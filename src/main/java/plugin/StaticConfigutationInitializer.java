@@ -1,6 +1,29 @@
 package plugin;
 
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
+
 import com.acme.SampleConfiguration;
+
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.GenericApplicationContext;
+
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.method.MethodDescription;
@@ -20,25 +43,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.GenericApplicationContext;
-
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Supplier;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class StaticConfigutationInitializer implements Plugin {
 
@@ -94,7 +98,7 @@ public class StaticConfigutationInitializer implements Plugin {
                     null);
             initializers.add(MethodInvocation.invoke(lambdaMeta).dynamic("get",
                     new TypeDescription.ForLoadedType(Supplier.class),
-                    Collections.singletonList(new TypeDescription.ForLoadedType(GenericApplicationContext.class)),
+                    Collections.singletonList(new TypeDescription.ForLoadedType(BeanFactory.class)),
                     Arrays.asList(
                             JavaConstant.MethodType.of(get).asConstantPoolValue(),
                             JavaConstant.MethodHandle.of(lambda).asConstantPoolValue(),
