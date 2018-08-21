@@ -17,8 +17,6 @@ package com.acme;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 
 /**
  * @author Dave Syer
@@ -32,15 +30,6 @@ public class SpringApplication extends org.springframework.boot.SpringApplicatio
 
     public SpringApplication(Class<?>[] primarySources) {
         super(primarySources);
-    }
-
-    @Override
-    protected ConfigurableApplicationContext createApplicationContext() {
-        ConfigurableApplicationContext context = super.createApplicationContext();
-        if (context instanceof AnnotationConfigApplicationContext) {
-            return new GenericApplicationContext();
-        }
-        return context;
     }
 
     public static ConfigurableApplicationContext run(Class<?> primarySource,

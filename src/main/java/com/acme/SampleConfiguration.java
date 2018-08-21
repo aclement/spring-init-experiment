@@ -20,7 +20,7 @@ public class SampleConfiguration {
     @Bean
     public CommandLineRunner runner(Bar bar) {
         return args -> {
-            System.err.println("Bar: " + bar);
+            System.out.println("Bar: " + bar);
         };
     }
 }
