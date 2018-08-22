@@ -1,3 +1,55 @@
+Demo of a Byte Buddy plugin that converts `@Configuration` to
+functional bean registrations, which are known to be faster and also
+more amenable to AOT compilation (native image building).
+
+Takes this:
+
+```java
+@Configuration
+public class SampleConfiguration {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+    
+}
+```
+
+and transforms it to this:
+
+```java
+@Configuration
+public class SampleConfiguration implements ApplicationContextInitializer<GenericApplicationContext> {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+
+    @Override
+    public void initialize(GenericApplicationContext context) {
+        context.registerBean(MyConfig.class);
+        context.registerBean(Foo.class, () -> context.getBean(MyConfig.class).foo());
+        context.registerBean(Bar.class, () -> context.getBean(MyConfig.class).bar(context.getBean(Foo.class)));
+    }
+    
+}
+```
+
+You then need a Spring application bootstrap utility that recognizes
+the `ApplicationContextInitializer` and treats it in a special way.
+
 Build and run:
 
 ```
