@@ -31,6 +31,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -64,7 +65,7 @@ public class StaticConfigutationInitializer implements Plugin {
     }
 
     @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator locator) {
         List<StackManipulation> initializers = new ArrayList<>();
         for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods().filter(isAnnotatedWith(Bean.class))) {
             List<StackManipulation> stackManipulations = new ArrayList<>();
@@ -125,6 +126,6 @@ public class StaticConfigutationInitializer implements Plugin {
     }
 
     public static void main(String[] args) {
-        new StaticConfigutationInitializer().apply(new ByteBuddy().rebase(SampleConfiguration.class), TypeDescription.ForLoadedType.of(SampleConfiguration.class)).make();
+        new StaticConfigutationInitializer().apply(new ByteBuddy().rebase(SampleConfiguration.class), TypeDescription.ForLoadedType.of(SampleConfiguration.class), ClassFileLocator.NoOp.INSTANCE).make();
     }
 }
