@@ -61,7 +61,7 @@
                 <configuration>
                     <transformations>
                         <transformation>
-                            <plugin>plugin.StaticConfigurationInitializer</plugin>
+                            <plugin>plugin.SlimConfigurationPlugin</plugin>
                         </transformation>
                     </transformations>
                 </configuration>
@@ -78,7 +78,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.acme.SampleApplication</mainClass>
+                    <mainClass>${start-class}</mainClass>
                 </configuration>
             </plugin>
         </plugins>

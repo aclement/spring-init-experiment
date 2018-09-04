@@ -1,2 +1,2 @@
 org.springframework.context.ApplicationContextInitializer=\
-com.acme.SampleConfiguration
+plugin.SlimConfigurationInstaller
