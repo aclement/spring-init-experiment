@@ -61,7 +61,7 @@
                 <configuration>
                     <transformations>
                         <transformation>
-                            <plugin>plugin.StaticConfigutationInitializer</plugin>
+                            <plugin>plugin.StaticConfigurationInitializer</plugin>
                         </transformation>
                     </transformations>
                 </configuration>

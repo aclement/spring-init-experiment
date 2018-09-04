@@ -82,7 +82,7 @@ Bar: com.acme.Bar@7f1d27422ad8
 
 N.B. the main class in the native image is `SimpleApplication` which is not a Spring Boot app. Spring Boot relies on `spring.factories` for a lot of its behaviour at runtime, and a Graal native image cannot use that mechanism currently.
 
-Native image generation works for the `SampleApplication`, but requires a patch for https://jira.spring.io/browse/SPR-17198:
+Native image generation also works for the `SampleApplication`, but requires Graal rc5 (rc6 is broken):
 
 ```
 $ mvn clean install
