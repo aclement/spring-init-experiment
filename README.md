@@ -87,7 +87,7 @@ Native image generation also works for the `SampleApplication`, but requires Gra
 ```
 $ mvn clean install
 $ CP=`java -jar target/spring-init-experiment-1.0-SNAPSHOT.jar --thin.classpath --thin.profile=graal`
-$ native-image -J-javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.9.1/aspectjweaver-1.9.1.jar -Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.java.JavaLoggingSystem -H:Name=target/app -H:IncludeResources='META-INF/spring.factories|org/springframework/boot/logging/.*' -H:ReflectionConfigurationFiles=app.json --report-unsupported-elements-at-runtime -cp $CP com.acme.SampleApplication
+$ native-image -Daj.weaving.verbose=true -J-javaagent:$HOME/.m2/repository/org/aspectj/aspectjweaver/1.9.1/aspectjweaver-1.9.1.jar -Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.java.JavaLoggingSystem -H:Name=target/app -H:IncludeResources='META-INF/spring.factories|org/springframework/boot/logging/.*' -H:ReflectionConfigurationFiles=app.json --report-unsupported-elements-at-runtime -cp $CP com.acme.SampleApplication
 $ ./target/app -Dorg.springframework.boot.logging.LoggingSystem=org.springframework.boot.logging.java.JavaLoggingSystem
 11:09:17.864 [main] DEBUG org.springframework.boot.context.logging.ClasspathLoggingApplicationListener - Application started with classpath: unknown
 
@@ -107,3 +107,5 @@ $ ./target/app -Dorg.springframework.boot.logging.LoggingSystem=org.springframew
 11:09:17.866 [main] INFO com.acme.SampleConfiguration - Bar: com.acme.Bar@7f1a6ad164a8
 
 ```
+
+For some reason this doesn't work without the `-Daj.weaving.verbose=true`.

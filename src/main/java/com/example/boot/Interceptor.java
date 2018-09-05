@@ -13,10 +13,10 @@ public class Interceptor {
 
 	private static Log logger = LogFactory.getLog(Interceptor.class);
 
-	@Around("execution(* org.springframework.boot.system.ApplicationHome.findSource(..))")
-	public Object source(ProceedingJoinPoint joinPoint) throws Throwable {
-		return proceed(joinPoint);
-	}
+    @Around("execution(* org.springframework.boot.system.ApplicationHome.findSource(..))")
+    public Object source(ProceedingJoinPoint joinPoint) throws Throwable {
+        return proceed(joinPoint);
+    }
 
 	@Around("execution(* org.springframework.boot.SpringApplication.isWebApplicationContext(..))")
 	public Object webApplication(ProceedingJoinPoint joinPoint) throws Throwable {
