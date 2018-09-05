@@ -66,7 +66,7 @@ public class SlimConfigurationPlugin implements Plugin {
 
         return builder.annotateType(
                 AnnotationDescription.Builder.ofType(SlimConfiguration.class)
-                        .define("type", proxy.getTypeDescription()).build());
+                        .defineTypeArray("type", proxy.getTypeDescription()).build());
     }
 
     @Override
