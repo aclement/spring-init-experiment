@@ -1,0 +1,13 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+	<weaver options="-verbose">
+		<include within="com.acme.*" />
+		<include within="org.springframework.boot..*" />
+	</weaver>
+
+	<aspects>
+		<aspect name="com.example.autoconfigure.Interceptor" />
+		<aspect name="com.example.boot.Interceptor" />
+	</aspects>
+
+</aspectj>
