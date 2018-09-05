@@ -34,6 +34,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
@@ -104,7 +105,6 @@ public class SlimConfigurationClassPostProcessor
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
             if (slimConfiguration(beanDefinition)) {
                 registry.removeBeanDefinition(beanName);
-                logger.info("Slim initializer: " + beanName);
             }
         }
     }
@@ -115,10 +115,21 @@ public class SlimConfigurationClassPostProcessor
             return false;
         }
         Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
+        return extract(beanClass);
+    }
+
+    public boolean extract(Class<?> beanClass) {
         SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
         if (slim != null) {
             Class<ApplicationContextInitializer<GenericApplicationContext>> type = slim.type();
+            logger.info("Slim initializer: " + type);
             initializers.add(type);
+            Import importer = beanClass.getAnnotation(Import.class);
+            if (importer != null) {
+                for (Class<?> imported : importer.value()) {
+                    extract(imported);
+                }
+            }
             return true;
         }
         return false;

@@ -11,7 +11,6 @@ public class SimpleApplication {
         GenericApplicationContext context = new GenericApplicationContext();
         new SlimConfigurationInstaller().initialize(context);
         context.registerBean(SampleApplication.class);
-        context.registerBean(SampleConfiguration.class);
         context.refresh();
         context.getBean(CommandLineRunner.class).run(args);
     }
