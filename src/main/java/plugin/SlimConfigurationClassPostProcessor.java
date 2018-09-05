@@ -17,6 +17,8 @@
 package plugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -46,7 +48,7 @@ public class SlimConfigurationClassPostProcessor
     private static final Log logger = LogFactory
             .getLog(SlimConfigurationClassPostProcessor.class);
 
-    private List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
+    private Collection<Class<ApplicationContextInitializer<GenericApplicationContext>>> initializers = new LinkedHashSet<>();
 
     private GenericApplicationContext context;
 
@@ -81,6 +83,12 @@ public class SlimConfigurationClassPostProcessor
             throws BeansException {
         if (context != null) {
             logger.info("Applying initializers");
+            List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
+            for (Class<ApplicationContextInitializer<GenericApplicationContext>> type : this.initializers) {
+                ApplicationContextInitializer<GenericApplicationContext> result = (ApplicationContextInitializer<GenericApplicationContext>) BeanUtils
+                        .instantiateClass(type);
+                initializers.add(result);
+            }
             OrderComparator.sort(initializers);
             for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
                 initializer.initialize(context);
@@ -94,32 +102,26 @@ public class SlimConfigurationClassPostProcessor
         String[] candidateNames = registry.getBeanDefinitionNames();
         for (String beanName : candidateNames) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
-            ApplicationContextInitializer<GenericApplicationContext> initializer = slimConfiguration(
-                    beanDefinition);
-            if (initializer != null) {
+            if (slimConfiguration(beanDefinition)) {
                 registry.removeBeanDefinition(beanName);
-                initializers.add(initializer);
                 logger.info("Slim initializer: " + beanName);
             }
         }
     }
 
-    private ApplicationContextInitializer<GenericApplicationContext> slimConfiguration(
-            BeanDefinition beanDef) {
+    private boolean slimConfiguration(BeanDefinition beanDef) {
         String className = beanDef.getBeanClassName();
         if (className == null || beanDef.getFactoryMethodName() != null) {
-            return null;
+            return false;
         }
         Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
         SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
         if (slim != null) {
-            Class<?> type = slim.type();
-            @SuppressWarnings("unchecked")
-            ApplicationContextInitializer<GenericApplicationContext> result = (ApplicationContextInitializer<GenericApplicationContext>) BeanUtils
-                    .instantiateClass(type);
-            return result;
+            Class<ApplicationContextInitializer<GenericApplicationContext>> type = slim.type();
+            initializers.add(type);
+            return true;
         }
-        return null;
+        return false;
     }
 
 }

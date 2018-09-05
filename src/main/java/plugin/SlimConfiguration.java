@@ -14,5 +14,5 @@ import org.springframework.context.support.GenericApplicationContext;
 @Documented
 public @interface SlimConfiguration {
 
-    Class<ApplicationContextInitializer<? extends GenericApplicationContext>> type();
+    Class<ApplicationContextInitializer<GenericApplicationContext>> type();
 }
