@@ -4,10 +4,47 @@
 		"allDeclaredConstructors": true
 	},
 	{
-		"name": "org.apache.logging.log4j.message.ParameterizedMessageFactory",
+		"name": "com.acme.SampleConfiguration$Initializer",
 		"allDeclaredConstructors": true
 	},
 	{
+		"name": "com.acme.SampleApplication",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "com.acme.SampleApplication$Initializer",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "plugin.SlimConfigurationInstaller",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "plugin.SlimConfigurationClassPostProcessor",
+		"allDeclaredConstructors": true,
+		"allDeclaredMethods": true
+	},
+    {
+		"name": "org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor",
+		"allDeclaredConstructors": true
+	},
+    {
+		"name": "org.springframework.context.annotation.CommonAnnotationBeanPostProcessor",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.context.event.EventListenerMethodProcessor",
+		"allDeclaredConstructors": true
+	},
+    {
+		"name": "org.springframework.context.event.DefaultEventListenerFactory",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.apache.logging.log4j.message.ParameterizedMessageFactory",
+		"allDeclaredConstructors": true
+	},
+    {
 		"name": "org.apache.logging.log4j.message.ReusableMessageFactory",
 		"allDeclaredConstructors": true
 	},

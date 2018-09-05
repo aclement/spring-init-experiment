@@ -16,7 +16,6 @@
 
 package plugin;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,10 +24,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
@@ -38,31 +36,32 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
-import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.core.type.StandardAnnotationMetadata;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
-import org.springframework.util.MultiValueMap;
+import org.springframework.util.ClassUtils;
 
-public class SlimConfigurationClassPostProcessor implements
-        BeanDefinitionRegistryPostProcessor, PriorityOrdered, ApplicationContextAware {
+public class SlimConfigurationClassPostProcessor
+        implements BeanDefinitionRegistryPostProcessor, PriorityOrdered,
+        BeanClassLoaderAware, ApplicationContextAware {
 
     private static final Log logger = LogFactory
             .getLog(SlimConfigurationClassPostProcessor.class);
-
-    private MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory();
 
     private List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
 
     private GenericApplicationContext context;
 
+    private ClassLoader classLoader;
+
     public int getOrder() {
         return Ordered.LOWEST_PRECEDENCE - 1;
     }
-    
+
     public void setMetadataReaderFactory(MetadataReaderFactory metadataReaderFactory) {
-        this.metadataReaderFactory = metadataReaderFactory;
+    }
+
+    @Override
+    public void setBeanClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 
     @Override
@@ -111,39 +110,10 @@ public class SlimConfigurationClassPostProcessor implements
         if (className == null || beanDef.getFactoryMethodName() != null) {
             return null;
         }
-        AnnotationMetadata metadata;
-        if (beanDef instanceof AnnotatedBeanDefinition && className.equals(
-                ((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
-            // Can reuse the pre-parsed metadata from the given BeanDefinition...
-            metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
-        }
-        else if (beanDef instanceof AbstractBeanDefinition
-                && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
-            // Check already loaded Class if present...
-            // since we possibly can't even load the class file for this Class.
-            Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
-            metadata = new StandardAnnotationMetadata(beanClass, true);
-        }
-        else {
-            try {
-                MetadataReader metadataReader = metadataReaderFactory
-                        .getMetadataReader(className);
-                metadata = metadataReader.getAnnotationMetadata();
-            }
-            catch (IOException ex) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(
-                            "Could not find class file for introspecting configuration annotations: "
-                                    + className,
-                            ex);
-                }
-                return null;
-            }
-        }
-        if (metadata.isAnnotated(SlimConfiguration.class.getName())) {
-            MultiValueMap<String, Object> attrs = metadata
-                    .getAllAnnotationAttributes(SlimConfiguration.class.getName());
-            Class<?> type = (Class<?>) attrs.getFirst("type");
+        Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
+        SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+        if (slim != null) {
+            Class<?> type = slim.type();
             @SuppressWarnings("unchecked")
             ApplicationContextInitializer<GenericApplicationContext> result = (ApplicationContextInitializer<GenericApplicationContext>) BeanUtils
                     .instantiateClass(type);
