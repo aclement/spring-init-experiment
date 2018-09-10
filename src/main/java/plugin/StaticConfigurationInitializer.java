@@ -44,11 +44,11 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 
-public class StaticConfigutationInitializer implements Plugin {
+public class StaticConfigurationInitializer implements Plugin {
 
     private final MethodDescription.InDefinedShape registerBean, registerBeanWithSupplier, getBean, lambdaMeta, get;
 
-    public StaticConfigutationInitializer() {
+    public StaticConfigurationInitializer() {
         try {
             registerBean = new MethodDescription.ForLoadedMethod(GenericApplicationContext.class.getMethod("registerBean",
                     Class.class, BeanDefinitionCustomizer[].class));
@@ -125,6 +125,6 @@ public class StaticConfigutationInitializer implements Plugin {
     }
 
     public static void main(String[] args) {
-        new StaticConfigutationInitializer().apply(new ByteBuddy().rebase(SampleConfiguration.class), TypeDescription.ForLoadedType.of(SampleConfiguration.class)).make();
+        new StaticConfigurationInitializer().apply(new ByteBuddy().rebase(SampleConfiguration.class), TypeDescription.ForLoadedType.of(SampleConfiguration.class)).make();
     }
 }

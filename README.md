@@ -39,9 +39,9 @@ public class SampleConfiguration implements ApplicationContextInitializer<Generi
 
     @Override
     public void initialize(GenericApplicationContext context) {
-        context.registerBean(MyConfig.class);
-        context.registerBean(Foo.class, () -> context.getBean(MyConfig.class).foo());
-        context.registerBean(Bar.class, () -> context.getBean(MyConfig.class).bar(context.getBean(Foo.class)));
+        context.registerBean(SampleConfiguration.class);
+        context.registerBean(Foo.class, () -> context.getBean(SampleConfiguration.class).foo());
+        context.registerBean(Bar.class, () -> context.getBean(SampleConfiguration.class).bar(context.getBean(Foo.class)));
     }
     
 }

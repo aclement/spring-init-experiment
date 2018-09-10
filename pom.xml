@@ -1,89 +1,157 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>spring-init-experiment</groupId>
-    <artifactId>spring-init-experiment</artifactId>
-    <version>1.0-SNAPSHOT</version>
+	<groupId>spring-init-experiment</groupId>
+	<artifactId>spring-init-experiment</artifactId>
+	<version>1.0-SNAPSHOT</version>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.0.BUILD-SNAPSHOT</version>
-    </parent>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spring-release-2</id>
+			<name>Spring Milestone Repository 2</name>
+			<url>https://repo.spring.io/libs-release</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-milestone-2</id>
+			<name>Spring Milestone Repository 2</name>
+			<url>https://repo.spring.io/libs-milestone</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-milestone</id>
+			<name>Spring Milestone Repository</name>
+			<url>https://repo.spring.io/milestone</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-snapshot</id>
+			<name>Spring Snapshot Repository</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-        </dependency>
-    </dependencies>
+	<repositories>
+		<repository>
+			<id>spring-release-2</id>
+			<name>Spring Milestone Repository 2</name>
+			<url>https://repo.spring.io/libs-release</url>
+		</repository>
+		<repository>
+			<id>spring-milestone-2</id>
+			<name>Spring Milestone Repository 2</name>
+			<url>https://repo.spring.io/libs-milestone</url>
+		</repository>
+		<repository>
+			<id>spring-milestone</id>
+			<name>Spring Milestone Repository</name>
+			<url>https://repo.spring.io/milestone</url>
+		</repository>
+		<repository>
+			<id>spring-snapshot</id>
+			<name>Spring Snapshot Repository</name>
+			<url>https://repo.spring.io/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
-    <properties>
-        <java.version>1.8</java.version>
-        <byte-buddy.version>1.8.17</byte-buddy.version>
-        <start-class>com.acme.SampleApplication</start-class>
-        <thin.version>1.0.14.RELEASE</thin.version>
-        <spring.version>5.1.0.BUILD-SNAPSHOT</spring.version>
-    </properties>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.1.0.BUILD-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy</artifactId>
+		</dependency>
+
+	</dependencies>
+
+	<properties>
+		<java.version>1.8</java.version>
+		<byte-buddy.version>1.8.17</byte-buddy.version>
+		<start-class>com.acme.SampleApplication</start-class>
+		<thin.version>1.0.14.RELEASE</thin.version>
+		<spring.version>5.1.0.BUILD-SNAPSHOT</spring.version>
+	</properties>
 
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework.boot.experimental</groupId>
-                        <artifactId>spring-boot-thin-layout</artifactId>
-                        <version>${thin.version}</version>
-                    </dependency>
-                </dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<dependencies>
+					<dependency>
+						<groupId>org.springframework.boot.experimental</groupId>
+						<artifactId>spring-boot-thin-layout</artifactId>
+						<version>${thin.version}</version>
+					</dependency>
+				</dependencies>
 
-            </plugin>
-            <plugin>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>${byte-buddy.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <transformations>
-                        <transformation>
-                            <plugin>plugin.StaticConfigutationInitializer</plugin>
-                        </transformation>
-                    </transformations>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>com.acme.SampleApplication</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.experiment</groupId>
+				<artifactId>spring-functional-registration-maven-plugin</artifactId>
+				<version>1.0-SNAPSHOT</version>
+				<executions>
+				     <execution>
+				       <phase>process-classes</phase>
+				       <goals>
+				         <goal>transform</goal>
+				       </goals>
+				     </execution>
+				   </executions>
+			</plugin>
+				<!-- 
+			<plugin>
+				<groupId>net.bytebuddy</groupId>
+				<artifactId>byte-buddy-maven-plugin</artifactId>
+				<version>${byte-buddy.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>transform</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<transformations> 
+						<transformation> 
+							<plugin>plugin.StaticConfigurationInitializer</plugin> 
+						</transformation> 
+					</transformations> 
+				</configuration>
+			</plugin>
+				 -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.6.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>com.acme.SampleApplication</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 
 </project>
