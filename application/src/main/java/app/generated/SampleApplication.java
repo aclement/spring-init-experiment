@@ -1,19 +1,19 @@
-package generated;
+package app.generated;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
+import boot.generated.AutoConfiguration;
+import boot.generated.AutoConfigurationModule;
 import slim.SlimConfiguration;
 import slim.SlimConfigurationInstaller;
 
 @SpringBootConfiguration
-@Import({ ConfigurationPropertiesAutoConfiguration.class, SampleConfiguration.class })
-@SlimConfiguration(module = SampleModule.class)
+@Import({ AutoConfiguration.class, SampleConfiguration.class })
+@SlimConfiguration(module = { SampleModule.class, AutoConfigurationModule.class })
 public class SampleApplication {
 
     public static void main(String[] args) {
@@ -34,9 +34,6 @@ public class SampleApplication {
         @Override
         public void initialize(GenericApplicationContext context) {
             context.registerBean(SampleApplication.class);
-            // TODO: how to get from ConfigurationPropertiesAutoConfiguration to this?
-            new ConfigurationPropertiesBindingPostProcessorRegistrar()
-                    .registerBeanDefinitions(null, context);
         }
 
     }

@@ -1,4 +1,4 @@
-package com.acme;
+package app.main;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

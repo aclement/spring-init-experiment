@@ -9,14 +9,14 @@
 	</parent>
 
 	<groupId>com.example</groupId>
-	<artifactId>demo</artifactId>
+	<artifactId>libraries</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Parent Demo</name>
 
 	<modules>
-		<module>modules</module>
-		<module>application</module>
+		<module>slim</module>
+		<module>library</module>
 	</modules>
 
 	<properties>

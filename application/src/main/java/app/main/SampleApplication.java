@@ -1,13 +1,14 @@
-package com.acme;
+package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
+import boot.generated.AutoConfiguration;
+
 @SpringBootConfiguration
-@Import({ConfigurationPropertiesAutoConfiguration.class, SampleConfiguration.class})
+@Import({AutoConfiguration.class, SampleConfiguration.class})
 public class SampleApplication {
 
     public static void main(String[] args) {

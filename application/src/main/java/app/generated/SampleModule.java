@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package generated;
+package app.generated;
 
 import java.util.Arrays;
 import java.util.List;

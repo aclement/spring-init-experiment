@@ -1,7 +1,4 @@
-package generated;
-
-import com.acme.Bar;
-import com.acme.Foo;
+package app.generated;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -10,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
 
+import app.main.Bar;
+import app.main.Foo;
 import slim.SlimConfiguration;
 
 @Configuration

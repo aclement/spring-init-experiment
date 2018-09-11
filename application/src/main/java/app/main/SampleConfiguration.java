@@ -1,4 +1,4 @@
-package com.acme;
+package app.main;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

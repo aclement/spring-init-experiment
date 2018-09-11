@@ -1,4 +1,4 @@
-package com.acme;
+package app.main;
 
 public class Bar {
 
