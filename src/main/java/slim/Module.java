@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package kotlin.reflect;
+package slim;
+
+import java.util.List;
+
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.support.GenericApplicationContext;
 
 /**
- * 
- * See https://github.com/oracle/graal/issues/656
- * 
  * @author Dave Syer
  *
  */
-public class KParameter {
+public interface Module {
+
+    List<ApplicationContextInitializer<GenericApplicationContext>> initializers();
 
 }

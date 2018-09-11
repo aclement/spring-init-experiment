@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package plugin;
+package slim;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +34,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
@@ -49,7 +48,7 @@ public class SlimConfigurationClassPostProcessor
     private static final Log logger = LogFactory
             .getLog(SlimConfigurationClassPostProcessor.class);
 
-    private Collection<Class<ApplicationContextInitializer<GenericApplicationContext>>> initializers = new LinkedHashSet<>();
+    private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 
     private GenericApplicationContext context;
 
@@ -85,9 +84,7 @@ public class SlimConfigurationClassPostProcessor
         if (context != null) {
             logger.info("Applying initializers");
             List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
-            for (Class<ApplicationContextInitializer<GenericApplicationContext>> type : this.initializers) {
-                ApplicationContextInitializer<GenericApplicationContext> result = (ApplicationContextInitializer<GenericApplicationContext>) BeanUtils
-                        .instantiateClass(type);
+            for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
                 initializers.add(result);
             }
             OrderComparator.sort(initializers);
@@ -104,6 +101,8 @@ public class SlimConfigurationClassPostProcessor
         for (String beanName : candidateNames) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
             if (slimConfiguration(beanDefinition)) {
+                // In an app with mixed @Configuration and initializers we would have to
+                // do more than this...
                 registry.removeBeanDefinition(beanName);
             }
         }
@@ -121,17 +120,11 @@ public class SlimConfigurationClassPostProcessor
     public boolean extract(Class<?> beanClass) {
         SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
         if (slim != null) {
-            Class<ApplicationContextInitializer<GenericApplicationContext>>[] types = slim
-                    .type();
-            for (Class<ApplicationContextInitializer<GenericApplicationContext>> type : types) {
+            Class<? extends Module>[] types = slim.module();
+            for (Class<? extends Module> type : types) {
                 logger.info("Slim initializer: " + type);
-                initializers.add(type);
-                Import importer = beanClass.getAnnotation(Import.class);
-                if (importer != null) {
-                    for (Class<?> imported : importer.value()) {
-                        extract(imported);
-                    }
-                }
+                initializers.addAll(
+                        BeanUtils.instantiateClass(type, Module.class).initializers());
             }
             return true;
         }

@@ -1,5 +1,0 @@
-org.springframework.context.ApplicationContextInitializer=\
-plugin.SlimConfigurationInstaller
-
-org.springframework.beans.BeanInfoFactory=\
-config.SpringBootBeanInfoFactory

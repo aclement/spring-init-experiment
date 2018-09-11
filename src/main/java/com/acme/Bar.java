@@ -7,4 +7,8 @@ public class Bar {
     public Bar(Foo foo) {
         this.foo = foo;
     }
+
+    public Foo getFoo() {
+        return this.foo;
+    }
 }
