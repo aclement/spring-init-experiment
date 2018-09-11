@@ -6,8 +6,8 @@
 	</weaver>
 
 	<aspects>
-		<aspect name="com.example.autoconfigure.Interceptor" />
-		<aspect name="com.example.boot.Interceptor" />
+		<aspect name="aspects.autoconfigure.Interceptor" />
+		<aspect name="aspects.boot.Interceptor" />
 	</aspects>
 
 </aspectj>

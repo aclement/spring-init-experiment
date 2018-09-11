@@ -1,4 +1,4 @@
-package com.example.boot;
+package aspects.boot;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

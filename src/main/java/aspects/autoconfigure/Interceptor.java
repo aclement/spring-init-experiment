@@ -1,4 +1,4 @@
-package com.example.autoconfigure;
+package aspects.autoconfigure;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
