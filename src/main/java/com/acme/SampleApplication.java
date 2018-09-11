@@ -10,7 +10,7 @@ import org.springframework.context.support.GenericApplicationContext;
 public class SampleApplication {
 
     public static void main(String[] args) {
-        SpringApplication app = new SpringApplication(new Class<?>[] {SampleApplication.class});
+        SpringApplication app = new SpringApplication(SampleApplication.class);
         app.setApplicationContextClass(GenericApplicationContext.class);
         app.run(args);
     }
