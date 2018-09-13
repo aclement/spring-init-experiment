@@ -32,10 +32,10 @@ import org.springframework.boot.autoconfigure.gson.GsonBuilderCustomizer;
 import org.springframework.boot.autoconfigure.gson.GsonProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.util.ClassUtils;
 
 import static slim.SlimRegistry.register;
 
+import slim.ConditionService;
 import slim.Module;
 
 /**
@@ -60,7 +60,9 @@ public class GsonAutoConfigurationModule implements Module {
 		public void initialize(GenericApplicationContext context) {
 			// Use a BeanDefinitionRegistryPostProcessor so that user configuration can
 			// take precedence (the same way that regular AutoConfiguration works).
-			context.registerBean(AutoConfigurationPostProcessor.class);
+			context.registerBean(AutoConfigurationPostProcessor.class,
+					() -> new AutoConfigurationPostProcessor(
+							context.getBean(ConditionService.class)));
 		}
 
 	}
@@ -69,6 +71,11 @@ public class GsonAutoConfigurationModule implements Module {
 			implements BeanDefinitionRegistryPostProcessor {
 
 		private ConfigurableListableBeanFactory context;
+		private final ConditionService conditions;
+
+		private AutoConfigurationPostProcessor(ConditionService conditions) {
+			this.conditions = conditions;
+		}
 
 		@Override
 		public void postProcessBeanFactory(ConfigurableListableBeanFactory context)
@@ -79,20 +86,17 @@ public class GsonAutoConfigurationModule implements Module {
 		@Override
 		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 				throws BeansException {
-			// @ConditionalOnClass(Gson.class)
-			if (ClassUtils.isPresent("com.google.gson.Gson", null)) {
+			if (conditions.matches(GsonAutoConfiguration.class)) {
 				register(registry, GsonProperties.class, () -> new GsonProperties());
 				register(registry, GsonAutoConfiguration.class);
-				// @ConditionalOnMissingBean
-				if (context.getBeanNamesForType(GsonBuilder.class).length == 0) {
+				if (conditions.matches(GsonAutoConfiguration.class, GsonBuilder.class)) {
 					register(registry, "gsonBuilder", GsonBuilder.class,
 							() -> context.getBean(GsonAutoConfiguration.class)
 									.gsonBuilder(new ArrayList<>(context
 											.getBeansOfType(GsonBuilderCustomizer.class)
 											.values())));
 				}
-				// @ConditionalOnMissingBean
-				if (context.getBeanNamesForType(Gson.class).length == 0) {
+				if (conditions.matches(GsonAutoConfiguration.class, Gson.class)) {
 					register(registry, "gson", Gson.class,
 							() -> context.getBean(GsonAutoConfiguration.class)
 									.gson(context.getBean(GsonBuilder.class)));
@@ -106,5 +110,5 @@ public class GsonAutoConfigurationModule implements Module {
 		}
 
 	}
-	
+
 }

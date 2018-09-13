@@ -24,14 +24,17 @@ import org.springframework.context.support.GenericApplicationContext;
  *
  */
 public class SlimConfigurationInstaller
-        implements ApplicationContextInitializer<GenericApplicationContext> {
+		implements ApplicationContextInitializer<GenericApplicationContext> {
 
-    @Override
-    public void initialize(GenericApplicationContext context) {
-        context.registerBean(
-                AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
-                SlimConfigurationClassPostProcessor.class);
-        AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
-    }
+	@Override
+	public void initialize(GenericApplicationContext context) {
+		context.registerBean(ConditionService.class,
+				() -> new SlimConditionService(context, context.getEnvironment(),
+						context));
+		context.registerBean(
+				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
+				SlimConfigurationClassPostProcessor.class);
+		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
+	}
 
 }
