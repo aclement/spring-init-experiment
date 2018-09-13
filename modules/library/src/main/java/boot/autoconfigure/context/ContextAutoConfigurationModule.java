@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package boot.generated;
+package boot.autoconfigure.context;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -28,11 +29,27 @@ import slim.Module;
  * @author Dave Syer
  *
  */
-public class AutoConfigurationModule implements Module {
+public class ContextAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(AutoConfiguration.initializer());
+		return Arrays.asList(ContextAutoConfigurationModule.initializer());
+	}
+
+	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
+		return new Initializer();
+	}
+
+	private static class Initializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
+
+		@Override
+		public void initialize(GenericApplicationContext context) {
+			// TODO: how to get from @EnableConfigurationProperties to this?
+			new ConfigurationPropertiesBindingPostProcessorRegistrar()
+					.registerBeanDefinitions(null, context);
+		}
+
 	}
 
 }

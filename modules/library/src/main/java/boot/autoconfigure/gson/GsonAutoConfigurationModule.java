@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package boot.generated;
+package boot.autoconfigure.gson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -26,99 +27,26 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.boot.autoconfigure.gson.GsonBuilderCustomizer;
 import org.springframework.boot.autoconfigure.gson.GsonProperties;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.Ordered;
 import org.springframework.util.ClassUtils;
 
 import static slim.SlimRegistry.register;
 
-import slim.SlimConfiguration;
+import slim.Module;
 
 /**
  * @author Dave Syer
  *
  */
-@Configuration
-@EnableConfigurationProperties
-@SlimConfiguration(module = AutoConfigurationModule.class)
-public class AutoConfiguration {
+public class GsonAutoConfigurationModule implements Module {
 
-	@ConditionalOnClass(Gson.class)
-	@EnableConfigurationProperties(GsonProperties.class)
-	// Copied from Spring Boot
-	static class GsonAutoConfiguration {
-
-		@Bean
-		@ConditionalOnMissingBean
-		public GsonBuilder gsonBuilder(List<GsonBuilderCustomizer> customizers) {
-			GsonBuilder builder = new GsonBuilder();
-			customizers.forEach((c) -> c.customize(builder));
-			return builder;
-		}
-
-		@Bean
-		@ConditionalOnMissingBean
-		public Gson gson(GsonBuilder gsonBuilder) {
-			return gsonBuilder.create();
-		}
-
-		@Bean
-		public StandardGsonBuilderCustomizer standardGsonBuilderCustomizer(
-				GsonProperties gsonProperties) {
-			return new StandardGsonBuilderCustomizer(gsonProperties);
-		}
-
-		private static final class StandardGsonBuilderCustomizer
-				implements GsonBuilderCustomizer, Ordered {
-
-			private final GsonProperties properties;
-
-			StandardGsonBuilderCustomizer(GsonProperties properties) {
-				this.properties = properties;
-			}
-
-			@Override
-			public int getOrder() {
-				return 0;
-			}
-
-			@Override
-			public void customize(GsonBuilder builder) {
-				GsonProperties properties = this.properties;
-				PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-				map.from(properties::getGenerateNonExecutableJson)
-						.toCall(builder::generateNonExecutableJson);
-				map.from(properties::getExcludeFieldsWithoutExposeAnnotation)
-						.toCall(builder::excludeFieldsWithoutExposeAnnotation);
-				map.from(properties::getSerializeNulls).toCall(builder::serializeNulls);
-				map.from(properties::getEnableComplexMapKeySerialization)
-						.toCall(builder::enableComplexMapKeySerialization);
-				map.from(properties::getDisableInnerClassSerialization)
-						.toCall(builder::disableInnerClassSerialization);
-				map.from(properties::getLongSerializationPolicy)
-						.to(builder::setLongSerializationPolicy);
-				map.from(properties::getFieldNamingPolicy)
-						.to(builder::setFieldNamingPolicy);
-				map.from(properties::getPrettyPrinting)
-						.toCall(builder::setPrettyPrinting);
-				map.from(properties::getLenient).toCall(builder::setLenient);
-				map.from(properties::getDisableHtmlEscaping)
-						.toCall(builder::disableHtmlEscaping);
-				map.from(properties::getDateFormat).to(builder::setDateFormat);
-			}
-
-		}
-
+	@Override
+	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
+		return Arrays.asList(GsonAutoConfigurationModule.initializer());
 	}
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
@@ -151,9 +79,6 @@ public class AutoConfiguration {
 		@Override
 		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 				throws BeansException {
-			// TODO: how to get from @EnableConfigurationProperties to this?
-			new ConfigurationPropertiesBindingPostProcessorRegistrar()
-					.registerBeanDefinitions(null, registry);
 			// @ConditionalOnClass(Gson.class)
 			if (ClassUtils.isPresent("com.google.gson.Gson", null)) {
 				register(registry, GsonProperties.class, () -> new GsonProperties());
@@ -181,5 +106,5 @@ public class AutoConfiguration {
 		}
 
 	}
-
+	
 }
