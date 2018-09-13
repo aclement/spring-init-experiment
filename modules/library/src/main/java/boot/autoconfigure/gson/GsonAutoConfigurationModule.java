@@ -35,13 +35,16 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import static slim.SlimRegistry.register;
 
+import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
 import slim.Module;
+import slim.SlimConfiguration;
 
 /**
  * @author Dave Syer
  *
  */
+@SlimConfiguration(module=ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 
 	@Override

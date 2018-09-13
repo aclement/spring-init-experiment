@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,93 +43,100 @@ import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 
 public class SlimConfigurationClassPostProcessor
-        implements BeanDefinitionRegistryPostProcessor, PriorityOrdered,
-        BeanClassLoaderAware, ApplicationContextAware {
+		implements BeanDefinitionRegistryPostProcessor, PriorityOrdered,
+		BeanClassLoaderAware, ApplicationContextAware {
 
-    private static final Log logger = LogFactory
-            .getLog(SlimConfigurationClassPostProcessor.class);
+	private static final Log logger = LogFactory
+			.getLog(SlimConfigurationClassPostProcessor.class);
 
-    private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
+	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 
-    private GenericApplicationContext context;
+	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
 
-    private ClassLoader classLoader;
+	private GenericApplicationContext context;
 
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE - 1;
-    }
+	private ClassLoader classLoader;
 
-    public void setMetadataReaderFactory(MetadataReaderFactory metadataReaderFactory) {
-    }
+	public int getOrder() {
+		return Ordered.LOWEST_PRECEDENCE - 1;
+	}
 
-    @Override
-    public void setBeanClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
-    }
+	public void setMetadataReaderFactory(MetadataReaderFactory metadataReaderFactory) {
+	}
 
-    @Override
-    public void setApplicationContext(ApplicationContext context) throws BeansException {
-        if (context instanceof GenericApplicationContext) {
-            this.context = (GenericApplicationContext) context;
-        }
-        else {
-            throw new UnsupportedOperationException(
-                    "Cannot create slim configuration (not GenericApplicationContext): "
-                            + context);
-        }
-    }
+	@Override
+	public void setBeanClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
+	}
 
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
-            throws BeansException {
-        if (context != null) {
-            logger.info("Applying initializers");
-            List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
-            for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
-                initializers.add(result);
-            }
-            OrderComparator.sort(initializers);
-            for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
-                initializer.initialize(context);
-            }
-        }
-    }
+	@Override
+	public void setApplicationContext(ApplicationContext context) throws BeansException {
+		if (context instanceof GenericApplicationContext) {
+			this.context = (GenericApplicationContext) context;
+		}
+		else {
+			throw new UnsupportedOperationException(
+					"Cannot create slim configuration (not GenericApplicationContext): "
+							+ context);
+		}
+	}
 
-    @Override
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
-            throws BeansException {
-        String[] candidateNames = registry.getBeanDefinitionNames();
-        for (String beanName : candidateNames) {
-            BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
-            if (slimConfiguration(beanDefinition)) {
-                // In an app with mixed @Configuration and initializers we would have to
-                // do more than this...
-                registry.removeBeanDefinition(beanName);
-            }
-        }
-    }
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
+			throws BeansException {
+		if (context != null) {
+			logger.info("Applying initializers");
+			List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
+			for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
+				initializers.add(result);
+			}
+			OrderComparator.sort(initializers);
+			for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
+				initializer.initialize(context);
+			}
+		}
+	}
 
-    private boolean slimConfiguration(BeanDefinition beanDef) {
-        String className = beanDef.getBeanClassName();
-        if (className == null || beanDef.getFactoryMethodName() != null) {
-            return false;
-        }
-        Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
-        return extract(beanClass);
-    }
+	@Override
+	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
+			throws BeansException {
+		String[] candidateNames = registry.getBeanDefinitionNames();
+		for (String beanName : candidateNames) {
+			BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
+			if (slimConfiguration(beanDefinition)) {
+				// In an app with mixed @Configuration and initializers we would have to
+				// do more than this...
+				registry.removeBeanDefinition(beanName);
+			}
+		}
+	}
 
-    public boolean extract(Class<?> beanClass) {
-        SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
-        if (slim != null) {
-            Class<? extends Module>[] types = slim.module();
-            for (Class<? extends Module> type : types) {
-                logger.info("Slim initializer: " + type);
-                initializers.addAll(
-                        BeanUtils.instantiateClass(type, Module.class).initializers());
-            }
-            return true;
-        }
-        return false;
-    }
+	private boolean slimConfiguration(BeanDefinition beanDef) {
+		String className = beanDef.getBeanClassName();
+		if (className == null || beanDef.getFactoryMethodName() != null) {
+			return false;
+		}
+		Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
+		return extract(beanClass);
+	}
+
+	public boolean extract(Class<?> beanClass) {
+		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+		if (slim != null) {
+			Class<? extends Module>[] types = slim.module();
+			for (Class<? extends Module> type : types) {
+				if (this.types.contains(type)) {
+					continue;
+				}
+				logger.info("Slim initializer: " + type);
+				extract(type);
+				this.types.add(type);
+				initializers.addAll(
+						BeanUtils.instantiateClass(type, Module.class).initializers());
+			}
+			return true;
+		}
+		return false;
+	}
 
 }
