@@ -16,44 +16,19 @@
 
 package slim;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 
-public class SlimConfigurationClassPostProcessor
-		implements BeanDefinitionRegistryPostProcessor, PriorityOrdered,
-		BeanClassLoaderAware, ApplicationContextAware {
-
-	private static final Log logger = LogFactory
-			.getLog(SlimConfigurationClassPostProcessor.class);
-
-	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
-
-	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
-
-	private GenericApplicationContext context;
+public class SlimConfigurationClassPostProcessor implements
+		BeanDefinitionRegistryPostProcessor, BeanClassLoaderAware, PriorityOrdered {
 
 	private ClassLoader classLoader;
 
@@ -70,31 +45,8 @@ public class SlimConfigurationClassPostProcessor
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext context) throws BeansException {
-		if (context instanceof GenericApplicationContext) {
-			this.context = (GenericApplicationContext) context;
-		}
-		else {
-			throw new UnsupportedOperationException(
-					"Cannot create slim configuration (not GenericApplicationContext): "
-							+ context);
-		}
-	}
-
-	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
 			throws BeansException {
-		if (context != null) {
-			logger.info("Applying initializers");
-			List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
-			for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
-				initializers.add(result);
-			}
-			OrderComparator.sort(initializers);
-			for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
-				initializer.initialize(context);
-			}
-		}
 	}
 
 	@Override
@@ -103,37 +55,32 @@ public class SlimConfigurationClassPostProcessor
 		String[] candidateNames = registry.getBeanDefinitionNames();
 		for (String beanName : candidateNames) {
 			BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
-			if (slimConfiguration(beanDefinition)) {
+			String className = beanDefinition.getBeanClassName();
+			if (className == null || beanDefinition.getFactoryMethodName() != null) {
+				continue;
+			}
+			Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
+			if (slimConfiguration(beanClass)) {
 				// In an app with mixed @Configuration and initializers we would have to
 				// do more than this...
-				registry.removeBeanDefinition(beanName);
+				if (registry instanceof ConfigurableListableBeanFactory) {
+					ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
+					if (listable.getBeanNamesForType(beanClass, false,
+							false).length > 1) {
+						// Some ApplicationContext classes register @Configuration classes
+						// as bean definitions so we need to remove that one
+						registry.removeBeanDefinition(beanName);
+					}
+				}
+				// TODO: mark the bean definition somehow so it doesn't get
+				// processed by ConfigurationClassPostProcessor
 			}
 		}
 	}
 
-	private boolean slimConfiguration(BeanDefinition beanDef) {
-		String className = beanDef.getBeanClassName();
-		if (className == null || beanDef.getFactoryMethodName() != null) {
-			return false;
-		}
-		Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
-		return extract(beanClass);
-	}
-
-	public boolean extract(Class<?> beanClass) {
+	private boolean slimConfiguration(Class<?> beanClass) {
 		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
 		if (slim != null) {
-			Class<? extends Module>[] types = slim.module();
-			for (Class<? extends Module> type : types) {
-				if (this.types.contains(type)) {
-					continue;
-				}
-				logger.info("Slim initializer: " + type);
-				extract(type);
-				this.types.add(type);
-				initializers.addAll(
-						BeanUtils.instantiateClass(type, Module.class).initializers());
-			}
 			return true;
 		}
 		return false;

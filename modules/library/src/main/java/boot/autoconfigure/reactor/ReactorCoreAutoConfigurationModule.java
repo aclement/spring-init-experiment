@@ -24,6 +24,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreAutoConfiguration;
+import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -56,6 +57,7 @@ public class ReactorCoreAutoConfigurationModule implements Module {
 		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 				throws BeansException {
 			if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
+				register(registry, ReactorCoreProperties.class, () -> new ReactorCoreProperties());
 				register(registry, ReactorCoreAutoConfiguration.class,
 						() -> new ReactorCoreAutoConfiguration());
 			}

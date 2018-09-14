@@ -15,19 +15,44 @@
  */
 package slim;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringApplicationRunListener;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.OrderComparator;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.util.ClassUtils;
 
 /**
  * @author Dave Syer
  *
  */
-public class SlimConfigurationInstaller
-		implements ApplicationContextInitializer<GenericApplicationContext> {
+public class SlimConfigurationInstaller implements SpringApplicationRunListener {
 
-	@Override
-	public void initialize(GenericApplicationContext context) {
+	private static final Log logger = LogFactory.getLog(SlimConfigurationInstaller.class);
+
+	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
+
+	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
+
+	private final SpringApplication application;
+
+	public SlimConfigurationInstaller(SpringApplication application, String[] args) {
+		this.application = application;
+	}
+	private void initialize(GenericApplicationContext context) {
 		context.registerBean(ConditionService.class,
 				() -> new SlimConditionService(context, context.getEnvironment(),
 						context));
@@ -35,6 +60,84 @@ public class SlimConfigurationInstaller
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class);
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
+	}
+
+	private void apply(GenericApplicationContext context) {
+		logger.info("Applying initializers");
+		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
+		for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
+			initializers.add(result);
+		}
+		OrderComparator.sort(initializers);
+		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
+			initializer.initialize(context);
+		}
+	}
+
+	private void extract(GenericApplicationContext context) {
+		for (Object source : application.getAllSources()) {
+			Class<?> type = null;
+			if (source instanceof Class) {
+				type = (Class<?>) source;
+			}
+			else if (source instanceof String && ClassUtils.isPresent((String) source,
+					application.getClassLoader())) {
+				type = ClassUtils.resolveClassName((String) source,
+						application.getClassLoader());
+			}
+			if (type != null) {
+				extract(type);
+			}
+		}
+		apply(context);
+	}
+
+	private void extract(Class<?> beanClass) {
+		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+		if (slim != null) {
+			Class<? extends Module>[] types = slim.module();
+			for (Class<? extends Module> type : types) {
+				if (this.types.contains(type)) {
+					continue;
+				}
+				logger.info("Slim initializer: " + type);
+				extract(type);
+				this.types.add(type);
+				initializers.addAll(
+						BeanUtils.instantiateClass(type, Module.class).initializers());
+			}
+		}
+	}
+
+	@Override
+	public void starting() {
+	}
+
+	@Override
+	public void environmentPrepared(ConfigurableEnvironment environment) {
+	}
+
+	@Override
+	public void contextPrepared(ConfigurableApplicationContext context) {
+		GenericApplicationContext generic = (GenericApplicationContext) context;
+		initialize(generic);
+		extract(generic);
+	}
+
+	@Override
+	public void contextLoaded(ConfigurableApplicationContext context) {
+	}
+
+	@Override
+	public void started(ConfigurableApplicationContext context) {
+	}
+
+	@Override
+	public void running(ConfigurableApplicationContext context) {
+	}
+
+	@Override
+	public void failed(ConfigurableApplicationContext context, Throwable exception) {
 	}
 
 }

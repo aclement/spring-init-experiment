@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package boot.autoconfigure.web;
+package boot.autoconfigure.web.reactive;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryCustomizer;
@@ -31,65 +24,40 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizerBeanPostPro
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
-import static slim.SlimRegistry.register;
-
-import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
-import slim.Module;
 import slim.SlimConfiguration;
 
 /**
  * @author Dave Syer
  *
  */
-@SlimConfiguration(module = { ContextAutoConfigurationModule.class,
-		ReactorCoreAutoConfigurationModule.class })
-public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
-
-	@Override
-	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(ReactorCoreAutoConfigurationModule.initializer());
-	}
+@SlimConfiguration
+class ReactiveWebServerFactoryAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> context.registerBean(BeanDefinitionRegistryPostProcessor.class,
-				() -> new AutoConfigurationPostProcessor(
-						context.getBean(ConditionService.class)));
+		return new Initializer();
 	}
 
-	private static final class AutoConfigurationPostProcessor
-			implements BeanDefinitionRegistryPostProcessor {
+	private static final class Initializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
 
-		private ConfigurableListableBeanFactory context;
-		private final ConditionService conditions;
-
-		private AutoConfigurationPostProcessor(ConditionService conditions) {
-			this.conditions = conditions;
-		}
 
 		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory context)
-				throws BeansException {
-			this.context = context;
-		}
-
-		@Override
-		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
-				throws BeansException {
+		public void initialize(GenericApplicationContext context) {
+			ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
 			if (conditions.matches(ReactiveWebServerFactoryAutoConfiguration.class)) {
 				ReactiveWebServerFactoryAutoConfiguration config = new ReactiveWebServerFactoryAutoConfiguration();
 				// From @Import
-				register(registry, WebServerFactoryCustomizerBeanPostProcessor.class,
+				context.registerBean(WebServerFactoryCustomizerBeanPostProcessor.class,
 						() -> new WebServerFactoryCustomizerBeanPostProcessor());
 				// From @Bean
-				register(registry, ReactiveWebServerFactoryCustomizer.class,
+				context.registerBean(ReactiveWebServerFactoryCustomizer.class,
 						() -> config.reactiveWebServerFactoryCustomizer(
 								context.getBean(ServerProperties.class)));
 				// From @Import
 				// TODO: add condition match from that (not visible here)
 				// ReactiveWebServerFactoryConfiguration
-				register(registry, NettyReactiveWebServerFactory.class,
+				context.registerBean(NettyReactiveWebServerFactory.class,
 						() -> new NettyReactiveWebServerFactory());
 			}
 		}

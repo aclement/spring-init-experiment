@@ -41,7 +41,11 @@ public class SlimConditionService implements ConditionService {
 
 	@Override
 	public boolean matches(Class<?> type) {
-		return this.evaluator.shouldSkip(new StandardAnnotationMetadata(type));
+		try {
+			return !this.evaluator.shouldSkip(new StandardAnnotationMetadata(type));
+		} catch (ArrayStoreException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -51,7 +55,7 @@ public class SlimConditionService implements ConditionService {
 			Class<?> candidate = ClassUtils.resolveClassName(method.getReturnTypeName(),
 					this.classLoader);
 			if (type.isAssignableFrom(candidate)) {
-				return true;
+				return !this.evaluator.shouldSkip(method);
 			}
 		}
 		return false;
