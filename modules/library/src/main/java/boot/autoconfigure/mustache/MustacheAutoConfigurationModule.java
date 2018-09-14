@@ -51,7 +51,7 @@ public class MustacheAutoConfigurationModule implements Module {
 			context.registerBean(MustacheAutoConfigurationModule.class.getName(),
 					BeanDefinitionRegistryPostProcessor.class,
 					() -> new AutoConfigurationPostProcessor(context,
-							Arrays.asList(new Initializer())));
+							Arrays.asList(new Initializer(), MustacheReactiveWebConfigurationGenerated.initializer())));
 		};
 	}
 

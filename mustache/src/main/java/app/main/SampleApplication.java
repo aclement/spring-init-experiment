@@ -10,14 +10,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import boot.autoconfigure.mustache.MustacheReactiveWebConfigurationModule;
+import boot.autoconfigure.mustache.MustacheAutoConfigurationModule;
+import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import slim.SlimConfiguration;
 
 @SpringBootConfiguration
-@Import({ MustacheAutoConfiguration.class, ReactiveWebServerFactoryAutoConfiguration.class })
+@Import({ MustacheAutoConfiguration.class,
+		ReactiveWebServerFactoryAutoConfiguration.class })
 // Generated:
-@SlimConfiguration(module = { SampleModule.class,
-		MustacheReactiveWebConfigurationModule.class })
+@SlimConfiguration(module = { SampleModule.class, MustacheAutoConfigurationModule.class,
+		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Bean

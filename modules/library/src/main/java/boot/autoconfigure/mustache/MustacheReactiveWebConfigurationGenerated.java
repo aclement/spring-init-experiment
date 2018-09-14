@@ -16,12 +16,8 @@
 
 package boot.autoconfigure.mustache;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.samskivert.mustache.Mustache.Compiler;
 
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
@@ -34,9 +30,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.Ordered;
 
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
-import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
-import slim.Module;
 import slim.SlimConfiguration;
 
 /**
@@ -45,20 +39,10 @@ import slim.SlimConfiguration;
  */
 @SlimConfiguration(module = { MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
-public class MustacheReactiveWebConfigurationModule implements Module {
-
-	@Override
-	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(MustacheReactiveWebConfigurationModule.initializer());
-	}
+public class MustacheReactiveWebConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> {
-			context.registerBean(MustacheReactiveWebConfigurationModule.class.getName(),
-					BeanDefinitionRegistryPostProcessor.class,
-					() -> new AutoConfigurationPostProcessor(context,
-							Arrays.asList(new Initializer())));
-		};
+		return new Initializer();
 	}
 
 	static class Initializer
