@@ -1,17 +1,13 @@
 package boot.autoconfigure.web.reactive;
 
-import java.util.List;
-
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.EnableWebFluxConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.WebFluxConfig;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxRegistrations;
-import org.springframework.boot.web.codec.CodecCustomizer;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.ReactiveAdapterRegistry;
-import org.springframework.core.ResolvableType;
 import org.springframework.format.support.FormattingConversionService;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.validation.Validator;
@@ -23,13 +19,11 @@ import org.springframework.web.reactive.function.server.support.HandlerFunctionA
 import org.springframework.web.reactive.function.server.support.RouterFunctionMapping;
 import org.springframework.web.reactive.function.server.support.ServerResponseResultHandler;
 import org.springframework.web.reactive.result.SimpleHandlerAdapter;
-import org.springframework.web.reactive.result.method.HandlerMethodArgumentResolver;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.reactive.result.method.annotation.ResponseBodyResultHandler;
 import org.springframework.web.reactive.result.method.annotation.ResponseEntityResultHandler;
 import org.springframework.web.reactive.result.view.ViewResolutionResultHandler;
-import org.springframework.web.reactive.result.view.ViewResolver;
 import org.springframework.web.server.WebExceptionHandler;
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
@@ -107,15 +101,12 @@ class WebFluxAutoConfigurationGenerated {
 			context.registerBean(WebFluxConfigurer.class,
 					() -> new WebFluxConfig(context.getBean(ResourceProperties.class),
 							context.getBean(WebFluxProperties.class), context,
-							context.getBeanProvider(ResolvableType.forClassWithGenerics(
-									List.class, HandlerMethodArgumentResolver.class)),
-							context.getBeanProvider(ResolvableType
-									.forClassWithGenerics(List.class, CodecCustomizer.class)),
+							ObjectProviders.provider(context, WebFluxConfig.class, 3),
+							ObjectProviders.provider(context, WebFluxConfig.class, 4),
 							// TODO: still need ObjectProviders for this (private class in
 							// public constructor):
 							ObjectProviders.provider(context, WebFluxConfig.class, 5),
-							context.getBeanProvider(ResolvableType
-									.forClassWithGenerics(List.class, ViewResolver.class))));
+							ObjectProviders.provider(context, WebFluxConfig.class, 6)));
 		}
 		
 	}
