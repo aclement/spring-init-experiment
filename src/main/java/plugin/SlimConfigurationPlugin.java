@@ -24,11 +24,13 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.expression.spel.ast.MethodReference;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodDescription.ForLoadedMethod;
 import net.bytebuddy.description.method.MethodDescription.InDefinedShape;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Ownership;
@@ -48,6 +50,7 @@ import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -61,7 +64,7 @@ public class SlimConfigurationPlugin implements Plugin {
 	
 	private InitializerClassFactory initializerClassFactory;
 
-//	private ModuleClassFactory moduleClassFactory;
+	private ModuleClassFactory moduleClassFactory;
 	
 	public SlimConfigurationPlugin() {
 		Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext =
@@ -69,7 +72,7 @@ public class SlimConfigurationPlugin implements Plugin {
 						new TypeDescription.ForLoadedType(ApplicationContextInitializer.class),
 						new TypeDescription.ForLoadedType(GenericApplicationContext.class)).build();
 		initializerClassFactory = new InitializerClassFactory();
-//		moduleClassFactory = new ModuleClassFactory();
+		moduleClassFactory = new ModuleClassFactory();
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public class SlimConfigurationPlugin implements Plugin {
 			DynamicType initializerClassType = initializerClassFactory.make(typeDescription, locator);
 			initializerClassType.saveIn(new File(path));
 			
-//			DynamicType moduleClassType = moduleClassFactory.make(typeDescription, locator, typeDescription, typeDescription);
+//			DynamicType moduleClassType = moduleClassFactory.make(typeDescription, locator, typeDescription, typeDescription, typeDescription);
 //			moduleClassType.saveIn(new File(path));
 			
 			builder = addSlimConfigurationAnnotation(builder, initializerClassType);
@@ -290,4 +293,67 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	}
 
+	class ModuleClassFactory {
+
+		public ModuleClassFactory() {
+		}
+		
+		private String toModuleName(String typename) {
+			if (typename.endsWith("Configuration")) {
+				return typename.substring(0,typename.indexOf("Configuration"))+"Module";
+			} else if (typename.endsWith("Application")) {
+				return typename.substring(0,typename.indexOf("Application"))+"Module";
+			}
+			return typename+"Module";
+		}
+
+		public DynamicType make(TypeDescription typeDescription, ClassFileLocator locator, TypeDescription... typesWithInitializeMethods) throws Exception {
+			log("Generating module for "+typeDescription.getName()+" calling");
+			for (TypeDescription td: typesWithInitializeMethods) {
+				log("- "+td);
+			}
+			String moduleName = toModuleName(typeDescription.getTypeName());
+			DynamicType.Builder<?> builder = new ByteBuddy()
+					.subclass(Object.class)
+					.name(moduleName);
+			
+			Generic Type_ACI = TypeDescription.Generic.Builder.rawType(ApplicationContextInitializer.class).build();
+
+			List<StackManipulation> code = new ArrayList<>();
+			List<StackManipulation> eachElement = new ArrayList<>();
+			
+			Generic Type_ListOfACI =
+					TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(List.class),
+							Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext).build();
+			
+			for (int i=0;i<typesWithInitializeMethods.length;i++) {
+				TypeDescription td = typesWithInitializeMethods[i];
+				MethodDescription md = new MethodDescription.Latent(
+						td, //declaringType, 
+						"$$initializer", //internalName, 
+						Modifier.PUBLIC, //modifiers, 
+						Collections.emptyList(), //typeVariables, 
+						Type_ACI, //returnType, 
+						Collections.emptyList(), //parameterTokens,
+						Collections.emptyList(), //exceptionTypes, 
+						null, //declaredAnnotations, 
+						null, //defaultValue, 
+						null); //receiverType)
+				eachElement.add(MethodInvocation.invoke(md));
+			}
+			code.add(ArrayFactory
+					.forType(new TypeDescription.ForLoadedType(ApplicationContextInitializer.class).asGenericType())
+					.withValues(eachElement));
+			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Arrays.class.getMethod("asList",Object[].class))));
+			code.add(MethodReturn.of(Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext));
+
+			builder = builder
+        		.defineMethod("initializers",Type_ListOfACI,Modifier.PUBLIC)
+        		.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
+
+			return builder.make();
+		}
+
+	}
+	
 }
