@@ -29,6 +29,7 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
+import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
 import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
 import slim.Module;
@@ -51,7 +52,9 @@ public class HttpMessageConvertersAutoConfigurationModule implements Module {
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
 		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = Arrays
 				.asList(new Initializer(),
-						GsonHttpMessageConvertersConfigurationGenerated.initializer());
+						GsonHttpMessageConvertersConfigurationGenerated.initializer(),
+						JacksonHttpMessageConvertersConfigurationGenerated.initializer(),
+						CodecsAutoConfigurationGenerated.initializer());
 		return context -> context.registerBean(
 				HttpMessageConvertersAutoConfigurationModule.class.getName(),
 				BeanDefinitionRegistryPostProcessor.class,

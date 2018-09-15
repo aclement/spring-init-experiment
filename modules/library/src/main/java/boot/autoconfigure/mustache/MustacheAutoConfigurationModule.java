@@ -55,6 +55,7 @@ public class MustacheAutoConfigurationModule implements Module {
 		};
 	}
 
+	// Generated from MustacheAutoConfiguration
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

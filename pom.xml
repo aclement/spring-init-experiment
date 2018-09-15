@@ -18,6 +18,7 @@
 		<module>modules</module>
 		<module>application</module>
 		<module>server</module>
+		<module>jackson</module>
 		<module>mustache</module>
 	</modules>
 

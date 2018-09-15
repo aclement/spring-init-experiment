@@ -37,6 +37,7 @@ import slim.SlimConfiguration;
  * @author Dave Syer
  *
  */
+// Generated from MustacheReactiveWebConfiguration
 @SlimConfiguration(module = { MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class MustacheReactiveWebConfigurationGenerated {
@@ -66,7 +67,7 @@ public class MustacheReactiveWebConfigurationGenerated {
 
 	}
 
-	// Copy of package private class in Boot
+	// Copy of MustacheReactiveWebConfiguration package private class in Boot
 	@Configuration
 	@ConditionalOnWebApplication(type = Type.REACTIVE)
 	static class MustacheReactiveWebConfiguration {
