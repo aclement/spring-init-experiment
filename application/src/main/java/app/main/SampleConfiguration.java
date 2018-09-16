@@ -7,11 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
 
-import slim.SlimConfiguration;
-
 @Configuration
-// Generated:
-@SlimConfiguration(module = SampleModule.class)
 public class SampleConfiguration {
 
     @Value("${app.value}")

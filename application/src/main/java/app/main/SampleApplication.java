@@ -7,13 +7,8 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import slim.SlimConfiguration;
-
 @SpringBootConfiguration
 @Import({ SampleConfiguration.class, ConfigurationPropertiesAutoConfiguration.class })
-// Generated:
-@SlimConfiguration(module = { SampleModule.class, ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {

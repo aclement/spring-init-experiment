@@ -38,7 +38,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
@@ -59,7 +58,6 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
 import slim.Module;
 import slim.SlimConfiguration;
@@ -77,12 +75,7 @@ public class JacksonAutoConfigurationModule implements Module {
 	}
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> {
-			context.registerBean(JacksonAutoConfigurationModule.class.getName(),
-					BeanDefinitionRegistryPostProcessor.class,
-					() -> new AutoConfigurationPostProcessor(context,
-							Arrays.asList(new Initializer())));
-		};
+		return new Initializer();
 	}
 
 	private static class Initializer
