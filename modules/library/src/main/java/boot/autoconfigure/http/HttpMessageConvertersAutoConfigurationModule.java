@@ -19,7 +19,6 @@ package boot.autoconfigure.http;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.autoconfigure.http.HttpProperties;
@@ -30,7 +29,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
-import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
 import slim.Module;
 import slim.SlimConfiguration;
@@ -46,19 +44,14 @@ public class HttpMessageConvertersAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(HttpMessageConvertersAutoConfigurationModule.initializer());
+		return Arrays.asList(new Initializer(),
+				GsonHttpMessageConvertersConfigurationGenerated.initializer(),
+				JacksonHttpMessageConvertersConfigurationGenerated.initializer(),
+				CodecsAutoConfigurationGenerated.initializer());
 	}
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = Arrays
-				.asList(new Initializer(),
-						GsonHttpMessageConvertersConfigurationGenerated.initializer(),
-						JacksonHttpMessageConvertersConfigurationGenerated.initializer(),
-						CodecsAutoConfigurationGenerated.initializer());
-		return context -> context.registerBean(
-				HttpMessageConvertersAutoConfigurationModule.class.getName(),
-				BeanDefinitionRegistryPostProcessor.class,
-				() -> new AutoConfigurationPostProcessor(context, initializers));
+		return new Initializer();
 	}
 
 	static class Initializer

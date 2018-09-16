@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.http.HttpProperties;
+import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.codec.CodecCustomizer;
 import org.springframework.context.ApplicationContextInitializer;
@@ -52,24 +53,28 @@ public class CodecsAutoConfigurationGenerated {
 		public void initialize(GenericApplicationContext context) {
 			ConditionService conditions = context.getBeanFactory()
 					.getBean(ConditionService.class);
-			if (conditions.matches(JacksonCodecConfiguration.class)) {
-				if (conditions.matches(JacksonCodecConfiguration.class,
-						CodecCustomizer.class)) {
-					context.registerBean(JacksonCodecConfiguration.class);
-					context.registerBean("jacksonCodecCustomizer", CodecCustomizer.class,
-							() -> context.getBean(JacksonCodecConfiguration.class)
-									.jacksonCodecCustomizer(
-											context.getBean(ObjectMapper.class)));
+			if (conditions.matches(CodecsAutoConfiguration.class)) {
+				if (conditions.matches(JacksonCodecConfiguration.class)) {
+					if (conditions.matches(JacksonCodecConfiguration.class,
+							CodecCustomizer.class)) {
+						context.registerBean(JacksonCodecConfiguration.class);
+						context.registerBean("jacksonCodecCustomizer",
+								CodecCustomizer.class,
+								() -> context.getBean(JacksonCodecConfiguration.class)
+										.jacksonCodecCustomizer(
+												context.getBean(ObjectMapper.class)));
+					}
 				}
-			}
-			if (conditions.matches(LoggingCodecConfiguration.class)) {
-				if (conditions.matches(LoggingCodecConfiguration.class,
-						CodecCustomizer.class)) {
-					context.registerBean(LoggingCodecConfiguration.class);
-					context.registerBean("loggingCodecCustomizer", CodecCustomizer.class,
-							() -> context.getBean(LoggingCodecConfiguration.class)
-									.loggingCodecCustomizer(
-											context.getBean(HttpProperties.class)));
+				if (conditions.matches(LoggingCodecConfiguration.class)) {
+					if (conditions.matches(LoggingCodecConfiguration.class,
+							CodecCustomizer.class)) {
+						context.registerBean(LoggingCodecConfiguration.class);
+						context.registerBean("loggingCodecCustomizer",
+								CodecCustomizer.class,
+								() -> context.getBean(LoggingCodecConfiguration.class)
+										.loggingCodecCustomizer(
+												context.getBean(HttpProperties.class)));
+					}
 				}
 			}
 		}

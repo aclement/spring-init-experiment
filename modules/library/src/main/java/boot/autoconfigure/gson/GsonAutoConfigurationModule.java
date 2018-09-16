@@ -23,17 +23,11 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.boot.autoconfigure.gson.GsonBuilderCustomizer;
 import org.springframework.boot.autoconfigure.gson.GsonProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-
-import static slim.SlimRegistry.register;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
@@ -44,7 +38,7 @@ import slim.SlimConfiguration;
  * @author Dave Syer
  *
  */
-@SlimConfiguration(module=ContextAutoConfigurationModule.class)
+@SlimConfiguration(module = ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 
 	@Override
@@ -61,50 +55,23 @@ public class GsonAutoConfigurationModule implements Module {
 
 		@Override
 		public void initialize(GenericApplicationContext context) {
-			// Use a BeanDefinitionRegistryPostProcessor so that user configuration can
-			// take precedence (the same way that regular AutoConfiguration works).
-			context.registerBean(AutoConfigurationPostProcessor.class,
-					() -> new AutoConfigurationPostProcessor(
-							context.getBean(ConditionService.class)));
-		}
-
-	}
-
-	private static class AutoConfigurationPostProcessor
-			implements BeanDefinitionRegistryPostProcessor {
-
-		private ConfigurableListableBeanFactory context;
-		private final ConditionService conditions;
-
-		private AutoConfigurationPostProcessor(ConditionService conditions) {
-			this.conditions = conditions;
-		}
-
-		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory context)
-				throws BeansException {
-			this.context = context;
-		}
-
-		@Override
-		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
-				throws BeansException {
+			ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
 			if (conditions.matches(GsonAutoConfiguration.class)) {
-				register(registry, GsonProperties.class, () -> new GsonProperties());
-				register(registry, GsonAutoConfiguration.class);
+				context.registerBean(GsonProperties.class, () -> new GsonProperties());
+				context.registerBean(GsonAutoConfiguration.class);
 				if (conditions.matches(GsonAutoConfiguration.class, GsonBuilder.class)) {
-					register(registry, "gsonBuilder", GsonBuilder.class,
+					context.registerBean("gsonBuilder", GsonBuilder.class,
 							() -> context.getBean(GsonAutoConfiguration.class)
 									.gsonBuilder(new ArrayList<>(context
 											.getBeansOfType(GsonBuilderCustomizer.class)
 											.values())));
 				}
 				if (conditions.matches(GsonAutoConfiguration.class, Gson.class)) {
-					register(registry, "gson", Gson.class,
+					context.registerBean("gson", Gson.class,
 							() -> context.getBean(GsonAutoConfiguration.class)
 									.gson(context.getBean(GsonBuilder.class)));
 				}
-				register(registry, "standardGsonBuilderCustomizer",
+				context.registerBean("standardGsonBuilderCustomizer",
 						GsonBuilderCustomizer.class,
 						() -> context.getBean(GsonAutoConfiguration.class)
 								.standardGsonBuilderCustomizer(

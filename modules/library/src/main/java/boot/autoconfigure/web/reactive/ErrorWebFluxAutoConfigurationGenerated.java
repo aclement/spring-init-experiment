@@ -30,6 +30,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
 
+import slim.ConditionService;
 import slim.SlimConfiguration;
 
 /**
@@ -48,14 +49,19 @@ class ErrorWebFluxAutoConfigurationGenerated {
 
 		@Override
 		public void initialize(GenericApplicationContext context) {
-			context.registerBean(ErrorAttributes.class,
-					() -> new DefaultErrorAttributes(
-							context.getBean(ServerProperties.class).getError()
-									.isIncludeException()));
-			context.registerBean(ErrorWebExceptionHandler.class, () -> {
-				return errorWebFluxAutoConfiguration(context)
-						.errorWebExceptionHandler(context.getBean(ErrorAttributes.class));
-			});
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
+			if (conditions.matches(ErrorWebFluxAutoConfiguration.class)) {
+				context.registerBean(ErrorAttributes.class,
+						() -> new DefaultErrorAttributes(
+								context.getBean(ServerProperties.class).getError()
+										.isIncludeException()));
+				context.registerBean(ErrorWebExceptionHandler.class, () -> {
+					return errorWebFluxAutoConfiguration(context)
+							.errorWebExceptionHandler(
+									context.getBean(ErrorAttributes.class));
+				});
+			}
 		}
 
 		private ErrorWebFluxAutoConfiguration errorWebFluxAutoConfiguration(

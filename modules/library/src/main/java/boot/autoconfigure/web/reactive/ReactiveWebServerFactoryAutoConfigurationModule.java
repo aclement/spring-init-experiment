@@ -19,7 +19,6 @@ package boot.autoconfigure.web.reactive;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
@@ -29,7 +28,6 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
-import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
 import slim.Module;
 import slim.SlimConfiguration;
@@ -44,8 +42,11 @@ public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays
-				.asList(ReactiveWebServerFactoryAutoConfigurationModule.initializer());
+		return Arrays.asList(
+				ReactiveWebServerFactoryAutoConfigurationModule.initializer(),
+				WebFluxAutoConfigurationGenerated.initializer(),
+				HttpHandlerAutoConfigurationGenerated.initializer(),
+				ErrorWebFluxAutoConfigurationGenerated.initializer());
 	}
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
@@ -56,17 +57,12 @@ public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 				// This one has to jump the queue. TODO: try something different
 				ReactiveWebServerFactoryAutoConfigurationGenerated.initializer()
 						.initialize(context);
-				context.registerBean(ServerProperties.class, () -> new ServerProperties());
-				context.registerBean(WebFluxProperties.class, () -> new WebFluxProperties());
-				context.registerBean(ResourceProperties.class, () -> new ResourceProperties());
-				List<ApplicationContextInitializer<GenericApplicationContext>> initializers = Arrays
-						.asList(WebFluxAutoConfigurationGenerated.initializer(),
-								HttpHandlerAutoConfigurationGenerated.initializer(),
-								ErrorWebFluxAutoConfigurationGenerated.initializer());
-				context.registerBean(
-						ReactiveWebServerFactoryAutoConfigurationModule.class.getName(),
-						BeanDefinitionRegistryPostProcessor.class,
-						() -> new AutoConfigurationPostProcessor(context, initializers));
+				context.registerBean(ServerProperties.class,
+						() -> new ServerProperties());
+				context.registerBean(WebFluxProperties.class,
+						() -> new WebFluxProperties());
+				context.registerBean(ResourceProperties.class,
+						() -> new ResourceProperties());
 			}
 		};
 	}

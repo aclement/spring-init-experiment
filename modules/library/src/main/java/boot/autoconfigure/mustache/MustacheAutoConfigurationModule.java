@@ -22,14 +22,12 @@ import java.util.List;
 import com.samskivert.mustache.Mustache.Compiler;
 import com.samskivert.mustache.Mustache.TemplateLoader;
 
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.mustache.MustacheProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import slim.AutoConfigurationPostProcessor;
 import slim.ConditionService;
 import slim.Module;
 import slim.SlimConfiguration;
@@ -43,16 +41,7 @@ public class MustacheAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(MustacheAutoConfigurationModule.initializer());
-	}
-
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> {
-			context.registerBean(MustacheAutoConfigurationModule.class.getName(),
-					BeanDefinitionRegistryPostProcessor.class,
-					() -> new AutoConfigurationPostProcessor(context,
-							Arrays.asList(new Initializer(), MustacheReactiveWebConfigurationGenerated.initializer())));
-		};
+		return Arrays.asList(new Initializer(), MustacheReactiveWebConfigurationGenerated.initializer());
 	}
 
 	// Generated from MustacheAutoConfiguration

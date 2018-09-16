@@ -16,11 +16,13 @@
 
 package boot.autoconfigure.web.reactive;
 
+import org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 
+import slim.ConditionService;
 import slim.SlimConfiguration;
 
 /**
@@ -38,8 +40,12 @@ class HttpHandlerAutoConfigurationGenerated {
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 		@Override
 		public void initialize(GenericApplicationContext context) {
-			context.registerBean(HttpHandler.class,
-					() -> WebHttpHandlerBuilder.applicationContext(context).build());
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
+			if (conditions.matches(HttpHandlerAutoConfiguration.class)) {
+				context.registerBean(HttpHandler.class,
+						() -> WebHttpHandlerBuilder.applicationContext(context).build());
+			}
 		}
 	}
 

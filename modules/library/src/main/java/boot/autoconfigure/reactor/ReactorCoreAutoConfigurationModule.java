@@ -19,16 +19,10 @@ package boot.autoconfigure.reactor;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreAutoConfiguration;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-
-import static slim.SlimRegistry.register;
 
 import slim.ConditionService;
 import slim.Module;
@@ -39,40 +33,22 @@ import slim.Module;
  */
 public class ReactorCoreAutoConfigurationModule implements Module {
 
-	private static class AutoConfigurationPostProcessor
-			implements BeanDefinitionRegistryPostProcessor {
-
-		private final ConditionService conditions;
-
-		private AutoConfigurationPostProcessor(ConditionService conditions) {
-			this.conditions = conditions;
-		}
-
-		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory context)
-				throws BeansException {
-		}
-
-		@Override
-		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
-				throws BeansException {
-			if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
-				register(registry, ReactorCoreProperties.class, () -> new ReactorCoreProperties());
-				register(registry, ReactorCoreAutoConfiguration.class,
-						() -> new ReactorCoreAutoConfiguration());
-			}
-		}
-	}
-
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
 		return Arrays.asList(ReactorCoreAutoConfigurationModule.initializer());
 	}
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> context.registerBean(AutoConfigurationPostProcessor.class,
-				() -> new AutoConfigurationPostProcessor(
-						context.getBean(ConditionService.class)));
+		return context -> {
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
+			if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
+				context.registerBean(ReactorCoreProperties.class,
+						() -> new ReactorCoreProperties());
+				context.registerBean(ReactorCoreAutoConfiguration.class,
+						() -> new ReactorCoreAutoConfiguration());
+			}
+		};
 	}
 
 }

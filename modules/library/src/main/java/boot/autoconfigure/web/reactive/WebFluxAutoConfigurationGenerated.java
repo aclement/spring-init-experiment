@@ -1,6 +1,7 @@
 package boot.autoconfigure.web.reactive;
 
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.EnableWebFluxConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.WebFluxConfig;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties;
@@ -28,17 +29,25 @@ import org.springframework.web.server.WebExceptionHandler;
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
 
+import slim.ConditionService;
 import slim.ObjectProviders;
 import slim.SlimConfiguration;
 
 @SlimConfiguration
 class WebFluxAutoConfigurationGenerated {
-	
+
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return new Initializer();
+		return context -> {
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
+			if (conditions.matches(WebFluxAutoConfiguration.class)) {
+				new Initializer().initialize(context);
+			}
+		};
 	}
-	
-	static class Initializer implements ApplicationContextInitializer<GenericApplicationContext> {
+
+	static class Initializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
 
 		@Override
 		public void initialize(GenericApplicationContext context) {
@@ -79,8 +88,9 @@ class WebFluxAutoConfigurationGenerated {
 			context.registerBean(ServerResponseResultHandler.class,
 					() -> context.getBean(EnableWebFluxConfigurationWrapper.class)
 							.serverResponseResultHandler());
-			context.registerBean(SimpleHandlerAdapter.class, () -> context
-					.getBean(EnableWebFluxConfigurationWrapper.class).simpleHandlerAdapter());
+			context.registerBean(SimpleHandlerAdapter.class,
+					() -> context.getBean(EnableWebFluxConfigurationWrapper.class)
+							.simpleHandlerAdapter());
 			context.registerBean(ViewResolutionResultHandler.class,
 					() -> context.getBean(EnableWebFluxConfigurationWrapper.class)
 							.viewResolutionResultHandler());
@@ -96,8 +106,9 @@ class WebFluxAutoConfigurationGenerated {
 			context.registerBean(Validator.class, () -> context
 					.getBean(EnableWebFluxConfigurationWrapper.class).webFluxValidator());
 			context.registerBean(WebHttpHandlerBuilder.WEB_HANDLER_BEAN_NAME,
-					DispatcherHandler.class, () -> context
-							.getBean(EnableWebFluxConfigurationWrapper.class).webHandler());
+					DispatcherHandler.class,
+					() -> context.getBean(EnableWebFluxConfigurationWrapper.class)
+							.webHandler());
 			context.registerBean(WebFluxConfigurer.class,
 					() -> new WebFluxConfig(context.getBean(ResourceProperties.class),
 							context.getBean(WebFluxProperties.class), context,
@@ -108,7 +119,7 @@ class WebFluxAutoConfigurationGenerated {
 							ObjectProviders.provider(context, WebFluxConfig.class, 5),
 							ObjectProviders.provider(context, WebFluxConfig.class, 6)));
 		}
-		
+
 	}
 
 }
