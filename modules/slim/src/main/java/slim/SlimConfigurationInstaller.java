@@ -17,6 +17,7 @@ package slim;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -45,13 +47,18 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 
+	private Collection<ApplicationContextInitializer<GenericApplicationContext>> autos = new LinkedHashSet<>();
+
 	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
+
+	private Set<String> autoTypes = new LinkedHashSet<>();
 
 	private final SpringApplication application;
 
 	public SlimConfigurationInstaller(SpringApplication application, String[] args) {
 		this.application = application;
 	}
+
 	private void initialize(GenericApplicationContext context) {
 		context.registerBean(ConditionService.class,
 				() -> new SlimConditionService(context, context.getEnvironment(),
@@ -60,12 +67,23 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class);
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
+		this.autoTypes = new HashSet<>(SpringFactoriesLoader
+				.loadFactoryNames(Module.class, context.getClassLoader()));
 	}
 
 	private void apply(GenericApplicationContext context) {
 		logger.info("Applying initializers");
 		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
+			initializers.add(result);
+		}
+		OrderComparator.sort(initializers);
+		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
+			initializer.initialize(context);
+		}
+		logger.info("Applying autoconfig");
+		initializers = new ArrayList<>();
+		for (ApplicationContextInitializer<GenericApplicationContext> result : this.autos) {
 			initializers.add(result);
 		}
 		OrderComparator.sort(initializers);
@@ -103,8 +121,14 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 				logger.info("Slim initializer: " + type);
 				extract(type);
 				this.types.add(type);
-				initializers.addAll(
-						BeanUtils.instantiateClass(type, Module.class).initializers());
+				if (this.autoTypes.contains(type.getName())) {
+					this.autos.addAll(BeanUtils.instantiateClass(type, Module.class)
+							.initializers());
+				}
+				else {
+					initializers.addAll(BeanUtils.instantiateClass(type, Module.class)
+							.initializers());
+				}
 			}
 		}
 	}
