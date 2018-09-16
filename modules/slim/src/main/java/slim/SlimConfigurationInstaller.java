@@ -86,6 +86,7 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.autos) {
 			initializers.add(result);
 		}
+		// TODO: sort into autoconfiguration order as well
 		OrderComparator.sort(initializers);
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
 			initializer.initialize(context);

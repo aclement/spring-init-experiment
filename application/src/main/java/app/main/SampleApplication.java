@@ -2,21 +2,18 @@ package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import boot.autoconfigure.gson.GsonAutoConfigurationModule;
-import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
+import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.SlimConfiguration;
 
 @SpringBootConfiguration
-@Import({ SampleConfiguration.class, GsonAutoConfiguration.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
+@Import({ SampleConfiguration.class, ConfigurationPropertiesAutoConfiguration.class })
 // Generated:
-@SlimConfiguration(module = { SampleModule.class, GsonAutoConfigurationModule.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
+@SlimConfiguration(module = { SampleModule.class, ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {
