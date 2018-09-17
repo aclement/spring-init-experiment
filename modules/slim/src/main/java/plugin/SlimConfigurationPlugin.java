@@ -6,7 +6,9 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,6 +55,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.ClassFileLocator.Resolution;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default;
@@ -108,13 +111,14 @@ public class SlimConfigurationPlugin implements Plugin {
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
 			TypeDescription typeDescription, ClassFileLocator locator) {
 		try {
-			String path = "target/classes";
-			if (System.getProperty("project.basedir") != null) {
-				path = System.getProperty("project.basedir") + "/" + path;
-			}
+			File targetClassesFolder = locateTargetClasses(locator);
+//			String path = "target/classes";
+//			if (System.getProperty("project.basedir") != null) {
+//				path = System.getProperty("project.basedir") + "/" + path;
+//			}
 			DynamicType initializerClassType = initializerClassFactory
 					.make(typeDescription, locator);
-			initializerClassType.saveIn(new File(path));
+			initializerClassType.saveIn(targetClassesFolder);
 
 			// TODO: fix this so it creates a module properly (and only when needed - one
 			// per app)
@@ -123,8 +127,8 @@ public class SlimConfigurationPlugin implements Plugin {
 				DynamicType moduleClassType = moduleClassFactory.make(typeDescription,
 						locator, configs);
 				builder = addSlimConfigurationAnnotation(builder, moduleClassType);
-				log("Saving: " + moduleClassType.getTypeDescription());
-				moduleClassType.saveIn(new File(path));
+				log("Saving: " + moduleClassType.getTypeDescription()+" in "+targetClassesFolder);
+				moduleClassType.saveIn(targetClassesFolder);
 			}
 
 			builder = addInitializerMethod(builder, initializerClassType);
@@ -135,6 +139,28 @@ public class SlimConfigurationPlugin implements Plugin {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	@SuppressWarnings("unchecked")
+	private File locateTargetClasses(ClassFileLocator compoundLocator) {
+		try {
+			Field classFileLocatorsField = compoundLocator.getClass().getDeclaredField("classFileLocators");
+			classFileLocatorsField.setAccessible(true);
+			File found = null;
+			List<ClassFileLocator> classFileLocators = (List<ClassFileLocator>) classFileLocatorsField.get(compoundLocator);
+			for (ClassFileLocator classFileLocator: classFileLocators) {
+				Field folderField = classFileLocator.getClass().getDeclaredField("folder");
+				folderField.setAccessible(true);
+				File ff = (File) folderField.get(classFileLocator);
+				if (ff.toString().endsWith("target/classes")) {
+					found = ff;
+					break;
+				}
+			}
+			return found;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	private TypeDescription[] findConfigs(TypeDescription typeDescription) {
@@ -740,7 +766,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				TypeDescription td = typesWithInitializeMethods[i];
 				MethodDescription md = new MethodDescription.Latent(td, // declaringType,
 						"$$initializer", // internalName,
-						Modifier.PUBLIC, // modifiers,
+						Modifier.PUBLIC | Modifier.STATIC, // modifiers,
 						Collections.emptyList(), // typeVariables,
 						Type_ACI, // returnType,
 						Collections.emptyList(), // parameterTokens,
@@ -754,6 +780,7 @@ public class SlimConfigurationPlugin implements Plugin {
 					.forType(new TypeDescription.ForLoadedType(
 							ApplicationContextInitializer.class).asGenericType())
 					.withValues(eachElement));
+			
 			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
 					Arrays.class.getMethod("asList", Object[].class))));
 			code.add(MethodReturn.of(

@@ -32,24 +32,24 @@ public class SampleConfiguration {
         };
     }
 
-    public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-        return new Initializer();
-    }
-
-    private static class Initializer
-            implements ApplicationContextInitializer<GenericApplicationContext> {
-
-        @Override
-        public void initialize(GenericApplicationContext context) {
-            context.registerBean(SampleConfiguration.class);
-            context.registerBean("foo", Foo.class,
-                    () -> context.getBean(SampleConfiguration.class).foo());
-            context.registerBean("bar", Bar.class, () -> context
-                    .getBean(SampleConfiguration.class).bar(context.getBean(Foo.class)));
-            context.registerBean("runner", CommandLineRunner.class,
-                    () -> context.getBean(SampleConfiguration.class)
-                            .runner(context.getBean(Bar.class)));
-        }
-
-    }
+//    public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
+//        return new Initializer();
+//    }
+//
+//    private static class Initializer
+//            implements ApplicationContextInitializer<GenericApplicationContext> {
+//
+//        @Override
+//        public void initialize(GenericApplicationContext context) {
+//            context.registerBean(SampleConfiguration.class);
+//            context.registerBean("foo", Foo.class,
+//                    () -> context.getBean(SampleConfiguration.class).foo());
+//            context.registerBean("bar", Bar.class, () -> context
+//                    .getBean(SampleConfiguration.class).bar(context.getBean(Foo.class)));
+//            context.registerBean("runner", CommandLineRunner.class,
+//                    () -> context.getBean(SampleConfiguration.class)
+//                            .runner(context.getBean(Bar.class)));
+//        }
+//
+//    }
 }
