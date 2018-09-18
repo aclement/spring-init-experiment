@@ -55,26 +55,39 @@ public class SlimConfigurationClassPostProcessor implements
 		String[] candidateNames = registry.getBeanDefinitionNames();
 		for (String beanName : candidateNames) {
 			BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
-			String className = beanDefinition.getBeanClassName();
-			if (className == null || beanDefinition.getFactoryMethodName() != null) {
-				continue;
-			}
-			Class<?> beanClass = ClassUtils.resolveClassName(className, classLoader);
-			if (slimConfiguration(beanClass)) {
-				// In an app with mixed @Configuration and initializers we would have to
-				// do more than this...
-				if (registry instanceof ConfigurableListableBeanFactory) {
-					ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
-					if (listable.getBeanNamesForType(beanClass, false,
-							false).length > 1) {
-						// Some ApplicationContext classes register @Configuration classes
-						// as bean definitions so we need to remove that one
-						registry.removeBeanDefinition(beanName);
+			Class<?> beanClass = findBeanClass(beanDefinition);
+			if (beanClass != null) {
+				if (slimConfiguration(beanClass)) {
+					// In an app with mixed @Configuration and initializers we would have
+					// to
+					// do more than this...
+					if (registry instanceof ConfigurableListableBeanFactory) {
+						ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
+						if (listable.getBeanNamesForType(beanClass, false,
+								false).length > 1) {
+							// Some ApplicationContext classes register @Configuration
+							// classes
+							// as bean definitions so we need to remove that one
+							registry.removeBeanDefinition(beanName);
+						}
 					}
+					// TODO: mark the bean definition somehow so it doesn't get
+					// processed by ConfigurationClassPostProcessor
 				}
-				// TODO: mark the bean definition somehow so it doesn't get
-				// processed by ConfigurationClassPostProcessor
 			}
+		}
+	}
+
+	public Class<?> findBeanClass(BeanDefinition beanDefinition) {
+		String className = beanDefinition.getBeanClassName();
+		if (className == null || beanDefinition.getFactoryMethodName() != null) {
+			return null;
+		}
+		try {
+			return ClassUtils.resolveClassName(className, classLoader);
+		}
+		catch (Throwable e) {
+			return null;
 		}
 	}
 

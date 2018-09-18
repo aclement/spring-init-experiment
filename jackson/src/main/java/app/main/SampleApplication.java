@@ -2,13 +2,8 @@ package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
-import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.web.reactive.function.server.RouterFunction;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
@@ -21,13 +16,8 @@ import reactor.core.publisher.Mono;
 import slim.ImportModule;
 
 @SpringBootConfiguration
-@Import({ JacksonAutoConfiguration.class,
-		ReactiveWebServerFactoryAutoConfiguration.class })
 @ImportModule(module = {JacksonAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class})
-// Generated:
-//@SlimConfiguration(module = { SampleModule.class, JacksonAutoConfigurationModule.class,
-//		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Bean
