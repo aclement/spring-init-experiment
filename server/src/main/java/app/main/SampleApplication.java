@@ -18,14 +18,17 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import reactor.core.publisher.Mono;
+import slim.ImportModule;
 import slim.SlimConfiguration;
+
 
 @SpringBootConfiguration
 @Import({ GsonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class })
-// Generated:
-@SlimConfiguration(module = { SampleModule.class, GsonAutoConfigurationModule.class,
+@ImportModule(module = { GsonAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
+// Generated:
+// @SlimConfiguration(module= {SampleModule.class, GsonAutoConfigurationModule.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
 public class SampleApplication {
 
 	@Bean
@@ -37,21 +40,5 @@ public class SampleApplication {
 		SpringApplication app = new SpringApplication(SampleApplication.class);
 		app.setApplicationContextClass(ReactiveWebServerApplicationContext.class);
 		app.run(args);
-	}
-
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return new Initializer();
-	}
-
-	private static class Initializer
-			implements ApplicationContextInitializer<GenericApplicationContext> {
-
-		@Override
-		public void initialize(GenericApplicationContext context) {
-			context.registerBean(SampleApplication.class);
-			context.registerBean(RouterFunction.class,
-					() -> context.getBean(SampleApplication.class).userEndpoints());
-		}
-
 	}
 }

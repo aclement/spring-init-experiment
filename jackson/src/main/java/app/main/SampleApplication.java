@@ -18,14 +18,16 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 import boot.autoconfigure.jackson.JacksonAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import reactor.core.publisher.Mono;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 @SpringBootConfiguration
 @Import({ JacksonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class })
+@ImportModule(module = {JacksonAutoConfigurationModule.class,
+		ReactiveWebServerFactoryAutoConfigurationModule.class})
 // Generated:
-@SlimConfiguration(module = { SampleModule.class, JacksonAutoConfigurationModule.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
+//@SlimConfiguration(module = { SampleModule.class, JacksonAutoConfigurationModule.class,
+//		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Bean
@@ -39,19 +41,4 @@ public class SampleApplication {
 		app.run(args);
 	}
 
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return new Initializer();
-	}
-
-	private static class Initializer
-			implements ApplicationContextInitializer<GenericApplicationContext> {
-
-		@Override
-		public void initialize(GenericApplicationContext context) {
-			context.registerBean(SampleApplication.class);
-			context.registerBean(RouterFunction.class,
-					() -> context.getBean(SampleApplication.class).userEndpoints());
-		}
-
-	}
 }

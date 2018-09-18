@@ -51,6 +51,11 @@
 			<artifactId>gson</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>slim</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 		</dependency>
@@ -93,6 +98,33 @@
 						<version>${thin.version}</version>
 					</dependency>
 				</dependencies>
+			</plugin>
+			<plugin>
+				<groupId>net.bytebuddy</groupId>
+				<artifactId>byte-buddy-maven-plugin</artifactId>
+				<version>${byte-buddy.version}</version>
+				<dependencies>
+					<dependency>
+						<groupId>${project.groupId}</groupId>
+						<artifactId>slim</artifactId>
+						<version>${project.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>transform</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<transformations>
+						<transformation>
+							<plugin>plugin.SlimConfigurationPlugin</plugin>
+						</transformation>
+					</transformations>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
