@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
@@ -76,6 +77,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.jar.asm.AnnotationVisitor;
 import net.bytebuddy.jar.asm.ClassVisitor;
 import net.bytebuddy.jar.asm.ClassWriter;
 import net.bytebuddy.jar.asm.Label;
@@ -85,6 +87,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import slim.Module;
+import slim.ImportModule;
 import slim.SlimConfiguration;
 
 public class SlimConfigurationPlugin implements Plugin {
@@ -111,26 +114,46 @@ public class SlimConfigurationPlugin implements Plugin {
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
 			TypeDescription typeDescription, ClassFileLocator locator) {
 		try {
+			TypeDescription[] importModuleTypeDescriptions = getImportModuleTypeDescriptions(typeDescription);
 			File targetClassesFolder = locateTargetClasses(locator);
-//			String path = "target/classes";
-//			if (System.getProperty("project.basedir") != null) {
-//				path = System.getProperty("project.basedir") + "/" + path;
-//			}
+			if (targetClassesFolder == null) {
+				log("Unable to determine target/classes folder for module");
+				targetClassesFolder = new File("target/classes");
+			}
 			DynamicType initializerClassType = initializerClassFactory
 					.make(typeDescription, locator);
 			initializerClassType.saveIn(targetClassesFolder);
-
-			// TODO: fix this so it creates a module properly (and only when needed - one
-			// per app)
+			// TODO: fix this so it creates a module properly (and only when needed - one per app)
 			if (hasAnnotation(typeDescription, SpringBootConfiguration.class)) {
 				TypeDescription[] configs = findConfigs(typeDescription);
+				log("Discovering @Import on "+typeDescription.getActualName()+", found: "+toString(configs));
+				// CRUDE - Create a subset of the configs where those that have module references are not included (i.e. presume
+				// the module reference will do the initialization stuff instead of looking for a $$initializer in the config)
+				List<TypeDescription> configSubset = new ArrayList<>();
+				configSubset.add(typeDescription);
+				for (TypeDescription config: configs) {
+					// Name based - crude...
+					boolean skip = false;
+					System.out.println(config.getSimpleName());
+					for (TypeDescription importModuleTypeDescription: importModuleTypeDescriptions) {
+						if (importModuleTypeDescription.getSimpleName().startsWith(config.getSimpleName())) {
+							skip=true;
+							break;
+						}
+					}
+					if (!skip) {
+						System.out.println("Not skipping "+config);
+						configSubset.add(config);
+					} else {
+						System.out.println("Skipping "+config);
+					}
+				}
 				DynamicType moduleClassType = moduleClassFactory.make(typeDescription,
-						locator, configs);
-				builder = addSlimConfigurationAnnotation(builder, moduleClassType);
+						locator, configSubset.toArray(new TypeDescription[0]));
+				builder = addSlimConfigurationAnnotation(importModuleTypeDescriptions, builder, moduleClassType);
 				log("Saving: " + moduleClassType.getTypeDescription()+" in "+targetClassesFolder);
 				moduleClassType.saveIn(targetClassesFolder);
 			}
-
 			builder = addInitializerMethod(builder, initializerClassType);
 
 			return builder;
@@ -139,6 +162,19 @@ public class SlimConfigurationPlugin implements Plugin {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	private String toString(TypeDescription[] tds) {
+		StringBuilder s = new StringBuilder();
+		s.append("[");
+		if (tds != null) {
+			for (int i=0;i<tds.length;i++) {
+				if (i>0) s.append(",");
+				s.append(tds[i].getName());
+			}
+		}
+		s.append("]");
+		return s.toString();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -181,14 +217,43 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 		return result.toArray(new TypeDescription[0]);
 	}
-
-	private Builder<?> addSlimConfigurationAnnotation(DynamicType.Builder<?> builder,
+	
+	private Builder<?> addSlimConfigurationAnnotation(TypeDescription[] importModuleTypeDescriptions, DynamicType.Builder<?> builder,
 			DynamicType initializerClassType) {
+		List<TypeDescription> initializers = new ArrayList<>();
+		initializers.add(initializerClassType.getTypeDescription());
+		for (TypeDescription td: importModuleTypeDescriptions) {
+			initializers.add(td);
+		}
 		return builder.annotateType(AnnotationDescription.Builder
-				.ofType(SlimConfiguration.class)
-				.defineTypeArray("module", initializerClassType.getTypeDescription())
-				.build());
+			.ofType(SlimConfiguration.class)
+			.defineTypeArray("module", initializers.toArray(new TypeDescription[0]))
+			.build());
 	}
+
+	private MethodDescription.InDefinedShape moduleProperty = null;
+
+	TypeDescription[] getImportModuleTypeDescriptions(TypeDescription typeDescription) {
+		List<TypeDescription> importModuleTypeDescriptions = new ArrayList<>();
+		if (moduleProperty == null) {
+			try {
+				moduleProperty = new MethodDescription.ForLoadedMethod(ImportModule.class.getMethod("module"));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		AnnotationDescription[] importModule = 
+				typeDescription.getDeclaredAnnotations().filter(desc -> desc.getAnnotationType().represents(ImportModule.class)).toArray(new AnnotationDescription[0]);
+		if (importModule.length != 0) {
+			AnnotationValue<?, ?> value = importModule[0].getValue(moduleProperty);
+			TypeDescription[] moduleClasses = (TypeDescription[]) value.resolve();
+			for (TypeDescription moduleClass: moduleClasses) {
+				importModuleTypeDescriptions.add(moduleClass);
+			}
+		}
+		return importModuleTypeDescriptions.toArray(new TypeDescription[0]);
+	}
+
 
 	@Override
 	public boolean matches(TypeDescription target) {
