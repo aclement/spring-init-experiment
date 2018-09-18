@@ -1,5 +1,9 @@
 package plugin;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.LambdaMetafactory;
@@ -29,12 +33,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.util.ClassUtils;
-
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
@@ -80,6 +83,7 @@ import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
+import slim.ConditionService;
 import slim.ImportModule;
 import slim.Module;
 import slim.SlimConfiguration;
@@ -332,14 +336,55 @@ public class SlimConfigurationPlugin implements Plugin {
 		protected MethodDescription.InDefinedShape valueProperty;
 
 		public BaseConditionalHandler(Class<?> annotationConditionClass) {
+			if (annotationConditionClass != null) {
+				try {
+					valueProperty = new MethodDescription.ForLoadedMethod(
+							annotationConditionClass.getMethod("value"));
+				}
+				catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+	}
+
+	static class FallbackConditionHandler implements ConditionalHandler {
+
+		@Override
+		public boolean accept(AnnotationDescription description) {
+			return true;
+		}
+		
+		@Override
+		public Collection<? extends StackManipulation> computeStackManipulations(AnnotationDescription annoDescription, 
+				Object annotatedElement, Label conditionFailsLabel) {
 			try {
-				valueProperty = new MethodDescription.ForLoadedMethod(
-						annotationConditionClass.getMethod("value"));
+				List<StackManipulation> code = new ArrayList<>();
+				if (annotatedElement instanceof MethodDescription) {
+					// Call ConditionService.matches(ConfigurationClass, BeanClass)
+					code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
+					code.add(ClassConstant.of(((MethodDescription)annotatedElement).getDeclaringType().asErasure()));
+					code.add(ClassConstant.of(((MethodDescription)annotatedElement).getReturnType().asErasure()));
+					code.add(
+							MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+									ConditionService.class.getMethod("matches", Class.class, Class.class))));
+					code.add(new IfEq(conditionFailsLabel));				    
+				} else {
+					// Call ConditionService.matches(Class)
+					code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
+					code.add(ClassConstant.of((TypeDescription)annotatedElement));
+					code.add(
+							MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+									ConditionService.class.getMethod("matches", Class.class))));
+					code.add(new IfEq(conditionFailsLabel));
+				}
+				return code;
 			}
 			catch (Exception e) {
 				throw new RuntimeException(e);
-			}
+			}			
 		}
+		
 	}
 
 	static class ConditionalOnMissingBeanHandler extends BaseConditionalHandler {
@@ -376,6 +421,62 @@ public class SlimConfigurationPlugin implements Plugin {
 								.getMethod("getBeanNamesForType", Class.class))));
 				code.add(new ArrayLength());
 				code.add(new IfNe(conditionFailsLabel));
+				return code;
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	static class ProfileConditionHandler extends BaseConditionalHandler {
+		public ProfileConditionHandler() {
+			super(Profile.class);
+		}
+
+		@Override
+		public boolean accept(AnnotationDescription description) {
+			return description.getAnnotationType().represents(Profile.class);
+		}
+
+		@Override
+		public Collection<? extends StackManipulation> computeStackManipulations(
+				AnnotationDescription annoDescription, Object annotatedElement,
+				Label conditionFailsLabel) {
+			try {
+				// Invoke: context.getEnvironment().acceptsProfiles(Profiles.of((String[]) value))
+				List<StackManipulation> code = new ArrayList<>();
+				AnnotationValue<?, ?> value = annoDescription.getValue(valueProperty);
+				// TODO I would prefer the unresolved references...
+				String[] profiles = (String[]) value.resolve();
+				List<StackManipulation> profilesArrayEntries = new ArrayList<>();
+				for (int i = 0; i < profiles.length; i++) {
+					profilesArrayEntries.add(new TextConstant(profiles[i]));
+				}
+//			    ALOAD 1
+//				INVOKEVIRTUAL org/springframework/context/support/GenericApplicationContext.getEnvironment()Lorg/springframework/core/env/ConfigurableEnvironment;
+//			    ALOAD 5
+//			    CHECKCAST [Ljava/lang/String;
+//			    CHECKCAST [Ljava/lang/String;
+//			    INVOKESTATIC org/springframework/core/env/Profiles.of([Ljava/lang/String;)Lorg/springframework/core/env/Profiles;
+//			    INVOKEINTERFACE org/springframework/core/env/Environment.acceptsProfiles(Lorg/springframework/core/env/Profiles;)Z
+//			    IFEQ L7
+
+				code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
+				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+						GenericApplicationContext.class.getMethod("getEnvironment")
+						)));
+				code.add(ArrayFactory
+						.forType(new TypeDescription.ForLoadedType(
+								String.class).asGenericType())
+						.withValues(profilesArrayEntries));
+				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+						Profiles.class.getDeclaredMethod("of", String[].class)
+						)));
+				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+						Environment.class.getDeclaredMethod("acceptsProfiles", Profiles.class)
+						)));
+				code.add(new IfEq(conditionFailsLabel));
 				return code;
 			}
 			catch (Exception e) {
@@ -564,11 +665,14 @@ public class SlimConfigurationPlugin implements Plugin {
 	class InitializerClassFactory {
 
 		private final MethodDescription.InDefinedShape registerBean,
-				registerBeanWithSupplier, getBean, lambdaMeta, get;
+				registerBeanWithSupplier, getBean, lambdaMeta, get, getBeanFactory;
 		private List<ConditionalHandler> conditionalHandlers = new ArrayList<>();
+		private boolean needsConditionService;
+		private FallbackConditionHandler fallbackConditionHandler;
 
 		public InitializerClassFactory() {
 			try {
+				getBeanFactory = new MethodDescription.ForLoadedMethod(GenericApplicationContext.class.getMethod("getBeanFactory"));
 				registerBean = new MethodDescription.ForLoadedMethod(
 						GenericApplicationContext.class.getMethod("registerBean",
 								Class.class, BeanDefinitionCustomizer[].class));
@@ -590,20 +694,16 @@ public class SlimConfigurationPlugin implements Plugin {
 			}
 			conditionalHandlers.add(new ConditionalOnClassHandler());
 			conditionalHandlers.add(new ConditionalOnMissingBeanHandler());
+			conditionalHandlers.add(new ProfileConditionHandler());
+			needsConditionService = false;
+			fallbackConditionHandler = new FallbackConditionHandler();
 		}
 
 		public DynamicType make(TypeDescription configurationTypeDescription,
 				ClassFileLocator locator) throws Exception {
 			DynamicType.Builder<?> builder = new ByteBuddy().subclass(
 					Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext,
-					Default.NO_CONSTRUCTORS).visit(new EnableFramesComputing()) // Might
-																				// need
-																				// this as
-																				// conditional
-																				// checks
-																				// alter
-																				// stacks/frames
-			;
+					Default.NO_CONSTRUCTORS).visit(new EnableFramesComputing());
 
 			// TODO how to do logging from a bytebuddy plugin?
 			log("Generating initializer for " + configurationTypeDescription.getName());
@@ -629,20 +729,9 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			List<StackManipulation> code = new ArrayList<>();
 
-			// Process the conditions on the top level configuration type
-			AnnotationList conditionalAnnotations = fetchConditionalAnnotations(
-					configurationTypeDescription);
 			Label typeConditionsFailJumpTarget = new Label();
-			for (AnnotationDescription annoDescription : conditionalAnnotations) {
-				for (ConditionalHandler handler : conditionalHandlers) {
-					if (handler.accept(annoDescription)) {
-						code.addAll(handler.computeStackManipulations(annoDescription,
-								configurationTypeDescription,
-								typeConditionsFailJumpTarget));
-					}
-				}
-			}
-
+			processConfigurationTypeLevelConditions(configurationTypeDescription, fallbackConditionHandler, code, typeConditionsFailJumpTarget);
+			
 			// Store a reusable empty array of BeanDefinitionCustomizer
 			code.add(ArrayFactory
 					.forType(new TypeDescription.ForLoadedType(
@@ -686,6 +775,16 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			code.add(new InsertLabel(typeConditionsFailJumpTarget));
 			code.add(MethodReturn.VOID);
+			
+			if (needsConditionService) {
+				TypeDescription conditionServiceTypeDescription = new TypeDescription.ForLoadedType(ConditionService.class);
+				code.add(0,MethodVariableAccess.REFERENCE.loadFrom(1));
+				code.add(1,MethodInvocation.invoke(getBeanFactory));
+				code.add(2,ClassConstant.of(conditionServiceTypeDescription));
+				code.add(3,MethodInvocation.invoke(getBean));
+				code.add(4,TypeCasting.to(conditionServiceTypeDescription));
+				code.add(5,MethodVariableAccess.REFERENCE.storeAt(3));
+			}
 
 			// Create the initialize() method
 			builder = builder
@@ -695,6 +794,44 @@ public class SlimConfigurationPlugin implements Plugin {
 							new Implementation.Simple(new ByteCodeAppender.Simple(code)));
 
 			return builder.make();
+		}
+
+		private void processConfigurationTypeLevelConditions(TypeDescription configurationTypeDescription,
+				FallbackConditionHandler fallbackConditionHandler,
+				List<StackManipulation> code, Label typeConditionsFailJumpTarget) {
+			// Process the conditions on the this type and any outer types
+			List<AnnotationDescription> conditionalAnnotations = fetchConditionalAnnotations(configurationTypeDescription);
+			if (conditionalAnnotations.size()==0) {
+				log("No type level conditions on "+configurationTypeDescription);
+			} else {
+				log("Applying the following type level conditions to "+configurationTypeDescription+": "+conditionalAnnotations);
+			}
+			// Check if fallback needed for any of these... if so, use fallback to check all of them
+			boolean fallbackRequired = false;
+			for (AnnotationDescription annoDescription : conditionalAnnotations) {
+				boolean handled = false;
+				for (ConditionalHandler handler : conditionalHandlers) {
+					if (handler.accept(annoDescription)) {
+						handled = true;
+					}
+				}
+				if (!handled) {
+					log("Due to existence of "+annoDescription+" on "+configurationTypeDescription+" the fallback handler is being used for all conditions on the type");
+					fallbackRequired = true;
+					needsConditionService = true;
+				}
+			}
+			if (fallbackRequired) {
+				code.addAll(fallbackConditionHandler.computeStackManipulations(null, configurationTypeDescription, typeConditionsFailJumpTarget));				
+			} else {
+				for (AnnotationDescription annoDescription : conditionalAnnotations) {
+					for (ConditionalHandler handler : conditionalHandlers) {
+						if (handler.accept(annoDescription)) {
+							code.addAll(handler.computeStackManipulations(annoDescription, configurationTypeDescription, typeConditionsFailJumpTarget));
+						}
+					}
+				}
+			}
 		}
 
 		private List<StackManipulation> createRegisterBeanCode(
@@ -707,11 +844,30 @@ public class SlimConfigurationPlugin implements Plugin {
 			AnnotationList conditionalAnnotations = fetchConditionalAnnotations(
 					methodDescription);
 			Label conditionsFailJumpTarget = new Label();
+			boolean fallbackRequired = false;
 			for (AnnotationDescription annoDescription : conditionalAnnotations) {
+				boolean handled = false;
 				for (ConditionalHandler handler : conditionalHandlers) {
 					if (handler.accept(annoDescription)) {
-						code.addAll(handler.computeStackManipulations(annoDescription,
-								methodDescription, conditionsFailJumpTarget));
+						handled = true;
+						break;
+					}
+				}
+				if (!handled) {
+					log("Due to existence of "+annoDescription+" on "+methodDescription+" the fallback handler is being used for all conditions for this method");
+					fallbackRequired = true;
+				}
+			}
+			if (fallbackRequired) {
+				needsConditionService = true;
+				code.addAll(fallbackConditionHandler.computeStackManipulations(null, methodDescription, conditionsFailJumpTarget));				
+			} else {
+				for (AnnotationDescription annoDescription : conditionalAnnotations) {
+					for (ConditionalHandler handler : conditionalHandlers) {
+						if (handler.accept(annoDescription)) {
+							code.addAll(handler.computeStackManipulations(annoDescription,
+									methodDescription, conditionsFailJumpTarget));
+						}
 					}
 				}
 			}
@@ -754,11 +910,22 @@ public class SlimConfigurationPlugin implements Plugin {
 			return list;
 		}
 
-		private AnnotationList fetchConditionalAnnotations(
+		private List<AnnotationDescription> fetchConditionalAnnotations(
 				TypeDescription typeDescription) {
-			AnnotationList list = typeDescription.getDeclaredAnnotations()
-					.filter(this::isConditionalAnnotation);
-			return list;
+			List<AnnotationDescription> result = new ArrayList<>();
+			AnnotationList list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
+			for (AnnotationDescription ad: list) {
+				result.add(ad);
+			}
+			while (typeDescription.isNestedClass()) {
+				typeDescription = typeDescription.getEnclosingType();
+//				System.out.println("Collecting conditions from outer class "+typeDescription);
+				list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
+				for (AnnotationDescription ad: list) {
+					result.add(ad);
+				}
+			}
+			return result;
 		}
 
 		public boolean isConditionalAnnotation(AnnotationDescription annoDescription) {
