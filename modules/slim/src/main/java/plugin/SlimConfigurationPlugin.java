@@ -28,6 +28,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -37,6 +38,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.core.env.PropertyResolver;
 import org.springframework.util.ClassUtils;
 
 import net.bytebuddy.ByteBuddy;
@@ -485,6 +487,118 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 	}
 
+	static class ConditionalOnPropertyHandler extends BaseConditionalHandler {
+		protected MethodDescription.InDefinedShape prefixProperty;
+		protected MethodDescription.InDefinedShape nameProperty;
+		protected MethodDescription.InDefinedShape matchIfMissingProperty;
+		protected MethodDescription.InDefinedShape havingValueProperty;
+		
+		public ConditionalOnPropertyHandler() {
+			super(ConditionalOnProperty.class);
+			try {
+				prefixProperty = new MethodDescription.ForLoadedMethod(
+						ConditionalOnProperty.class.getMethod("prefix"));
+				nameProperty = new MethodDescription.ForLoadedMethod(
+						ConditionalOnProperty.class.getMethod("name"));
+				matchIfMissingProperty = new MethodDescription.ForLoadedMethod(
+						ConditionalOnProperty.class.getMethod("matchIfMissing"));
+				havingValueProperty = new MethodDescription.ForLoadedMethod(
+						ConditionalOnProperty.class.getMethod("havingValue"));
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public boolean accept(AnnotationDescription description) {
+			if (!description.getAnnotationType().represents(ConditionalOnProperty.class)) {
+				return false;
+			}
+			AnnotationValue<?, ?> av = description.getValue(havingValueProperty);
+			String havingValue = (String) av.resolve();
+			if (havingValue.length() != 0) {
+				System.out.println("Unable to optimize "+description+" because havingValue is set");
+				return false;
+			}
+			return true;
+		}
+
+		/**
+		 * What this does - looks at ConditionalOnProperty annotation for a value or name being set as 
+		 * one or more property names. It checks the prefix to see if that has been set. Using this information
+		 * it creates a list of properties to check for. It cannot handle havingValue being set right now.
+		 * It does understand matchIfMissing.
+		 */
+		@Override
+		public Collection<? extends StackManipulation> computeStackManipulations(
+				AnnotationDescription annoDescription, Object annotatedElement,
+				Label conditionFailsLabel) {
+			try {
+				    
+				// Iterate over properties calling PropertyResolver.containsProperty(Ljava/lang/String;)Z
+				List<StackManipulation> code = new ArrayList<>();
+				
+				AnnotationValue<?, ?> mim = annoDescription.getValue(matchIfMissingProperty);
+				boolean matchIfMissing = (Boolean) mim.resolve();
+				AnnotationValue<?, ?> prefix = annoDescription.getValue(prefixProperty);
+				String prefixString = (String) prefix.resolve();
+				AnnotationValue<?, ?> value = annoDescription.getValue(valueProperty);
+				Object resolvedValue = value.resolve();
+				if (resolvedValue == null) {
+					resolvedValue = annoDescription.getValue(nameProperty).resolve();
+				}
+				List<String> properties = new ArrayList<>();
+				if (resolvedValue instanceof String) {
+					properties.add((String)resolvedValue);
+				} else {
+					for (String propertyString: (String[])resolvedValue) {
+						String propertyToCheck = (prefixString!=null && prefixString.length()!=0)? prefix + "." + propertyString: propertyString;
+						properties.add(propertyToCheck);
+					}
+				}
+				resolvedValue = annoDescription.getValue(nameProperty).resolve();
+				if (resolvedValue instanceof String) {
+					properties.add((String)resolvedValue);
+				} else {
+					for (String propertyString: (String[])resolvedValue) {
+						String propertyToCheck = (prefixString!=null && prefixString.length()!=0)? prefix + "." + propertyString: propertyString;
+						properties.add(propertyToCheck);
+					}
+				}
+				
+				
+				if (properties.size() != 0) {
+					System.out.println("Processing ConditionalOnProperty found on "+annotatedElement);
+				}
+				
+				code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
+				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+						GenericApplicationContext.class.getMethod("getEnvironment")
+						)));
+				code.add(MethodVariableAccess.REFERENCE.storeAt(4));
+
+				for (String propertyString: properties) {
+					System.out.println("inserting "+(matchIfMissing?"negative ":"")+"check for property '"+propertyString+"'");
+					code.add(MethodVariableAccess.REFERENCE.loadFrom(4));
+					code.add(new TextConstant(propertyString));
+					code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
+							PropertyResolver.class.getMethod("containsProperty",String.class)
+							)));
+					if (matchIfMissing) {
+						code.add(new IfNe(conditionFailsLabel));					
+					} else {
+						code.add(new IfEq(conditionFailsLabel));					
+					}
+				}
+				return code;
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
 	static class ConditionalOnClassHandler extends BaseConditionalHandler {
 		public ConditionalOnClassHandler() {
 			super(ConditionalOnClass.class);
@@ -695,6 +809,7 @@ public class SlimConfigurationPlugin implements Plugin {
 			conditionalHandlers.add(new ConditionalOnClassHandler());
 			conditionalHandlers.add(new ConditionalOnMissingBeanHandler());
 			conditionalHandlers.add(new ProfileConditionHandler());
+			conditionalHandlers.add(new ConditionalOnPropertyHandler());
 			needsConditionService = false;
 			fallbackConditionHandler = new FallbackConditionHandler();
 		}
