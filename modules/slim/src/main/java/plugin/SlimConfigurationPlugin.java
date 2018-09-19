@@ -149,6 +149,10 @@ public class SlimConfigurationPlugin implements Plugin {
 							break;
 						}
 					}
+					// Exclude spring library imports (they won't have the $$initializer method)
+					if (!hasAnnotation(config, SlimConfiguration.class) && config.getName().startsWith("org.springframework")) {
+						skip = true;
+					}
 					if (!skip) {
 						System.out.println("Not skipping " + config);
 						configSubset.add(config);
@@ -866,7 +870,8 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			builder = builder.modifiers(Modifier.STATIC)
 					.name(configurationTypeDescription.getTypeName() + "$Initializer");
-			builder.annotateType(AnnotationDescription.Builder.ofType(InitializerMapping.class)
+			builder.annotateType(AnnotationDescription.Builder
+					.ofType(InitializerMapping.class)
 					.defineTypeArray("value",
 							new TypeDescription[] { configurationTypeDescription })
 					.build());

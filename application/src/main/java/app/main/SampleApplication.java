@@ -2,16 +2,14 @@ package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 //import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import slim.ImportModule;
-
 @SpringBootConfiguration
-@Import({ SampleConfiguration.class })
-@ImportModule(module = ContextAutoConfigurationModule.class)
+@Import({ SampleConfiguration.class, PropertyPlaceholderAutoConfiguration.class, ConfigurationPropertiesAutoConfiguration.class })
 public class SampleApplication {
 	
 	public static void main(String[] args) {
