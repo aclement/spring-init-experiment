@@ -59,14 +59,16 @@ import org.springframework.util.ReflectionUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
+import slim.ModuleMapping;
 import slim.SlimConfiguration;
 
 /**
  * @author Dave Syer
  *
  */
+@ModuleMapping(JacksonAutoConfiguration.class)
 @SlimConfiguration(module = ContextAutoConfigurationModule.class)
 public class JacksonAutoConfigurationModule implements Module {
 

@@ -59,15 +59,13 @@ public class SlimConfigurationClassPostProcessor implements
 			if (beanClass != null) {
 				if (slimConfiguration(beanClass)) {
 					// In an app with mixed @Configuration and initializers we would have
-					// to
-					// do more than this...
+					// to do more than this...
 					if (registry instanceof ConfigurableListableBeanFactory) {
 						ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
 						if (listable.getBeanNamesForType(beanClass, false,
 								false).length > 1) {
 							// Some ApplicationContext classes register @Configuration
-							// classes
-							// as bean definitions so we need to remove that one
+							// classes as bean definitions so we need to remove that one
 							registry.removeBeanDefinition(beanName);
 						}
 					}
@@ -78,7 +76,7 @@ public class SlimConfigurationClassPostProcessor implements
 		}
 	}
 
-	public Class<?> findBeanClass(BeanDefinition beanDefinition) {
+	private Class<?> findBeanClass(BeanDefinition beanDefinition) {
 		String className = beanDefinition.getBeanClassName();
 		if (className == null || beanDefinition.getFactoryMethodName() != null) {
 			return null;

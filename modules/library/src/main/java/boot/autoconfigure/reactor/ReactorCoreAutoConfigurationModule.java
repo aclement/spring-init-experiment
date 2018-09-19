@@ -25,13 +25,15 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
+import slim.ModuleMapping;
 
 /**
  * @author Dave Syer
  *
  */
+@ModuleMapping(ReactorCoreAutoConfiguration.class)
 public class ReactorCoreAutoConfigurationModule implements Module {
 
 	@Override

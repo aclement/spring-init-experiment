@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.autoconfigure.http.HttpProperties;
+import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -30,8 +31,9 @@ import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
 import slim.ConditionService;
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
+import slim.ModuleMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -39,6 +41,7 @@ import slim.SlimConfiguration;
  *
  */
 // TODO: add Jackson and Jsonb
+@ModuleMapping({HttpMessageConvertersAutoConfiguration.class, CodecsAutoConfiguration.class})
 @SlimConfiguration(module = { ContextAutoConfigurationModule.class,
 		GsonAutoConfigurationModule.class })
 public class HttpMessageConvertersAutoConfigurationModule implements Module {

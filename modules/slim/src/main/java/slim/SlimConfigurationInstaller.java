@@ -17,9 +17,11 @@ package slim;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -31,6 +33,7 @@ import org.springframework.boot.SpringApplicationRunListener;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -51,7 +54,9 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 
 	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
 
-	private Set<String> autoTypes = new LinkedHashSet<>();
+	private Set<String> autoTypeNames = new LinkedHashSet<>();
+
+	private Map<Class<?>, Class<? extends Module>> autoTypes = new HashMap<>();
 
 	private final SpringApplication application;
 
@@ -67,8 +72,21 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class);
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
-		this.autoTypes = new HashSet<>(SpringFactoriesLoader
+		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
 				.loadFactoryNames(Module.class, context.getClassLoader()));
+		for (String typeName : autoTypeNames) {
+			if (ClassUtils.isPresent(typeName, context.getClassLoader())) {
+				@SuppressWarnings("unchecked")
+				Class<? extends Module> module = (Class<? extends Module>) ClassUtils
+						.resolveClassName(typeName, context.getClassLoader());
+				ModuleMapping mapping = module.getAnnotation(ModuleMapping.class);
+				if (mapping != null) {
+					for (Class<?> type : mapping.value()) {
+						this.autoTypes.put(type,  module);
+					}
+				}
+			}
+		}
 	}
 
 	private void apply(GenericApplicationContext context) {
@@ -116,21 +134,34 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 		if (slim != null) {
 			Class<? extends Module>[] types = slim.module();
 			for (Class<? extends Module> type : types) {
-				if (this.types.contains(type)) {
-					continue;
-				}
-				logger.info("Slim initializer: " + type);
-				extract(type);
-				this.types.add(type);
-				if (this.autoTypes.contains(type.getName())) {
-					this.autos.addAll(BeanUtils.instantiateClass(type, Module.class)
-							.initializers());
-				}
-				else {
-					initializers.addAll(BeanUtils.instantiateClass(type, Module.class)
-							.initializers());
-				}
+				logger.debug("ModuleImport: " + type);
+				addModule(type);
 			}
+		}
+		Import imports = beanClass.getAnnotation(Import.class);
+		if (imports != null) {
+			for (Class<?> value : imports.value()) {
+				logger.debug("Import: " + value);
+				Class<? extends Module> type = this.autoTypes.get(value);
+				addModule(type);
+			}
+		}
+	}
+
+	public void addModule(Class<? extends Module> type) {
+		if (type == null || this.types.contains(type)) {
+			return;
+		}
+		extract(type);
+		logger.debug("Module: " + type);
+		this.types.add(type);
+		if (this.autoTypeNames.contains(type.getName())) {
+			this.autos.addAll(
+					BeanUtils.instantiateClass(type, Module.class).initializers());
+		}
+		else {
+			initializers.addAll(
+					BeanUtils.instantiateClass(type, Module.class).initializers());
 		}
 	}
 

@@ -25,13 +25,16 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesBindin
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
+import slim.ModuleMapping;
 
 /**
  * @author Dave Syer
  *
  */
+@ModuleMapping({ PropertyPlaceholderAutoConfiguration.class,
+			ConfigurationPropertiesAutoConfiguration.class })
 public class ContextAutoConfigurationModule implements Module {
 
 	@Override

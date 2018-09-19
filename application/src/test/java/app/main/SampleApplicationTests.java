@@ -40,6 +40,7 @@ public class SampleApplicationTests {
 	@Test
 	public void test() {
 		assertThat(bar).isNotNull();
+		assertThat(bar.getFoo().getValue()).isNotNull();
 	}
 
 }

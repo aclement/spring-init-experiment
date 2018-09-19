@@ -29,14 +29,16 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
+import slim.ModuleMapping;
 import slim.SlimConfiguration;
 
 /**
  * @author Dave Syer
  *
  */
+@ModuleMapping(MustacheAutoConfiguration.class)
 @SlimConfiguration(module = ContextAutoConfigurationModule.class)
 public class MustacheAutoConfigurationModule implements Module {
 
