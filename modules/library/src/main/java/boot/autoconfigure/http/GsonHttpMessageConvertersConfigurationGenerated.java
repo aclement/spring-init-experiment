@@ -18,11 +18,13 @@ package boot.autoconfigure.http;
 
 import com.google.gson.Gson;
 
+import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.util.ClassUtils;
 
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -36,6 +38,7 @@ public class GsonHttpMessageConvertersConfigurationGenerated {
 		return new Initializer();
 	}
 
+	@InitializerMapping(HttpMessageConvertersAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

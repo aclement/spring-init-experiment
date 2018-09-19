@@ -30,6 +30,7 @@ import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
 import slim.Module;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -42,15 +43,17 @@ public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(
-				ReactiveWebServerFactoryAutoConfigurationModule.initializer(),
+		return Arrays.asList(new Initializer(),
 				WebFluxAutoConfigurationGenerated.initializer(),
 				HttpHandlerAutoConfigurationGenerated.initializer(),
 				ErrorWebFluxAutoConfigurationGenerated.initializer());
 	}
 
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> {
+	@InitializerMapping(ReactiveWebServerFactoryAutoConfiguration.class)
+	static class Initializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
+		@Override
+		public void initialize(GenericApplicationContext context) {
 			ConditionService conditions = context.getBeanFactory()
 					.getBean(ConditionService.class);
 			if (conditions.matches(ReactiveWebServerFactoryAutoConfiguration.class)) {
@@ -64,7 +67,7 @@ public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 				context.registerBean(ResourceProperties.class,
 						() -> new ResourceProperties());
 			}
-		};
+		}
 	}
 
 }

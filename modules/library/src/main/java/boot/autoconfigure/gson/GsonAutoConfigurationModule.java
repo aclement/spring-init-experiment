@@ -32,6 +32,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
 import slim.Module;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -50,6 +51,7 @@ public class GsonAutoConfigurationModule implements Module {
 		return new Initializer();
 	}
 
+	@InitializerMapping(GsonAutoConfiguration.class)
 	private static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

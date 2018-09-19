@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -38,6 +39,7 @@ class ReactiveWebServerFactoryAutoConfigurationGenerated {
 		return new Initializer();
 	}
 
+	@InitializerMapping(ReactiveWebServerFactoryAutoConfiguration.class)
 	private static final class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

@@ -88,6 +88,7 @@ import net.bytebuddy.utility.JavaConstant;
 import slim.ConditionService;
 import slim.ImportModule;
 import slim.Module;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 public class SlimConfigurationPlugin implements Plugin {
@@ -114,7 +115,8 @@ public class SlimConfigurationPlugin implements Plugin {
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
 			TypeDescription typeDescription, ClassFileLocator locator) {
 		try {
-			TypeDescription[] importModuleTypeDescriptions = getImportModuleTypeDescriptions(typeDescription);
+			TypeDescription[] importModuleTypeDescriptions = getImportModuleTypeDescriptions(
+					typeDescription);
 			File targetClassesFolder = locateTargetClasses(locator);
 			if (targetClassesFolder == null) {
 				log("Unable to determine target/classes folder for module");
@@ -124,35 +126,43 @@ public class SlimConfigurationPlugin implements Plugin {
 			DynamicType initializerClassType = initializerClassFactory
 					.make(typeDescription, locator);
 			initializerClassType.saveIn(targetClassesFolder);
-			// TODO: fix this so it creates a module properly (and only when needed - one per app)
+			// TODO: fix this so it creates a module properly (and only when needed - one
+			// per app)
 			if (hasAnnotation(typeDescription, SpringBootConfiguration.class)) {
 				TypeDescription[] configs = findConfigs(typeDescription);
-				log("Discovering @Import on "+typeDescription.getActualName()+", found: "+toString(configs));
-				// CRUDE - Create a subset of the configs where those that have module references are not included (i.e. presume
-				// the module reference will do the initialization stuff instead of looking for a $$initializer in the config)
+				log("Discovering @Import on " + typeDescription.getActualName()
+						+ ", found: " + toString(configs));
+				// CRUDE - Create a subset of the configs where those that have module
+				// references are not included (i.e. presume
+				// the module reference will do the initialization stuff instead of
+				// looking for a $$initializer in the config)
 				List<TypeDescription> configSubset = new ArrayList<>();
 				configSubset.add(typeDescription);
-				for (TypeDescription config: configs) {
+				for (TypeDescription config : configs) {
 					// Name based - crude...
 					boolean skip = false;
 					System.out.println(config.getSimpleName());
-					for (TypeDescription importModuleTypeDescription: importModuleTypeDescriptions) {
-						if (importModuleTypeDescription.getSimpleName().startsWith(config.getSimpleName())) {
-							skip=true;
+					for (TypeDescription importModuleTypeDescription : importModuleTypeDescriptions) {
+						if (importModuleTypeDescription.getSimpleName()
+								.startsWith(config.getSimpleName())) {
+							skip = true;
 							break;
 						}
 					}
 					if (!skip) {
-						System.out.println("Not skipping "+config);
+						System.out.println("Not skipping " + config);
 						configSubset.add(config);
-					} else {
-						System.out.println("Skipping "+config);
+					}
+					else {
+						System.out.println("Skipping " + config);
 					}
 				}
 				DynamicType moduleClassType = moduleClassFactory.make(typeDescription,
 						locator, configSubset.toArray(new TypeDescription[0]));
-				builder = addSlimConfigurationAnnotation(importModuleTypeDescriptions, builder, moduleClassType);
-				log("Saving: " + moduleClassType.getTypeDescription()+" in "+targetClassesFolder);
+				builder = addSlimConfigurationAnnotation(importModuleTypeDescriptions,
+						builder, moduleClassType);
+				log("Saving: " + moduleClassType.getTypeDescription() + " in "
+						+ targetClassesFolder);
 				moduleClassType.saveIn(targetClassesFolder);
 			}
 			builder = addInitializerMethod(builder, initializerClassType);
@@ -169,8 +179,9 @@ public class SlimConfigurationPlugin implements Plugin {
 		StringBuilder s = new StringBuilder();
 		s.append("[");
 		if (tds != null) {
-			for (int i=0;i<tds.length;i++) {
-				if (i>0) s.append(",");
+			for (int i = 0; i < tds.length; i++) {
+				if (i > 0)
+					s.append(",");
 				s.append(tds[i].getName());
 			}
 		}
@@ -181,12 +192,15 @@ public class SlimConfigurationPlugin implements Plugin {
 	@SuppressWarnings("unchecked")
 	private File locateTargetClasses(ClassFileLocator compoundLocator) {
 		try {
-			Field classFileLocatorsField = compoundLocator.getClass().getDeclaredField("classFileLocators");
+			Field classFileLocatorsField = compoundLocator.getClass()
+					.getDeclaredField("classFileLocators");
 			classFileLocatorsField.setAccessible(true);
 			File found = null;
-			List<ClassFileLocator> classFileLocators = (List<ClassFileLocator>) classFileLocatorsField.get(compoundLocator);
-			for (ClassFileLocator classFileLocator: classFileLocators) {
-				Field folderField = classFileLocator.getClass().getDeclaredField("folder");
+			List<ClassFileLocator> classFileLocators = (List<ClassFileLocator>) classFileLocatorsField
+					.get(compoundLocator);
+			for (ClassFileLocator classFileLocator : classFileLocators) {
+				Field folderField = classFileLocator.getClass()
+						.getDeclaredField("folder");
 				folderField.setAccessible(true);
 				File ff = (File) folderField.get(classFileLocator);
 				if (ff.toString().endsWith("target/classes")) {
@@ -195,7 +209,8 @@ public class SlimConfigurationPlugin implements Plugin {
 				}
 			}
 			return found;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			return null;
 		}
 	}
@@ -218,18 +233,19 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 		return result.toArray(new TypeDescription[0]);
 	}
-	
-	private Builder<?> addSlimConfigurationAnnotation(TypeDescription[] importModuleTypeDescriptions, DynamicType.Builder<?> builder,
-			DynamicType initializerClassType) {
+
+	private Builder<?> addSlimConfigurationAnnotation(
+			TypeDescription[] importModuleTypeDescriptions,
+			DynamicType.Builder<?> builder, DynamicType initializerClassType) {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
-		for (TypeDescription td: importModuleTypeDescriptions) {
+		for (TypeDescription td : importModuleTypeDescriptions) {
 			initializers.add(td);
 		}
 		return builder.annotateType(AnnotationDescription.Builder
-			.ofType(SlimConfiguration.class)
-			.defineTypeArray("module", initializers.toArray(new TypeDescription[0]))
-			.build());
+				.ofType(SlimConfiguration.class)
+				.defineTypeArray("module", initializers.toArray(new TypeDescription[0]))
+				.build());
 	}
 
 	private MethodDescription.InDefinedShape moduleProperty = null;
@@ -238,23 +254,25 @@ public class SlimConfigurationPlugin implements Plugin {
 		List<TypeDescription> importModuleTypeDescriptions = new ArrayList<>();
 		if (moduleProperty == null) {
 			try {
-				moduleProperty = new MethodDescription.ForLoadedMethod(ImportModule.class.getMethod("module"));
-			} catch (Exception e) {
+				moduleProperty = new MethodDescription.ForLoadedMethod(
+						ImportModule.class.getMethod("module"));
+			}
+			catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		}
-		AnnotationDescription[] importModule = 
-				typeDescription.getDeclaredAnnotations().filter(desc -> desc.getAnnotationType().represents(ImportModule.class)).toArray(new AnnotationDescription[0]);
+		AnnotationDescription[] importModule = typeDescription.getDeclaredAnnotations()
+				.filter(desc -> desc.getAnnotationType().represents(ImportModule.class))
+				.toArray(new AnnotationDescription[0]);
 		if (importModule.length != 0) {
 			AnnotationValue<?, ?> value = importModule[0].getValue(moduleProperty);
 			TypeDescription[] moduleClasses = (TypeDescription[]) value.resolve();
-			for (TypeDescription moduleClass: moduleClasses) {
+			for (TypeDescription moduleClass : moduleClasses) {
 				importModuleTypeDescriptions.add(moduleClass);
 			}
 		}
 		return importModuleTypeDescriptions.toArray(new TypeDescription[0]);
 	}
-
 
 	@Override
 	public boolean matches(TypeDescription target) {
@@ -357,37 +375,41 @@ public class SlimConfigurationPlugin implements Plugin {
 		public boolean accept(AnnotationDescription description) {
 			return true;
 		}
-		
+
 		@Override
-		public Collection<? extends StackManipulation> computeStackManipulations(AnnotationDescription annoDescription, 
-				Object annotatedElement, Label conditionFailsLabel) {
+		public Collection<? extends StackManipulation> computeStackManipulations(
+				AnnotationDescription annoDescription, Object annotatedElement,
+				Label conditionFailsLabel) {
 			try {
 				List<StackManipulation> code = new ArrayList<>();
 				if (annotatedElement instanceof MethodDescription) {
 					// Call ConditionService.matches(ConfigurationClass, BeanClass)
 					code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
-					code.add(ClassConstant.of(((MethodDescription)annotatedElement).getDeclaringType().asErasure()));
-					code.add(ClassConstant.of(((MethodDescription)annotatedElement).getReturnType().asErasure()));
-					code.add(
-							MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-									ConditionService.class.getMethod("matches", Class.class, Class.class))));
-					code.add(new IfEq(conditionFailsLabel));				    
-				} else {
+					code.add(ClassConstant.of(((MethodDescription) annotatedElement)
+							.getDeclaringType().asErasure()));
+					code.add(ClassConstant.of(((MethodDescription) annotatedElement)
+							.getReturnType().asErasure()));
+					code.add(MethodInvocation.invoke(
+							new MethodDescription.ForLoadedMethod(ConditionService.class
+									.getMethod("matches", Class.class, Class.class))));
+					code.add(new IfEq(conditionFailsLabel));
+				}
+				else {
 					// Call ConditionService.matches(Class)
 					code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
-					code.add(ClassConstant.of((TypeDescription)annotatedElement));
-					code.add(
-							MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-									ConditionService.class.getMethod("matches", Class.class))));
+					code.add(ClassConstant.of((TypeDescription) annotatedElement));
+					code.add(MethodInvocation.invoke(
+							new MethodDescription.ForLoadedMethod(ConditionService.class
+									.getMethod("matches", Class.class))));
 					code.add(new IfEq(conditionFailsLabel));
 				}
 				return code;
 			}
 			catch (Exception e) {
 				throw new RuntimeException(e);
-			}			
+			}
 		}
-		
+
 	}
 
 	static class ConditionalOnMissingBeanHandler extends BaseConditionalHandler {
@@ -447,7 +469,8 @@ public class SlimConfigurationPlugin implements Plugin {
 				AnnotationDescription annoDescription, Object annotatedElement,
 				Label conditionFailsLabel) {
 			try {
-				// Invoke: context.getEnvironment().acceptsProfiles(Profiles.of((String[]) value))
+				// Invoke: context.getEnvironment().acceptsProfiles(Profiles.of((String[])
+				// value))
 				List<StackManipulation> code = new ArrayList<>();
 				AnnotationValue<?, ?> value = annoDescription.getValue(valueProperty);
 				// TODO I would prefer the unresolved references...
@@ -456,29 +479,31 @@ public class SlimConfigurationPlugin implements Plugin {
 				for (int i = 0; i < profiles.length; i++) {
 					profilesArrayEntries.add(new TextConstant(profiles[i]));
 				}
-//			    ALOAD 1
-//				INVOKEVIRTUAL org/springframework/context/support/GenericApplicationContext.getEnvironment()Lorg/springframework/core/env/ConfigurableEnvironment;
-//			    ALOAD 5
-//			    CHECKCAST [Ljava/lang/String;
-//			    CHECKCAST [Ljava/lang/String;
-//			    INVOKESTATIC org/springframework/core/env/Profiles.of([Ljava/lang/String;)Lorg/springframework/core/env/Profiles;
-//			    INVOKEINTERFACE org/springframework/core/env/Environment.acceptsProfiles(Lorg/springframework/core/env/Profiles;)Z
-//			    IFEQ L7
+				// ALOAD 1
+				// INVOKEVIRTUAL
+				// org/springframework/context/support/GenericApplicationContext.getEnvironment()Lorg/springframework/core/env/ConfigurableEnvironment;
+				// ALOAD 5
+				// CHECKCAST [Ljava/lang/String;
+				// CHECKCAST [Ljava/lang/String;
+				// INVOKESTATIC
+				// org/springframework/core/env/Profiles.of([Ljava/lang/String;)Lorg/springframework/core/env/Profiles;
+				// INVOKEINTERFACE
+				// org/springframework/core/env/Environment.acceptsProfiles(Lorg/springframework/core/env/Profiles;)Z
+				// IFEQ L7
 
 				code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						GenericApplicationContext.class.getMethod("getEnvironment")
-						)));
-				code.add(ArrayFactory
-						.forType(new TypeDescription.ForLoadedType(
-								String.class).asGenericType())
-						.withValues(profilesArrayEntries));
+						GenericApplicationContext.class.getMethod("getEnvironment"))));
+				code.add(
+						ArrayFactory
+								.forType(new TypeDescription.ForLoadedType(String.class)
+										.asGenericType())
+								.withValues(profilesArrayEntries));
 				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						Profiles.class.getDeclaredMethod("of", String[].class)
-						)));
-				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						Environment.class.getDeclaredMethod("acceptsProfiles", Profiles.class)
-						)));
+						Profiles.class.getDeclaredMethod("of", String[].class))));
+				code.add(MethodInvocation
+						.invoke(new MethodDescription.ForLoadedMethod(Environment.class
+								.getDeclaredMethod("acceptsProfiles", Profiles.class))));
 				code.add(new IfEq(conditionFailsLabel));
 				return code;
 			}
@@ -493,7 +518,7 @@ public class SlimConfigurationPlugin implements Plugin {
 		protected MethodDescription.InDefinedShape nameProperty;
 		protected MethodDescription.InDefinedShape matchIfMissingProperty;
 		protected MethodDescription.InDefinedShape havingValueProperty;
-		
+
 		public ConditionalOnPropertyHandler() {
 			super(ConditionalOnProperty.class);
 			try {
@@ -513,34 +538,39 @@ public class SlimConfigurationPlugin implements Plugin {
 
 		@Override
 		public boolean accept(AnnotationDescription description) {
-			if (!description.getAnnotationType().represents(ConditionalOnProperty.class)) {
+			if (!description.getAnnotationType()
+					.represents(ConditionalOnProperty.class)) {
 				return false;
 			}
 			AnnotationValue<?, ?> av = description.getValue(havingValueProperty);
 			String havingValue = (String) av.resolve();
 			if (havingValue.length() != 0) {
-				System.out.println("Unable to optimize "+description+" because havingValue is set");
+				System.out.println("Unable to optimize " + description
+						+ " because havingValue is set");
 				return false;
 			}
 			return true;
 		}
 
 		/**
-		 * What this does - looks at ConditionalOnProperty annotation for a value or name being set as 
-		 * one or more property names. It checks the prefix to see if that has been set. Using this information
-		 * it creates a list of properties to check for. It cannot handle havingValue being set right now.
-		 * It does understand matchIfMissing.
+		 * What this does - looks at ConditionalOnProperty annotation for a value or name
+		 * being set as one or more property names. It checks the prefix to see if that
+		 * has been set. Using this information it creates a list of properties to check
+		 * for. It cannot handle havingValue being set right now. It does understand
+		 * matchIfMissing.
 		 */
 		@Override
 		public Collection<? extends StackManipulation> computeStackManipulations(
 				AnnotationDescription annoDescription, Object annotatedElement,
 				Label conditionFailsLabel) {
 			try {
-				    
-				// Iterate over properties calling PropertyResolver.containsProperty(Ljava/lang/String;)Z
+
+				// Iterate over properties calling
+				// PropertyResolver.containsProperty(Ljava/lang/String;)Z
 				List<StackManipulation> code = new ArrayList<>();
-				
-				AnnotationValue<?, ?> mim = annoDescription.getValue(matchIfMissingProperty);
+
+				AnnotationValue<?, ?> mim = annoDescription
+						.getValue(matchIfMissingProperty);
 				boolean matchIfMissing = (Boolean) mim.resolve();
 				AnnotationValue<?, ?> prefix = annoDescription.getValue(prefixProperty);
 				String prefixString = (String) prefix.resolve();
@@ -551,45 +581,54 @@ public class SlimConfigurationPlugin implements Plugin {
 				}
 				List<String> properties = new ArrayList<>();
 				if (resolvedValue instanceof String) {
-					properties.add((String)resolvedValue);
-				} else {
-					for (String propertyString: (String[])resolvedValue) {
-						String propertyToCheck = (prefixString!=null && prefixString.length()!=0)? prefix + "." + propertyString: propertyString;
+					properties.add((String) resolvedValue);
+				}
+				else {
+					for (String propertyString : (String[]) resolvedValue) {
+						String propertyToCheck = (prefixString != null
+								&& prefixString.length() != 0)
+										? prefix + "." + propertyString
+										: propertyString;
 						properties.add(propertyToCheck);
 					}
 				}
 				resolvedValue = annoDescription.getValue(nameProperty).resolve();
 				if (resolvedValue instanceof String) {
-					properties.add((String)resolvedValue);
-				} else {
-					for (String propertyString: (String[])resolvedValue) {
-						String propertyToCheck = (prefixString!=null && prefixString.length()!=0)? prefix + "." + propertyString: propertyString;
+					properties.add((String) resolvedValue);
+				}
+				else {
+					for (String propertyString : (String[]) resolvedValue) {
+						String propertyToCheck = (prefixString != null
+								&& prefixString.length() != 0)
+										? prefix + "." + propertyString
+										: propertyString;
 						properties.add(propertyToCheck);
 					}
 				}
-				
-				
+
 				if (properties.size() != 0) {
-					System.out.println("Processing ConditionalOnProperty found on "+annotatedElement);
+					System.out.println("Processing ConditionalOnProperty found on "
+							+ annotatedElement);
 				}
-				
+
 				code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						GenericApplicationContext.class.getMethod("getEnvironment")
-						)));
+						GenericApplicationContext.class.getMethod("getEnvironment"))));
 				code.add(MethodVariableAccess.REFERENCE.storeAt(4));
 
-				for (String propertyString: properties) {
-					System.out.println("inserting "+(matchIfMissing?"negative ":"")+"check for property '"+propertyString+"'");
+				for (String propertyString : properties) {
+					System.out.println("inserting " + (matchIfMissing ? "negative " : "")
+							+ "check for property '" + propertyString + "'");
 					code.add(MethodVariableAccess.REFERENCE.loadFrom(4));
 					code.add(new TextConstant(propertyString));
-					code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-							PropertyResolver.class.getMethod("containsProperty",String.class)
-							)));
+					code.add(MethodInvocation.invoke(
+							new MethodDescription.ForLoadedMethod(PropertyResolver.class
+									.getMethod("containsProperty", String.class))));
 					if (matchIfMissing) {
-						code.add(new IfNe(conditionFailsLabel));					
-					} else {
-						code.add(new IfEq(conditionFailsLabel));					
+						code.add(new IfNe(conditionFailsLabel));
+					}
+					else {
+						code.add(new IfEq(conditionFailsLabel));
 					}
 				}
 				return code;
@@ -787,7 +826,8 @@ public class SlimConfigurationPlugin implements Plugin {
 
 		public InitializerClassFactory() {
 			try {
-				getBeanFactory = new MethodDescription.ForLoadedMethod(GenericApplicationContext.class.getMethod("getBeanFactory"));
+				getBeanFactory = new MethodDescription.ForLoadedMethod(
+						GenericApplicationContext.class.getMethod("getBeanFactory"));
 				registerBean = new MethodDescription.ForLoadedMethod(
 						GenericApplicationContext.class.getMethod("registerBean",
 								Class.class, BeanDefinitionCustomizer[].class));
@@ -826,6 +866,10 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			builder = builder.modifiers(Modifier.STATIC)
 					.name(configurationTypeDescription.getTypeName() + "$Initializer");
+			builder.annotateType(AnnotationDescription.Builder.ofType(InitializerMapping.class)
+					.defineTypeArray("value",
+							new TypeDescription[] { configurationTypeDescription })
+					.build());
 
 			TypeDescription target = builder.make().getTypeDescription();
 
@@ -846,8 +890,9 @@ public class SlimConfigurationPlugin implements Plugin {
 			List<StackManipulation> code = new ArrayList<>();
 
 			Label typeConditionsFailJumpTarget = new Label();
-			processConfigurationTypeLevelConditions(configurationTypeDescription, fallbackConditionHandler, code, typeConditionsFailJumpTarget);
-			
+			processConfigurationTypeLevelConditions(configurationTypeDescription,
+					fallbackConditionHandler, code, typeConditionsFailJumpTarget);
+
 			// Store a reusable empty array of BeanDefinitionCustomizer
 			code.add(ArrayFactory
 					.forType(new TypeDescription.ForLoadedType(
@@ -891,15 +936,16 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			code.add(new InsertLabel(typeConditionsFailJumpTarget));
 			code.add(MethodReturn.VOID);
-			
+
 			if (needsConditionService) {
-				TypeDescription conditionServiceTypeDescription = new TypeDescription.ForLoadedType(ConditionService.class);
-				code.add(0,MethodVariableAccess.REFERENCE.loadFrom(1));
-				code.add(1,MethodInvocation.invoke(getBeanFactory));
-				code.add(2,ClassConstant.of(conditionServiceTypeDescription));
-				code.add(3,MethodInvocation.invoke(getBean));
-				code.add(4,TypeCasting.to(conditionServiceTypeDescription));
-				code.add(5,MethodVariableAccess.REFERENCE.storeAt(3));
+				TypeDescription conditionServiceTypeDescription = new TypeDescription.ForLoadedType(
+						ConditionService.class);
+				code.add(0, MethodVariableAccess.REFERENCE.loadFrom(1));
+				code.add(1, MethodInvocation.invoke(getBeanFactory));
+				code.add(2, ClassConstant.of(conditionServiceTypeDescription));
+				code.add(3, MethodInvocation.invoke(getBean));
+				code.add(4, TypeCasting.to(conditionServiceTypeDescription));
+				code.add(5, MethodVariableAccess.REFERENCE.storeAt(3));
 			}
 
 			// Create the initialize() method
@@ -912,17 +958,22 @@ public class SlimConfigurationPlugin implements Plugin {
 			return builder.make();
 		}
 
-		private void processConfigurationTypeLevelConditions(TypeDescription configurationTypeDescription,
+		private void processConfigurationTypeLevelConditions(
+				TypeDescription configurationTypeDescription,
 				FallbackConditionHandler fallbackConditionHandler,
 				List<StackManipulation> code, Label typeConditionsFailJumpTarget) {
 			// Process the conditions on the this type and any outer types
-			List<AnnotationDescription> conditionalAnnotations = fetchConditionalAnnotations(configurationTypeDescription);
-			if (conditionalAnnotations.size()==0) {
-				log("No type level conditions on "+configurationTypeDescription);
-			} else {
-				log("Applying the following type level conditions to "+configurationTypeDescription+": "+conditionalAnnotations);
+			List<AnnotationDescription> conditionalAnnotations = fetchConditionalAnnotations(
+					configurationTypeDescription);
+			if (conditionalAnnotations.size() == 0) {
+				log("No type level conditions on " + configurationTypeDescription);
 			}
-			// Check if fallback needed for any of these... if so, use fallback to check all of them
+			else {
+				log("Applying the following type level conditions to "
+						+ configurationTypeDescription + ": " + conditionalAnnotations);
+			}
+			// Check if fallback needed for any of these... if so, use fallback to check
+			// all of them
 			boolean fallbackRequired = false;
 			for (AnnotationDescription annoDescription : conditionalAnnotations) {
 				boolean handled = false;
@@ -932,18 +983,24 @@ public class SlimConfigurationPlugin implements Plugin {
 					}
 				}
 				if (!handled) {
-					log("Due to existence of "+annoDescription+" on "+configurationTypeDescription+" the fallback handler is being used for all conditions on the type");
+					log("Due to existence of " + annoDescription + " on "
+							+ configurationTypeDescription
+							+ " the fallback handler is being used for all conditions on the type");
 					fallbackRequired = true;
 					needsConditionService = true;
 				}
 			}
 			if (fallbackRequired) {
-				code.addAll(fallbackConditionHandler.computeStackManipulations(null, configurationTypeDescription, typeConditionsFailJumpTarget));				
-			} else {
+				code.addAll(fallbackConditionHandler.computeStackManipulations(null,
+						configurationTypeDescription, typeConditionsFailJumpTarget));
+			}
+			else {
 				for (AnnotationDescription annoDescription : conditionalAnnotations) {
 					for (ConditionalHandler handler : conditionalHandlers) {
 						if (handler.accept(annoDescription)) {
-							code.addAll(handler.computeStackManipulations(annoDescription, configurationTypeDescription, typeConditionsFailJumpTarget));
+							code.addAll(handler.computeStackManipulations(annoDescription,
+									configurationTypeDescription,
+									typeConditionsFailJumpTarget));
 						}
 					}
 				}
@@ -970,14 +1027,18 @@ public class SlimConfigurationPlugin implements Plugin {
 					}
 				}
 				if (!handled) {
-					log("Due to existence of "+annoDescription+" on "+methodDescription+" the fallback handler is being used for all conditions for this method");
+					log("Due to existence of " + annoDescription + " on "
+							+ methodDescription
+							+ " the fallback handler is being used for all conditions for this method");
 					fallbackRequired = true;
 				}
 			}
 			if (fallbackRequired) {
 				needsConditionService = true;
-				code.addAll(fallbackConditionHandler.computeStackManipulations(null, methodDescription, conditionsFailJumpTarget));				
-			} else {
+				code.addAll(fallbackConditionHandler.computeStackManipulations(null,
+						methodDescription, conditionsFailJumpTarget));
+			}
+			else {
 				for (AnnotationDescription annoDescription : conditionalAnnotations) {
 					for (ConditionalHandler handler : conditionalHandlers) {
 						if (handler.accept(annoDescription)) {
@@ -1029,15 +1090,18 @@ public class SlimConfigurationPlugin implements Plugin {
 		private List<AnnotationDescription> fetchConditionalAnnotations(
 				TypeDescription typeDescription) {
 			List<AnnotationDescription> result = new ArrayList<>();
-			AnnotationList list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
-			for (AnnotationDescription ad: list) {
+			AnnotationList list = typeDescription.getDeclaredAnnotations()
+					.filter(this::isConditionalAnnotation);
+			for (AnnotationDescription ad : list) {
 				result.add(ad);
 			}
 			while (typeDescription.isNestedClass()) {
 				typeDescription = typeDescription.getEnclosingType();
-//				System.out.println("Collecting conditions from outer class "+typeDescription);
-				list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
-				for (AnnotationDescription ad: list) {
+				// System.out.println("Collecting conditions from outer class
+				// "+typeDescription);
+				list = typeDescription.getDeclaredAnnotations()
+						.filter(this::isConditionalAnnotation);
+				for (AnnotationDescription ad : list) {
 					result.add(ad);
 				}
 			}
@@ -1122,7 +1186,7 @@ public class SlimConfigurationPlugin implements Plugin {
 					.forType(new TypeDescription.ForLoadedType(
 							ApplicationContextInitializer.class).asGenericType())
 					.withValues(eachElement));
-			
+
 			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
 					Arrays.class.getMethod("asList", Object[].class))));
 			code.add(MethodReturn.of(

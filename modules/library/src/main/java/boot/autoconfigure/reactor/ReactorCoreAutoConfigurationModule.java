@@ -26,6 +26,7 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
 import slim.Module;
+import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -35,11 +36,15 @@ public class ReactorCoreAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(ReactorCoreAutoConfigurationModule.initializer());
+		return Arrays.asList(new Initializer());
 	}
 
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return context -> {
+	@InitializerMapping(ReactorCoreAutoConfiguration.class)
+	static class Initializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
+
+		@Override
+		public void initialize(GenericApplicationContext context) {
 			ConditionService conditions = context.getBeanFactory()
 					.getBean(ConditionService.class);
 			if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
@@ -48,7 +53,8 @@ public class ReactorCoreAutoConfigurationModule implements Module {
 				context.registerBean(ReactorCoreAutoConfiguration.class,
 						() -> new ReactorCoreAutoConfiguration());
 			}
-		};
+		}
+
 	}
 
 }

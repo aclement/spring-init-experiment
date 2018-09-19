@@ -19,11 +19,14 @@ package boot.autoconfigure.context;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.Module;
+import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -40,6 +43,8 @@ public class ContextAutoConfigurationModule implements Module {
 		return new Initializer();
 	}
 
+	@InitializerMapping({ PropertyPlaceholderAutoConfiguration.class,
+			ConfigurationPropertiesAutoConfiguration.class })
 	private static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

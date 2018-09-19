@@ -31,6 +31,7 @@ import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
 import slim.ConditionService;
 import slim.Module;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -54,6 +55,7 @@ public class HttpMessageConvertersAutoConfigurationModule implements Module {
 		return new Initializer();
 	}
 
+	@InitializerMapping(HttpMessageConvertersAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

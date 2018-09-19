@@ -23,6 +23,7 @@ import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 
 import slim.ConditionService;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -36,6 +37,7 @@ class HttpHandlerAutoConfigurationGenerated {
 		return new Initializer();
 	}
 
+	@InitializerMapping(HttpHandlerAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 		@Override

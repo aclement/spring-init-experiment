@@ -34,6 +34,7 @@ import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.util.MimeType;
 
 import slim.ConditionService;
+import slim.InitializerMapping;
 import slim.SlimConfiguration;
 
 /**
@@ -46,6 +47,7 @@ public class CodecsAutoConfigurationGenerated {
 		return new Initializer();
 	}
 
+	@InitializerMapping(CodecsAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

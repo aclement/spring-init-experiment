@@ -30,6 +30,7 @@ import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
 
 import slim.ConditionService;
+import slim.InitializerMapping;
 import slim.ObjectProviders;
 import slim.SlimConfiguration;
 
@@ -46,6 +47,7 @@ class WebFluxAutoConfigurationGenerated {
 		};
 	}
 
+	@InitializerMapping(WebFluxAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 
