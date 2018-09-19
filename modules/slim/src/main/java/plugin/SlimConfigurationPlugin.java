@@ -120,6 +120,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				log("Unable to determine target/classes folder for module");
 				targetClassesFolder = new File("target/classes");
 			}
+			// TODO: skip this class if it was already processed
 			DynamicType initializerClassType = initializerClassFactory
 					.make(typeDescription, locator);
 			initializerClassType.saveIn(targetClassesFolder);

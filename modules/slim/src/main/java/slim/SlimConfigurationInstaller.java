@@ -144,9 +144,12 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 
 	@Override
 	public void contextPrepared(ConfigurableApplicationContext context) {
-		GenericApplicationContext generic = (GenericApplicationContext) context;
-		initialize(generic);
-		extract(generic);
+		if (context.getEnvironment().getProperty("spring.functional.enabled",
+				Boolean.class, true)) {
+			GenericApplicationContext generic = (GenericApplicationContext) context;
+			initialize(generic);
+			extract(generic);
+		}
 	}
 
 	@Override
