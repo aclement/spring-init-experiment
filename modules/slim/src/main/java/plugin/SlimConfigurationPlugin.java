@@ -264,7 +264,7 @@ public class SlimConfigurationPlugin implements Plugin {
 		if (moduleProperty == null) {
 			try {
 				moduleProperty = new MethodDescription.ForLoadedMethod(
-						ImportModule.class.getMethod("module"));
+						ImportModule.class.getMethod("value"));
 			}
 			catch (Exception e) {
 				throw new RuntimeException(e);

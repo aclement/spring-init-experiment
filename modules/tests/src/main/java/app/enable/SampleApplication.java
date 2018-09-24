@@ -11,7 +11,7 @@ import slim.ImportModule;
 @SpringBootConfiguration
 @EnableBar
 // TODO: make this work with `@Import(ConfigurationPropertiesAutoConfiguration.class)`
-@ImportModule(module = ContextAutoConfigurationModule.class)
+@ImportModule(value = ContextAutoConfigurationModule.class)
 public class SampleApplication {
 	
 	public static void main(String[] args) {

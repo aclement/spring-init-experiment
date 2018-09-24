@@ -17,7 +17,7 @@ import slim.ImportModule;
 
 
 @SpringBootConfiguration
-@ImportModule(module = { GsonAutoConfigurationModule.class,
+@ImportModule(value = { GsonAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 

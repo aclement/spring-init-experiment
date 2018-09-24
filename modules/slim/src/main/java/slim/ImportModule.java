@@ -6,10 +6,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
+
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Configuration
+@Import(Object.class)
 public @interface ImportModule {
 
-    Class<? extends Module>[] module() default {};
+	@AliasFor(annotation=Import.class)
+	Class<? extends Module>[] value() default {};
 }

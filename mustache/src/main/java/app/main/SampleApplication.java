@@ -10,7 +10,7 @@ import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration
 import slim.ImportModule;
 
 @SpringBootConfiguration
-@ImportModule(module= {MustacheAutoConfigurationModule.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
+@ImportModule(value= {MustacheAutoConfigurationModule.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
 public class SampleApplication {
 
 	@Bean
