@@ -29,7 +29,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -49,6 +51,7 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 
 	private static final Log logger = LogFactory.getLog(SlimConfigurationInstaller.class);
 
+	// TODO: make this class stateless
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> autos = new LinkedHashSet<>();
@@ -58,6 +61,36 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 	private Set<String> autoTypeNames = new LinkedHashSet<>();
 
 	private Map<Class<?>, Class<? extends Module>> autoTypes = new HashMap<>();
+
+	@Override
+	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
+		return ApplicationContextInitializedEvent.class.isAssignableFrom(eventType)
+				|| ApplicationEnvironmentPreparedEvent.class.isAssignableFrom(eventType);
+	}
+
+	@Override
+	public void onApplicationEvent(ApplicationEvent event) {
+		if (event instanceof ApplicationContextInitializedEvent) {
+			ApplicationContextInitializedEvent initialized = (ApplicationContextInitializedEvent) event;
+			ConfigurableApplicationContext context = initialized.getApplicationContext();
+			if (!(context instanceof GenericApplicationContext)) {
+				throw new IllegalStateException(
+						"ApplicationContext must be a GenericApplicationContext");
+			}
+			if (context.getEnvironment().getProperty("spring.functional.enabled",
+					Boolean.class, true)) {
+				GenericApplicationContext generic = (GenericApplicationContext) context;
+				initialize(generic);
+				extract(generic, initialized.getSpringApplication());
+			}
+		} else if (event instanceof ApplicationEnvironmentPreparedEvent) {
+			ApplicationEnvironmentPreparedEvent prepared = (ApplicationEnvironmentPreparedEvent) event;
+			if (prepared.getSpringApplication().getWebApplicationType()==WebApplicationType.NONE) {
+				// TODO: uncomment this (https://github.com/spring-projects/spring-boot/issues/14589)
+				// prepared.getSpringApplication().setApplicationContextClass(GenericApplicationContext.class);
+			}
+		}
+	}
 
 	private void initialize(GenericApplicationContext context) {
 		context.registerBean(ConditionService.class,
@@ -106,7 +139,8 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		}
 	}
 
-	private void extract(GenericApplicationContext context, SpringApplication application) {
+	private void extract(GenericApplicationContext context,
+			SpringApplication application) {
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
 			if (source instanceof Class) {
@@ -157,27 +191,6 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		else {
 			initializers.addAll(
 					BeanUtils.instantiateClass(type, Module.class).initializers());
-		}
-	}
-
-	@Override
-	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
-		return ApplicationContextInitializedEvent.class.isAssignableFrom(eventType);
-	}
-
-	@Override
-	public void onApplicationEvent(ApplicationEvent event) {
-		ApplicationContextInitializedEvent initialized = (ApplicationContextInitializedEvent) event;
-		ConfigurableApplicationContext context = initialized
-				.getApplicationContext();
-		if (!(context instanceof GenericApplicationContext)) {
-			throw new IllegalStateException("ApplicationContext must be a GenericApplicationContext");
-		}
-		if (context.getEnvironment().getProperty("spring.functional.enabled",
-				Boolean.class, true)) {
-			GenericApplicationContext generic = (GenericApplicationContext) context;
-			initialize(generic);
-			extract(generic, initialized.getSpringApplication());
 		}
 	}
 
