@@ -34,7 +34,7 @@ import org.springframework.core.annotation.AliasFor;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Configuration
-@Import(Object.class)
+@Import({})
 public @interface ModuleMapping {
 
 	@AliasFor(annotation=Import.class)

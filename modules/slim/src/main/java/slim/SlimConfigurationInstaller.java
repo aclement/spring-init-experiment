@@ -32,6 +32,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -40,6 +42,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.ClassUtils;
 
@@ -83,11 +86,23 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 				initialize(generic);
 				extract(generic, initialized.getSpringApplication());
 			}
-		} else if (event instanceof ApplicationEnvironmentPreparedEvent) {
+		}
+		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			ApplicationEnvironmentPreparedEvent prepared = (ApplicationEnvironmentPreparedEvent) event;
-			if (prepared.getSpringApplication().getWebApplicationType()==WebApplicationType.NONE) {
-				// TODO: uncomment this (https://github.com/spring-projects/spring-boot/issues/14589)
-				// prepared.getSpringApplication().setApplicationContextClass(GenericApplicationContext.class);
+			SpringApplication application = prepared.getSpringApplication();
+			WebApplicationType type = application.getWebApplicationType();
+			if (type == WebApplicationType.NONE) {
+				// TODO: uncomment this
+				// (https://github.com/spring-projects/spring-boot/issues/14589)
+				// application.setApplicationContextClass(GenericApplicationContext.class);
+			}
+			else if (type == WebApplicationType.REACTIVE) {
+				application.setApplicationContextClass(
+						ReactiveWebServerApplicationContext.class);
+			}
+			else if (type == WebApplicationType.SERVLET) {
+				application.setApplicationContextClass(
+						ServletWebServerApplicationContext.class);
 			}
 		}
 	}
@@ -141,6 +156,7 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 
 	private void extract(GenericApplicationContext context,
 			SpringApplication application) {
+		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
 			if (source instanceof Class) {
@@ -152,13 +168,13 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 						application.getClassLoader());
 			}
 			if (type != null) {
-				extract(type);
+				extract(type, seen);
 			}
 		}
 		apply(context);
 	}
 
-	private void extract(Class<?> beanClass) {
+	private void extract(Class<?> beanClass, Set<Class<?>> seen) {
 		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
 		if (slim != null) {
 			Class<? extends Module>[] types = slim.module();
@@ -167,13 +183,26 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 				addModule(type);
 			}
 		}
-		Import imports = beanClass.getAnnotation(Import.class);
-		if (imports != null) {
-			for (Class<?> value : imports.value()) {
-				logger.debug("Import: " + value);
-				Class<? extends Module> type = this.autoTypes.get(value);
-				addModule(type);
+		processImports(beanClass, seen);
+	}
+
+	private void processImports(Class<?> beanClass, Set<Class<?>> seen) {
+		if (!seen.contains(beanClass)) {
+			Set<Import> imports = AnnotatedElementUtils
+					.findAllMergedAnnotations(beanClass, Import.class);
+			if (imports != null) {
+				for (Import imported : imports) {
+					for (Class<?> value : imported.value()) {
+						logger.debug("Import: " + value);
+						Class<? extends Module> type = this.autoTypes.get(value);
+						if (type != null) {
+							addModule(type);
+						}
+						processImports(value, seen);
+					}
+				}
 			}
+			seen.add(beanClass);
 		}
 	}
 
@@ -181,7 +210,6 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		if (type == null || this.types.contains(type)) {
 			return;
 		}
-		extract(type);
 		logger.debug("Module: " + type);
 		this.types.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {

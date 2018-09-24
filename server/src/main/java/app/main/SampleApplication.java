@@ -2,7 +2,6 @@ package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.server.RouterFunction;
 
@@ -27,8 +26,6 @@ public class SampleApplication {
 	}
 
 	public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(SampleApplication.class);
-		app.setApplicationContextClass(ReactiveWebServerApplicationContext.class);
-		app.run(args);
+		SpringApplication.run(SampleApplication.class, args);
 	}
 }

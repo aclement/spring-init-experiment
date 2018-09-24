@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfig
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration;
-import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -34,9 +33,7 @@ public class SampleApplication {
 	}
 
 	public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(SampleApplication.class);
-		app.setApplicationContextClass(ReactiveWebServerApplicationContext.class);
-		app.run(args);
+		SpringApplication.run(SampleApplication.class, args);
 	}
 
 }
