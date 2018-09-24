@@ -17,7 +17,6 @@
 package app.main;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(properties="spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
-@Ignore
 public class NonFunctionalApplicationTests {
 
 	@Autowired
