@@ -59,7 +59,6 @@ class ConditionEvaluator {
 	 */
 	public ConditionEvaluator(@Nullable BeanDefinitionRegistry registry,
 			@Nullable Environment environment, @Nullable ResourceLoader resourceLoader) {
-
 		this.context = new ConditionContextImpl(registry, environment, resourceLoader);
 	}
 

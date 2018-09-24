@@ -29,14 +29,15 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringApplicationRunListener;
+import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.ClassUtils;
 
@@ -44,7 +45,7 @@ import org.springframework.util.ClassUtils;
  * @author Dave Syer
  *
  */
-public class SlimConfigurationInstaller implements SpringApplicationRunListener {
+public class SlimConfigurationInstaller implements SmartApplicationListener {
 
 	private static final Log logger = LogFactory.getLog(SlimConfigurationInstaller.class);
 
@@ -57,12 +58,6 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 	private Set<String> autoTypeNames = new LinkedHashSet<>();
 
 	private Map<Class<?>, Class<? extends Module>> autoTypes = new HashMap<>();
-
-	private final SpringApplication application;
-
-	public SlimConfigurationInstaller(SpringApplication application, String[] args) {
-		this.application = application;
-	}
 
 	private void initialize(GenericApplicationContext context) {
 		context.registerBean(ConditionService.class,
@@ -82,7 +77,7 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 				ModuleMapping mapping = module.getAnnotation(ModuleMapping.class);
 				if (mapping != null) {
 					for (Class<?> type : mapping.value()) {
-						this.autoTypes.put(type,  module);
+						this.autoTypes.put(type, module);
 					}
 				}
 			}
@@ -111,7 +106,7 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 		}
 	}
 
-	private void extract(GenericApplicationContext context) {
+	private void extract(GenericApplicationContext context, SpringApplication application) {
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
 			if (source instanceof Class) {
@@ -148,7 +143,7 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 		}
 	}
 
-	public void addModule(Class<? extends Module> type) {
+	private void addModule(Class<? extends Module> type) {
 		if (type == null || this.types.contains(type)) {
 			return;
 		}
@@ -166,37 +161,24 @@ public class SlimConfigurationInstaller implements SpringApplicationRunListener 
 	}
 
 	@Override
-	public void starting() {
+	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
+		return ApplicationContextInitializedEvent.class.isAssignableFrom(eventType);
 	}
 
 	@Override
-	public void environmentPrepared(ConfigurableEnvironment environment) {
-	}
-
-	@Override
-	public void contextPrepared(ConfigurableApplicationContext context) {
+	public void onApplicationEvent(ApplicationEvent event) {
+		ApplicationContextInitializedEvent initialized = (ApplicationContextInitializedEvent) event;
+		ConfigurableApplicationContext context = initialized
+				.getApplicationContext();
+		if (!(context instanceof GenericApplicationContext)) {
+			throw new IllegalStateException("ApplicationContext must be a GenericApplicationContext");
+		}
 		if (context.getEnvironment().getProperty("spring.functional.enabled",
 				Boolean.class, true)) {
 			GenericApplicationContext generic = (GenericApplicationContext) context;
 			initialize(generic);
-			extract(generic);
+			extract(generic, initialized.getSpringApplication());
 		}
-	}
-
-	@Override
-	public void contextLoaded(ConfigurableApplicationContext context) {
-	}
-
-	@Override
-	public void started(ConfigurableApplicationContext context) {
-	}
-
-	@Override
-	public void running(ConfigurableApplicationContext context) {
-	}
-
-	@Override
-	public void failed(ConfigurableApplicationContext context, Throwable exception) {
 	}
 
 }

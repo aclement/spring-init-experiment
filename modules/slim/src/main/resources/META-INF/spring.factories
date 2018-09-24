@@ -1,2 +1,2 @@
-org.springframework.boot.SpringApplicationRunListener=\
+org.springframework.context.ApplicationListener=\
 slim.SlimConfigurationInstaller

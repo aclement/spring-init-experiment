@@ -61,6 +61,8 @@ import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.DynamicType.Builder;
+import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ImplementationDefinition;
+import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ParameterDefinition.Initial;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.Implementation.Context;
@@ -82,6 +84,7 @@ import net.bytebuddy.jar.asm.ClassWriter;
 import net.bytebuddy.jar.asm.Label;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
@@ -149,8 +152,10 @@ public class SlimConfigurationPlugin implements Plugin {
 							break;
 						}
 					}
-					// Exclude spring library imports (they won't have the $$initializer method)
-					if (!hasAnnotation(config, SlimConfiguration.class) && config.getName().startsWith("org.springframework")) {
+					// Exclude spring library imports (they won't have the $$initializer
+					// method)
+					if (!hasAnnotation(config, SlimConfiguration.class)
+							&& config.getName().startsWith("org.springframework")) {
 						skip = true;
 					}
 					if (!skip) {
@@ -335,9 +340,10 @@ public class SlimConfigurationPlugin implements Plugin {
 		code.add(MethodInvocation.invoke(inDefinedShape));
 		code.add(MethodReturn.of(
 				Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext));
-		builder = builder.defineMethod("$$initializer",
+		ImplementationDefinition<?> method = builder.defineMethod("$$initializer",
 				Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext,
-				Visibility.PUBLIC, Ownership.STATIC)
+				Visibility.PUBLIC, Ownership.STATIC);
+		builder = method
 				.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
 		return builder;
 	}

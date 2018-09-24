@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfigurat
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.WebFluxConfig;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxRegistrations;
+import org.springframework.boot.web.codec.CodecCustomizer;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.ReactiveAdapterRegistry;
@@ -20,11 +21,13 @@ import org.springframework.web.reactive.function.server.support.HandlerFunctionA
 import org.springframework.web.reactive.function.server.support.RouterFunctionMapping;
 import org.springframework.web.reactive.function.server.support.ServerResponseResultHandler;
 import org.springframework.web.reactive.result.SimpleHandlerAdapter;
+import org.springframework.web.reactive.result.method.HandlerMethodArgumentResolver;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.reactive.result.method.annotation.ResponseBodyResultHandler;
 import org.springframework.web.reactive.result.method.annotation.ResponseEntityResultHandler;
 import org.springframework.web.reactive.result.view.ViewResolutionResultHandler;
+import org.springframework.web.reactive.result.view.ViewResolver;
 import org.springframework.web.server.WebExceptionHandler;
 import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
@@ -114,12 +117,12 @@ class WebFluxAutoConfigurationGenerated {
 			context.registerBean(WebFluxConfigurer.class,
 					() -> new WebFluxConfig(context.getBean(ResourceProperties.class),
 							context.getBean(WebFluxProperties.class), context,
-							ObjectProviders.provider(context, WebFluxConfig.class, 3),
-							ObjectProviders.provider(context, WebFluxConfig.class, 4),
+							context.getAutowireCapableBeanFactory().getBeanProvider(HandlerMethodArgumentResolver.class),
+							context.getAutowireCapableBeanFactory().getBeanProvider(CodecCustomizer.class),
 							// TODO: still need ObjectProviders for this (private class in
 							// public constructor):
 							ObjectProviders.provider(context, WebFluxConfig.class, 5),
-							ObjectProviders.provider(context, WebFluxConfig.class, 6)));
+							context.getAutowireCapableBeanFactory().getBeanProvider(ViewResolver.class)));
 		}
 
 	}

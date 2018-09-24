@@ -16,6 +16,9 @@
 
 package slim;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -32,6 +35,7 @@ public class SlimConditionService implements ConditionService {
 
 	private final ConditionEvaluator evaluator;
 	private final ClassLoader classLoader;
+	private final Map<Class<?>, StandardAnnotationMetadata> metadata = new ConcurrentHashMap<>();
 
 	public SlimConditionService(BeanDefinitionRegistry registry, Environment environment,
 			ResourceLoader resourceLoader) {
@@ -42,16 +46,17 @@ public class SlimConditionService implements ConditionService {
 	@Override
 	public boolean matches(Class<?> type) {
 		try {
-			return !this.evaluator.shouldSkip(new StandardAnnotationMetadata(type));
-		} catch (ArrayStoreException e) {
+			return !this.evaluator.shouldSkip(getMetadata(type));
+		}
+		catch (ArrayStoreException e) {
 			return false;
 		}
 	}
 
 	@Override
 	public boolean matches(Class<?> factory, Class<?> type) {
-		for (MethodMetadata method : new StandardAnnotationMetadata(factory)
-				.getAnnotatedMethods(Bean.class.getName())) {
+		StandardAnnotationMetadata metadata = getMetadata(factory);
+		for (MethodMetadata method : metadata.getAnnotatedMethods(Bean.class.getName())) {
 			Class<?> candidate = ClassUtils.resolveClassName(method.getReturnTypeName(),
 					this.classLoader);
 			if (type.isAssignableFrom(candidate)) {
@@ -59,6 +64,11 @@ public class SlimConditionService implements ConditionService {
 			}
 		}
 		return false;
+	}
+
+	public StandardAnnotationMetadata getMetadata(Class<?> factory) {
+		return metadata.computeIfAbsent(factory,
+				type -> new StandardAnnotationMetadata(type));
 	}
 
 }
