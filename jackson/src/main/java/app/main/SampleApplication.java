@@ -25,11 +25,16 @@ import reactor.core.publisher.Mono;
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
 public class SampleApplication {
+	
+	@Bean
+	public Foo foo() {
+		return new Foo();
+	}
 
 	@Bean
-	public RouterFunction<?> userEndpoints() {
+	public RouterFunction<?> userEndpoints(Foo foo) {
 		return route(GET("/"),
-				request -> ok().body(Mono.just(new Foo("Hello")), Foo.class));
+				request -> ok().body(Mono.just(foo), Foo.class));
 	}
 
 	public static void main(String[] args) {

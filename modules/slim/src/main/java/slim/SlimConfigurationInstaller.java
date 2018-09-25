@@ -83,8 +83,10 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 			if (context.getEnvironment().getProperty("spring.functional.enabled",
 					Boolean.class, true)) {
 				GenericApplicationContext generic = (GenericApplicationContext) context;
-				initialize(generic);
-				extract(generic, initialized.getSpringApplication());
+				ConditionService conditions = new SlimConditionService(generic,
+						context.getEnvironment(), context);
+				initialize(generic, conditions);
+				extract(generic, initialized.getSpringApplication(), conditions);
 			}
 		}
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
@@ -107,10 +109,9 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		}
 	}
 
-	private void initialize(GenericApplicationContext context) {
-		context.registerBean(ConditionService.class,
-				() -> new SlimConditionService(context, context.getEnvironment(),
-						context));
+	private void initialize(GenericApplicationContext context,
+			ConditionService conditions) {
+		context.registerBean(ConditionService.class, () -> conditions);
 		context.registerBean(
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class);
@@ -154,8 +155,8 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		}
 	}
 
-	private void extract(GenericApplicationContext context,
-			SpringApplication application) {
+	private void extract(GenericApplicationContext context, SpringApplication application,
+			ConditionService conditions) {
 		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
@@ -168,37 +169,43 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 						application.getClassLoader());
 			}
 			if (type != null) {
-				extract(type, seen);
+				extract(conditions, type, seen);
 			}
 		}
 		apply(context);
 	}
 
-	private void extract(Class<?> beanClass, Set<Class<?>> seen) {
-		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
-		if (slim != null) {
-			Class<? extends Module>[] types = slim.module();
-			for (Class<? extends Module> type : types) {
-				logger.debug("ModuleImport: " + type);
-				addModule(type);
+	private void extract(ConditionService conditions, Class<?> beanClass,
+			Set<Class<?>> seen) {
+		if (conditions.matches(beanClass)) {
+			SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+			if (slim != null) {
+				Class<? extends Module>[] types = slim.module();
+				for (Class<? extends Module> type : types) {
+					logger.debug("ModuleImport: " + type);
+					addModule(type);
+				}
 			}
+			processImports(conditions, beanClass, seen);
 		}
-		processImports(beanClass, seen);
 	}
 
-	private void processImports(Class<?> beanClass, Set<Class<?>> seen) {
+	private void processImports(ConditionService conditions, Class<?> beanClass,
+			Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
-			Set<Import> imports = AnnotatedElementUtils
-					.findAllMergedAnnotations(beanClass, Import.class);
-			if (imports != null) {
-				for (Import imported : imports) {
-					for (Class<?> value : imported.value()) {
-						logger.debug("Import: " + value);
-						Class<? extends Module> type = this.autoTypes.get(value);
-						if (type != null) {
-							addModule(type);
+			if (conditions.matches(beanClass)) {
+				Set<Import> imports = AnnotatedElementUtils
+						.findAllMergedAnnotations(beanClass, Import.class);
+				if (imports != null) {
+					for (Import imported : imports) {
+						for (Class<?> value : imported.value()) {
+							logger.debug("Import: " + value);
+							Class<? extends Module> type = this.autoTypes.get(value);
+							if (type != null) {
+								addModule(type);
+							}
+							processImports(conditions, value, seen);
 						}
-						processImports(value, seen);
 					}
 				}
 			}

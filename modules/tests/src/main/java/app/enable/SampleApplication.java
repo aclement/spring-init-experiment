@@ -2,16 +2,16 @@ package app.enable;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import lib.enable.EnableBar;
-import slim.ImportModule;
 
 @SpringBootConfiguration
 @EnableBar
 // TODO: make this work with `@Import(ConfigurationPropertiesAutoConfiguration.class)`
-@ImportModule(value = ContextAutoConfigurationModule.class)
+@Import(ContextAutoConfigurationModule.class)
 public class SampleApplication {
 	
 	public static void main(String[] args) {

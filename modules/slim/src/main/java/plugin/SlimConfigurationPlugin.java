@@ -1,9 +1,5 @@
 package plugin;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.LambdaMetafactory;
@@ -41,6 +37,10 @@ import org.springframework.core.env.Profiles;
 import org.springframework.core.env.PropertyResolver;
 import org.springframework.util.ClassUtils;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.Plugin;
@@ -62,7 +62,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ImplementationDefinition;
-import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ParameterDefinition.Initial;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.Implementation.Context;
@@ -84,14 +83,12 @@ import net.bytebuddy.jar.asm.ClassWriter;
 import net.bytebuddy.jar.asm.Label;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import slim.ConditionService;
-import slim.ImportModule;
-import slim.Module;
 import slim.InitializerMapping;
+import slim.Module;
 import slim.SlimConfiguration;
 
 public class SlimConfigurationPlugin implements Plugin {
@@ -118,8 +115,6 @@ public class SlimConfigurationPlugin implements Plugin {
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
 			TypeDescription typeDescription, ClassFileLocator locator) {
 		try {
-			TypeDescription[] importModuleTypeDescriptions = getImportModuleTypeDescriptions(
-					typeDescription);
 			File targetClassesFolder = locateTargetClasses(locator);
 			if (targetClassesFolder == null) {
 				log("Unable to determine target/classes folder for module");
@@ -145,13 +140,6 @@ public class SlimConfigurationPlugin implements Plugin {
 					// Name based - crude...
 					boolean skip = false;
 					System.out.println(config.getSimpleName());
-					for (TypeDescription importModuleTypeDescription : importModuleTypeDescriptions) {
-						if (importModuleTypeDescription.getSimpleName()
-								.startsWith(config.getSimpleName())) {
-							skip = true;
-							break;
-						}
-					}
 					// Exclude spring library imports (they won't have the $$initializer
 					// method)
 					if (!hasAnnotation(config, SlimConfiguration.class)
@@ -168,7 +156,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				}
 				DynamicType moduleClassType = moduleClassFactory.make(typeDescription,
 						locator, configSubset.toArray(new TypeDescription[0]));
-				builder = addSlimConfigurationAnnotation(importModuleTypeDescriptions,
+				builder = addSlimConfigurationAnnotation(
 						builder, moduleClassType);
 				log("Saving: " + moduleClassType.getTypeDescription() + " in "
 						+ targetClassesFolder);
@@ -236,51 +224,23 @@ public class SlimConfigurationPlugin implements Plugin {
 			TypeDescription[] types = (TypeDescription[]) imports.getValue(IMPORTS)
 					.resolve();
 			for (TypeDescription type : types) {
-				log("Import " + type);
-				result.add(type);
+				if (!type.isAssignableTo(Module.class)) {
+					log("Import " + type);
+					result.add(type);
+				}
 			}
 		}
 		return result.toArray(new TypeDescription[0]);
 	}
 
 	private Builder<?> addSlimConfigurationAnnotation(
-			TypeDescription[] importModuleTypeDescriptions,
 			DynamicType.Builder<?> builder, DynamicType initializerClassType) {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
-		for (TypeDescription td : importModuleTypeDescriptions) {
-			initializers.add(td);
-		}
 		return builder.annotateType(AnnotationDescription.Builder
 				.ofType(SlimConfiguration.class)
 				.defineTypeArray("module", initializers.toArray(new TypeDescription[0]))
 				.build());
-	}
-
-	private MethodDescription.InDefinedShape moduleProperty = null;
-
-	TypeDescription[] getImportModuleTypeDescriptions(TypeDescription typeDescription) {
-		List<TypeDescription> importModuleTypeDescriptions = new ArrayList<>();
-		if (moduleProperty == null) {
-			try {
-				moduleProperty = new MethodDescription.ForLoadedMethod(
-						ImportModule.class.getMethod("value"));
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		AnnotationDescription[] importModule = typeDescription.getDeclaredAnnotations()
-				.filter(desc -> desc.getAnnotationType().represents(ImportModule.class))
-				.toArray(new AnnotationDescription[0]);
-		if (importModule.length != 0) {
-			AnnotationValue<?, ?> value = importModule[0].getValue(moduleProperty);
-			TypeDescription[] moduleClasses = (TypeDescription[]) value.resolve();
-			for (TypeDescription moduleClass : moduleClasses) {
-				importModuleTypeDescriptions.add(moduleClass);
-			}
-		}
-		return importModuleTypeDescriptions.toArray(new TypeDescription[0]);
 	}
 
 	@Override
