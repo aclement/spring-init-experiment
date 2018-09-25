@@ -34,7 +34,7 @@ import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
 import slim.ModuleMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
@@ -42,7 +42,7 @@ import slim.SlimConfiguration;
  */
 // TODO: add Jackson and Jsonb
 @ModuleMapping({HttpMessageConvertersAutoConfiguration.class, CodecsAutoConfiguration.class})
-@SlimConfiguration(module = { ContextAutoConfigurationModule.class,
+@ImportModule(module = { ContextAutoConfigurationModule.class,
 		GsonAutoConfigurationModule.class })
 public class HttpMessageConvertersAutoConfigurationModule implements Module {
 

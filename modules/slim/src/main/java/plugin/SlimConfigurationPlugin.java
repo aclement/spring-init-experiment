@@ -89,7 +89,7 @@ import net.bytebuddy.utility.JavaConstant;
 import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 public class SlimConfigurationPlugin implements Plugin {
 
@@ -142,7 +142,7 @@ public class SlimConfigurationPlugin implements Plugin {
 					System.out.println(config.getSimpleName());
 					// Exclude spring library imports (they won't have the $$initializer
 					// method)
-					if (!hasAnnotation(config, SlimConfiguration.class)
+					if (!hasAnnotation(config, ImportModule.class)
 							&& config.getName().startsWith("org.springframework")) {
 						skip = true;
 					}
@@ -238,14 +238,14 @@ public class SlimConfigurationPlugin implements Plugin {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
 		return builder.annotateType(AnnotationDescription.Builder
-				.ofType(SlimConfiguration.class)
+				.ofType(ImportModule.class)
 				.defineTypeArray("module", initializers.toArray(new TypeDescription[0]))
 				.build());
 	}
 
 	@Override
 	public boolean matches(TypeDescription target) {
-		return !hasAnnotation(target, SlimConfiguration.class)
+		return !hasAnnotation(target, ImportModule.class)
 				&& hasAnnotation(target, Configuration.class);
 	}
 

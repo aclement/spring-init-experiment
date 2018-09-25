@@ -33,14 +33,14 @@ import org.springframework.core.Ordered;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
 // Generated from MustacheReactiveWebConfiguration
-@SlimConfiguration(module = { MustacheAutoConfigurationModule.class,
+@ImportModule(module = { MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class MustacheReactiveWebConfigurationGenerated {
 

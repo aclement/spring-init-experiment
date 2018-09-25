@@ -90,7 +90,7 @@ public class SlimConfigurationClassPostProcessor implements
 	}
 
 	private boolean slimConfiguration(Class<?> beanClass) {
-		SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+		ImportModule slim = beanClass.getAnnotation(ImportModule.class);
 		if (slim != null) {
 			return true;
 		}

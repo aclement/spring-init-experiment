@@ -178,7 +178,7 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 	private void extract(ConditionService conditions, Class<?> beanClass,
 			Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
-			SlimConfiguration slim = beanClass.getAnnotation(SlimConfiguration.class);
+			ImportModule slim = beanClass.getAnnotation(ImportModule.class);
 			if (slim != null) {
 				Class<? extends Module>[] types = slim.module();
 				for (Class<? extends Module> type : types) {

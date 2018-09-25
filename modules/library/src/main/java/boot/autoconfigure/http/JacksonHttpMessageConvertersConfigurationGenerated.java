@@ -35,13 +35,13 @@ import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerate
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2XmlHttpMessageConverterConfiguration;
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@SlimConfiguration
+@ImportModule
 public class JacksonHttpMessageConvertersConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {

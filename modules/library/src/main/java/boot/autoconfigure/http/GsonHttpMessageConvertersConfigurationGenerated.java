@@ -25,13 +25,13 @@ import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.util.ClassUtils;
 
 import slim.InitializerMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@SlimConfiguration
+@ImportModule
 public class GsonHttpMessageConvertersConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {

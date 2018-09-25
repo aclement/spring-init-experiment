@@ -32,14 +32,14 @@ import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
 import slim.ModuleMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
 @ModuleMapping(MustacheAutoConfiguration.class)
-@SlimConfiguration(module = ContextAutoConfigurationModule.class)
+@ImportModule(module = ContextAutoConfigurationModule.class)
 public class MustacheAutoConfigurationModule implements Module {
 
 	@Override

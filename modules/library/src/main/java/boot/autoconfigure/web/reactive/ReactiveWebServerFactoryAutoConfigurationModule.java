@@ -35,7 +35,7 @@ import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
 import slim.ModuleMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
@@ -44,7 +44,7 @@ import slim.SlimConfiguration;
 @ModuleMapping({ ReactiveWebServerFactoryAutoConfiguration.class,
 		WebFluxAutoConfiguration.class, ErrorWebFluxAutoConfiguration.class,
 		HttpHandlerAutoConfiguration.class })
-@SlimConfiguration(module = { HttpMessageConvertersAutoConfigurationModule.class,
+@ImportModule(module = { HttpMessageConvertersAutoConfigurationModule.class,
 		ReactorCoreAutoConfigurationModule.class })
 public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 

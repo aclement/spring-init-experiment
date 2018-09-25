@@ -34,14 +34,14 @@ import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
 import slim.ModuleMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
 @ModuleMapping(GsonAutoConfiguration.class)
-@SlimConfiguration(module = ContextAutoConfigurationModule.class)
+@ImportModule(module = ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 
 	@Override

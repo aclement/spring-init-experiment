@@ -26,13 +26,13 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.SlimConfiguration;
+import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@SlimConfiguration
+@ImportModule
 class ReactiveWebServerFactoryAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
