@@ -31,13 +31,13 @@ import org.springframework.util.ClassUtils;
  * @author Dave Syer
  *
  */
-public class SlimConditionService implements ConditionService {
+public class ModuleInstallerConditionService implements ConditionService {
 
 	private final ConditionEvaluator evaluator;
 	private final ClassLoader classLoader;
 	private final Map<Class<?>, StandardAnnotationMetadata> metadata = new ConcurrentHashMap<>();
 
-	public SlimConditionService(BeanDefinitionRegistry registry, Environment environment,
+	public ModuleInstallerConditionService(BeanDefinitionRegistry registry, Environment environment,
 			ResourceLoader resourceLoader) {
 		this.evaluator = new ConditionEvaluator(registry, environment, resourceLoader);
 		this.classLoader = resourceLoader.getClassLoader();

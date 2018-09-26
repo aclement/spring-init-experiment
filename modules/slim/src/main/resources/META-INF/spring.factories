@@ -1,2 +1,2 @@
 org.springframework.context.ApplicationListener=\
-slim.SlimConfigurationInstaller
+slim.ModuleInstallerListener

@@ -1,6 +1,7 @@
 package boot.autoconfigure.web.reactive;
 
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
+import org.springframework.boot.autoconfigure.web.reactive.ResourceHandlerRegistrationCustomizer;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.EnableWebFluxConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration.WebFluxConfig;
@@ -33,9 +34,8 @@ import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
 
 import slim.ConditionService;
-import slim.InitializerMapping;
-import slim.ObjectProviders;
 import slim.ImportModule;
+import slim.InitializerMapping;
 
 @ImportModule
 class WebFluxAutoConfigurationGenerated {
@@ -119,9 +119,7 @@ class WebFluxAutoConfigurationGenerated {
 							context.getBean(WebFluxProperties.class), context,
 							context.getAutowireCapableBeanFactory().getBeanProvider(HandlerMethodArgumentResolver.class),
 							context.getAutowireCapableBeanFactory().getBeanProvider(CodecCustomizer.class),
-							// TODO: still need ObjectProviders for this (private class in
-							// public constructor):
-							ObjectProviders.provider(context, WebFluxConfig.class, 5),
+							context.getAutowireCapableBeanFactory().getBeanProvider(ResourceHandlerRegistrationCustomizer.class),
 							context.getAutowireCapableBeanFactory().getBeanProvider(ViewResolver.class)));
 		}
 

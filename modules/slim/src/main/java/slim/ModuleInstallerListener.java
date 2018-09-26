@@ -28,6 +28,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
@@ -42,18 +48,21 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.io.support.SpringFactoriesLoader;
+import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 
 /**
  * @author Dave Syer
  *
  */
-public class SlimConfigurationInstaller implements SmartApplicationListener {
+public class ModuleInstallerListener implements SmartApplicationListener {
 
-	private static final Log logger = LogFactory.getLog(SlimConfigurationInstaller.class);
+	private static final Log logger = LogFactory.getLog(ModuleInstallerListener.class);
 
 	// TODO: make this class stateless
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
@@ -85,10 +94,10 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 						"ApplicationContext must be a GenericApplicationContext");
 			}
 			GenericApplicationContext generic = (GenericApplicationContext) context;
-			ConditionService conditions = new SlimConditionService(generic,
+			ConditionService conditions = new ModuleInstallerConditionService(generic,
 					context.getEnvironment(), context);
 			initialize(generic, conditions);
-			extract(generic, initialized.getSpringApplication(), conditions);
+			apply(generic, initialized.getSpringApplication(), conditions);
 		}
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			ApplicationEnvironmentPreparedEvent prepared = (ApplicationEnvironmentPreparedEvent) event;
@@ -122,7 +131,8 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		context.registerBean(ConditionService.class, () -> conditions);
 		context.registerBean(
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
-				SlimConfigurationClassPostProcessor.class);
+				SlimConfigurationClassPostProcessor.class,
+				() -> new SlimConfigurationClassPostProcessor());
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
 		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
 				.loadFactoryNames(Module.class, context.getClassLoader()));
@@ -163,7 +173,7 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		}
 	}
 
-	private void extract(GenericApplicationContext context, SpringApplication application,
+	private void apply(GenericApplicationContext context, SpringApplication application,
 			ConditionService conditions) {
 		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
@@ -235,6 +245,76 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 			initializers.addAll(
 					BeanUtils.instantiateClass(type, Module.class).initializers());
 		}
+	}
+
+}
+
+class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostProcessor,
+		BeanClassLoaderAware, PriorityOrdered {
+
+	private ClassLoader classLoader;
+
+	public int getOrder() {
+		return Ordered.LOWEST_PRECEDENCE - 1;
+	}
+
+	public void setMetadataReaderFactory(MetadataReaderFactory metadataReaderFactory) {
+	}
+
+	@Override
+	public void setBeanClassLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
+	}
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
+			throws BeansException {
+	}
+
+	@Override
+	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
+			throws BeansException {
+		String[] candidateNames = registry.getBeanDefinitionNames();
+		for (String beanName : candidateNames) {
+			BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
+			Class<?> beanClass = findBeanClass(beanDefinition);
+			if (beanClass != null) {
+				if (slimConfiguration(beanClass)) {
+					// In an app with mixed @Configuration and initializers we would have
+					// to do more than this...
+					if (registry instanceof ConfigurableListableBeanFactory) {
+						ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
+						if (listable.getBeanNamesForType(beanClass, false,
+								false).length > 1) {
+							// Some ApplicationContext classes register @Configuration
+							// classes as bean definitions so we need to remove that one
+							registry.removeBeanDefinition(beanName);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private Class<?> findBeanClass(BeanDefinition beanDefinition) {
+		String className = beanDefinition.getBeanClassName();
+		if (className == null || beanDefinition.getFactoryMethodName() != null) {
+			return null;
+		}
+		try {
+			return ClassUtils.resolveClassName(className, classLoader);
+		}
+		catch (Throwable e) {
+			return null;
+		}
+	}
+
+	private boolean slimConfiguration(Class<?> beanClass) {
+		ImportModule slim = beanClass.getAnnotation(ImportModule.class);
+		if (slim != null) {
+			return true;
+		}
+		return false;
 	}
 
 }
