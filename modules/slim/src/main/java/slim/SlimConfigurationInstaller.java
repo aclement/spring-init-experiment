@@ -43,6 +43,7 @@ import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.util.ClassUtils;
 
@@ -76,21 +77,24 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 		if (event instanceof ApplicationContextInitializedEvent) {
 			ApplicationContextInitializedEvent initialized = (ApplicationContextInitializedEvent) event;
 			ConfigurableApplicationContext context = initialized.getApplicationContext();
+			if (!isEnabled(context.getEnvironment())) {
+				return;
+			}
 			if (!(context instanceof GenericApplicationContext)) {
 				throw new IllegalStateException(
 						"ApplicationContext must be a GenericApplicationContext");
 			}
-			if (context.getEnvironment().getProperty("spring.functional.enabled",
-					Boolean.class, true)) {
-				GenericApplicationContext generic = (GenericApplicationContext) context;
-				ConditionService conditions = new SlimConditionService(generic,
-						context.getEnvironment(), context);
-				initialize(generic, conditions);
-				extract(generic, initialized.getSpringApplication(), conditions);
-			}
+			GenericApplicationContext generic = (GenericApplicationContext) context;
+			ConditionService conditions = new SlimConditionService(generic,
+					context.getEnvironment(), context);
+			initialize(generic, conditions);
+			extract(generic, initialized.getSpringApplication(), conditions);
 		}
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			ApplicationEnvironmentPreparedEvent prepared = (ApplicationEnvironmentPreparedEvent) event;
+			if (!isEnabled(prepared.getEnvironment())) {
+				return;
+			}
 			SpringApplication application = prepared.getSpringApplication();
 			WebApplicationType type = application.getWebApplicationType();
 			if (type == WebApplicationType.NONE) {
@@ -107,6 +111,10 @@ public class SlimConfigurationInstaller implements SmartApplicationListener {
 						ServletWebServerApplicationContext.class);
 			}
 		}
+	}
+
+	private boolean isEnabled(ConfigurableEnvironment environment) {
+		return environment.getProperty("spring.functional.enabled", Boolean.class, true);
 	}
 
 	private void initialize(GenericApplicationContext context,

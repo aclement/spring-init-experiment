@@ -281,7 +281,7 @@ public class SlimConfigurationPlugin implements Plugin {
 	 * <pre>
 	 * <code>
 	 *  public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-	 *    return new SampleConfiguration.Initializer();
+	 *    return new SampleConfiguration.$Initializer();
 	 *  }
 	 *  </code>
 	 * 
@@ -871,6 +871,8 @@ public class SlimConfigurationPlugin implements Plugin {
 					.withValues(Collections.emptyList()));
 			code.add(MethodVariableAccess.REFERENCE.storeAt(2));
 
+			// TODO: mark the bean definition somehow so it doesn't get
+			// processed by ConfigurationClassPostProcessor
 			// Call context.registerBean(SampleConfiguration.class)
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 			code.add(ClassConstant.of(configurationTypeDescription));

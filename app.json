@@ -9,7 +9,8 @@
 	},
 	{
 		"name": "com.acme.SampleApplication",
-		"allDeclaredConstructors": true
+		"allDeclaredConstructors": true,
+		"allDeclaredFields": true
 	},
 	{
 		"name": "com.acme.SampleApplication$Initializer",

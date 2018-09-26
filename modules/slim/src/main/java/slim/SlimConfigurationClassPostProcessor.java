@@ -69,8 +69,6 @@ public class SlimConfigurationClassPostProcessor implements
 							registry.removeBeanDefinition(beanName);
 						}
 					}
-					// TODO: mark the bean definition somehow so it doesn't get
-					// processed by ConfigurationClassPostProcessor
 				}
 			}
 		}
