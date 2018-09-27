@@ -82,7 +82,6 @@
 		<byte-buddy.version>1.8.21</byte-buddy.version>
 		<start-class>app.main.SampleApplication</start-class>
 		<thin.version>1.0.15.RELEASE</thin.version>
-		<spring.version>5.1.0.BUILD-SNAPSHOT</spring.version>
 	</properties>
 
 
@@ -91,13 +90,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<dependencies>
-					<dependency>
-						<groupId>org.springframework.boot.experimental</groupId>
-						<artifactId>spring-boot-thin-layout</artifactId>
-						<version>${thin.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>net.bytebuddy</groupId>
