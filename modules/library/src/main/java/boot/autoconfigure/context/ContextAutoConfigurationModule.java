@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoCon
 import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 import slim.InitializerMapping;
 import slim.Module;
@@ -34,7 +35,7 @@ import slim.ModuleMapping;
  *
  */
 @ModuleMapping({ PropertyPlaceholderAutoConfiguration.class,
-			ConfigurationPropertiesAutoConfiguration.class })
+		ConfigurationPropertiesAutoConfiguration.class })
 public class ContextAutoConfigurationModule implements Module {
 
 	@Override
@@ -56,6 +57,8 @@ public class ContextAutoConfigurationModule implements Module {
 			// TODO: how to get from @EnableConfigurationProperties to this?
 			new ConfigurationPropertiesBindingPostProcessorRegistrar()
 					.registerBeanDefinitions(null, context);
+			context.registerBean(PropertySourcesPlaceholderConfigurer.class,
+					() -> new PropertySourcesPlaceholderConfigurer());
 		}
 
 	}
