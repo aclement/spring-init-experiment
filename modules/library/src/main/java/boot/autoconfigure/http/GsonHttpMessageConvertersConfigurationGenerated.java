@@ -45,7 +45,9 @@ public class GsonHttpMessageConvertersConfigurationGenerated {
 		@Override
 		public void initialize(GenericApplicationContext context) {
 			// @ConditionalOnClass (but from a class that isn't visible)
-			if (ClassUtils.isPresent("com.google.gson.Gson", context.getClassLoader())) {
+			if (ClassUtils.isPresent("com.google.gson.Gson", context.getClassLoader())
+					&& context.getBeanFactory().getBeanNamesForType(Gson.class, false,
+							false).length > 0) {
 				context.registerBean(GsonHttpMessageConverter.class,
 						() -> new GsonHttpMessageConverter(context.getBean(Gson.class)));
 			}

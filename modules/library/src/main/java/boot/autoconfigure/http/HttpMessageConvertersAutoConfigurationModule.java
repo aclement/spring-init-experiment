@@ -25,23 +25,26 @@ import org.springframework.boot.autoconfigure.http.HttpProperties;
 import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.ResolvableType;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 import slim.ModuleMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
 // TODO: add Jackson and Jsonb
-@ModuleMapping({HttpMessageConvertersAutoConfiguration.class, CodecsAutoConfiguration.class})
+@ModuleMapping({ HttpMessageConvertersAutoConfiguration.class,
+		CodecsAutoConfiguration.class })
 @ImportModule(module = { ContextAutoConfigurationModule.class,
 		GsonAutoConfigurationModule.class })
 public class HttpMessageConvertersAutoConfigurationModule implements Module {
@@ -67,7 +70,10 @@ public class HttpMessageConvertersAutoConfigurationModule implements Module {
 			ConditionService conditions = context.getBeanFactory()
 					.getBean(ConditionService.class);
 			if (conditions.matches(HttpMessageConvertersAutoConfiguration.class)) {
-				context.registerBean(HttpMessageConvertersAutoConfiguration.class);
+				context.registerBean(HttpMessageConvertersAutoConfiguration.class,
+						() -> new HttpMessageConvertersAutoConfiguration(
+								context.getBeanFactory().getBeanProvider(ResolvableType
+										.forClass(HttpMessageConverter.class))));
 				context.registerBean(HttpProperties.class, () -> new HttpProperties());
 				if (conditions.matches(HttpMessageConvertersAutoConfiguration.class,
 						HttpMessageConverters.class)) {
