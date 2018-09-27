@@ -1,4 +1,4 @@
-package app.main;
+	package app.main;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 
 @SpringBootConfiguration
+// @EnableAutoConfiguration
 @Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 	

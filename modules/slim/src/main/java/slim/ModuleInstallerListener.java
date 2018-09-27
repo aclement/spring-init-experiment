@@ -204,7 +204,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
 			if (conditions.matches(beanClass)) {
-				processImportModule(beanClass);
+				processImportModule(conditions, beanClass, seen);
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
 				if (imports != null) {
@@ -214,7 +214,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							Class<? extends Module> type = this.autoTypes.get(value);
 							if (type != null) {
 								addModule(type);
-								processImportModule(type);
+								processImportModule(conditions, type, seen);
 							}
 							processImports(conditions, value, seen);
 						}
@@ -225,13 +225,19 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		}
 	}
 
-	private void processImportModule(Class<?> beanClass) {
-		ImportModule slim = beanClass.getAnnotation(ImportModule.class);
-		if (slim != null) {
-			Class<? extends Module>[] types = slim.module();
-			for (Class<? extends Module> type : types) {
-				logger.debug("ModuleImport: " + type);
-				addModule(type);
+	private void processImportModule(ConditionService conditions, Class<?> beanClass,
+			Set<Class<?>> seen) {
+		if (!seen.contains(beanClass)) {
+			if (conditions.matches(beanClass)) {
+				ImportModule slim = beanClass.getAnnotation(ImportModule.class);
+				if (slim != null) {
+					Class<? extends Module>[] types = slim.module();
+					for (Class<? extends Module> type : types) {
+						logger.debug("ModuleImport: " + type);
+						addModule(type);
+						processImportModule(conditions, type, seen);
+					}
+				}
 			}
 		}
 	}
