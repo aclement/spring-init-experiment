@@ -22,18 +22,20 @@ import java.util.List;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreAutoConfiguration;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreProperties;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping(ReactorCoreAutoConfiguration.class)
+@Configuration
+@Import(ReactorCoreAutoConfiguration.class)
 public class ReactorCoreAutoConfigurationModule implements Module {
 
 	@Override

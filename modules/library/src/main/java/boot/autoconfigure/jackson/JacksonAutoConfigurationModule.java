@@ -49,6 +49,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.Ordered;
@@ -59,16 +60,16 @@ import org.springframework.util.ReflectionUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping(JacksonAutoConfiguration.class)
+@Configuration
+@Import(JacksonAutoConfiguration.class)
 @ImportModule(module = ContextAutoConfigurationModule.class)
 public class JacksonAutoConfigurationModule implements Module {
 

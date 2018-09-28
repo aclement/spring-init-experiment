@@ -24,6 +24,8 @@ import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConf
 import org.springframework.boot.autoconfigure.http.HttpProperties;
 import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -36,14 +38,14 @@ import slim.ConditionService;
 import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
 
 /**
  * @author Dave Syer
  *
  */
 // TODO: add Jackson and Jsonb
-@ModuleMapping({ HttpMessageConvertersAutoConfiguration.class,
+@Configuration
+@Import({ HttpMessageConvertersAutoConfiguration.class,
 		CodecsAutoConfiguration.class })
 @ImportModule(module = { ContextAutoConfigurationModule.class,
 		GsonAutoConfigurationModule.class })

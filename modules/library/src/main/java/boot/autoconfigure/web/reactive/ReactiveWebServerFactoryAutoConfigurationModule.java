@@ -27,21 +27,23 @@ import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfigurat
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping({ ReactiveWebServerFactoryAutoConfiguration.class,
+@Configuration
+@Import({ ReactiveWebServerFactoryAutoConfiguration.class,
 		WebFluxAutoConfiguration.class, ErrorWebFluxAutoConfiguration.class,
 		HttpHandlerAutoConfiguration.class })
 @ImportModule(module = { HttpMessageConvertersAutoConfigurationModule.class,

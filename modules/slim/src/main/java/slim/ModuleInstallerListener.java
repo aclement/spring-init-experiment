@@ -141,7 +141,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				@SuppressWarnings("unchecked")
 				Class<? extends Module> module = (Class<? extends Module>) ClassUtils
 						.resolveClassName(typeName, context.getClassLoader());
-				ModuleMapping mapping = module.getAnnotation(ModuleMapping.class);
+				Import mapping = module.getAnnotation(Import.class);
 				if (mapping != null) {
 					for (Class<?> type : mapping.value()) {
 						this.autoTypes.put(type, module);

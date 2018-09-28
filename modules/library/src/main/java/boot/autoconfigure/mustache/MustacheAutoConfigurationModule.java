@@ -25,20 +25,22 @@ import com.samskivert.mustache.Mustache.TemplateLoader;
 import org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.mustache.MustacheProperties;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping(MustacheAutoConfiguration.class)
+@Configuration
+@Import(MustacheAutoConfiguration.class)
 @ImportModule(module = ContextAutoConfigurationModule.class)
 public class MustacheAutoConfigurationModule implements Module {
 

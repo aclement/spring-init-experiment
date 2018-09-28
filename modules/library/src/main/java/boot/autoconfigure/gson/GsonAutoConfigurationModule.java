@@ -27,20 +27,22 @@ import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.boot.autoconfigure.gson.GsonBuilderCustomizer;
 import org.springframework.boot.autoconfigure.gson.GsonProperties;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping(GsonAutoConfiguration.class)
+@Configuration
+@Import(GsonAutoConfiguration.class)
 @ImportModule(module = ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 

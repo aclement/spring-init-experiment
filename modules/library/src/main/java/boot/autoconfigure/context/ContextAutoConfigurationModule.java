@@ -23,18 +23,20 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ModuleMapping;
 
 /**
  * @author Dave Syer
  *
  */
-@ModuleMapping({ PropertyPlaceholderAutoConfiguration.class,
+@Configuration
+@Import({ PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class })
 public class ContextAutoConfigurationModule implements Module {
 
