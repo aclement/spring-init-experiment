@@ -45,7 +45,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.annotation.AnnotationDescription.Loadable;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -87,9 +86,9 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import slim.ConditionService;
+import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
-import slim.ImportModule;
 
 public class SlimConfigurationPlugin implements Plugin {
 
@@ -156,8 +155,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				}
 				DynamicType moduleClassType = moduleClassFactory.make(typeDescription,
 						locator, configSubset.toArray(new TypeDescription[0]));
-				builder = addSlimConfigurationAnnotation(
-						builder, moduleClassType);
+				builder = addSlimConfigurationAnnotation(builder, moduleClassType);
 				log("Saving: " + moduleClassType.getTypeDescription() + " in "
 						+ targetClassesFolder);
 				moduleClassType.saveIn(targetClassesFolder);
@@ -213,14 +211,12 @@ public class SlimConfigurationPlugin implements Plugin {
 	}
 
 	private TypeDescription[] findConfigs(TypeDescription typeDescription) {
-		Collection<TypeDescription> result = new LinkedHashSet<>();
-		Loadable<Import> imports = typeDescription.getDeclaredAnnotations()
-				.ofType(Import.class);
 		log("Finding imports for " + typeDescription);
-		MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType
-				.of(Import.class).getDeclaredMethods();
-		InDefinedShape IMPORTS = methodList.filter(named("value")).getOnly();
-		if (imports != null) {
+		Collection<TypeDescription> result = new LinkedHashSet<>();
+		for (AnnotationDescription imports : findImports(typeDescription)) {
+			MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType
+					.of(Import.class).getDeclaredMethods();
+			InDefinedShape IMPORTS = methodList.filter(named("value")).getOnly();
 			TypeDescription[] types = (TypeDescription[]) imports.getValue(IMPORTS)
 					.resolve();
 			for (TypeDescription type : types) {
@@ -233,8 +229,19 @@ public class SlimConfigurationPlugin implements Plugin {
 		return result.toArray(new TypeDescription[0]);
 	}
 
-	private Builder<?> addSlimConfigurationAnnotation(
-			DynamicType.Builder<?> builder, DynamicType initializerClassType) {
+	private List<AnnotationDescription> findImports(TypeDescription typeDescription) {
+		List<AnnotationDescription> result = new ArrayList<>();
+		for(AnnotationDescription candidate : typeDescription.getDeclaredAnnotations()) {
+			AnnotationDescription found = findMetaAnnotation(candidate, Import.class);
+			if (found!=null) {
+				result.add(found);
+			}
+		}
+		return result;
+	}
+
+	private Builder<?> addSlimConfigurationAnnotation(DynamicType.Builder<?> builder,
+			DynamicType initializerClassType) {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
 		return builder.annotateType(AnnotationDescription.Builder
@@ -245,6 +252,7 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	@Override
 	public boolean matches(TypeDescription target) {
+		log("Matching: " + target);
 		return !hasAnnotation(target, ImportModule.class)
 				&& hasAnnotation(target, Configuration.class);
 	}
@@ -257,22 +265,31 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	private boolean isMetaAnnotated(AnnotationDescription desc,
 			Class<? extends Annotation> annotation) {
-		return isMetaAnnotated(desc, annotation, new HashSet<>());
+		return findMetaAnnotation(desc, annotation) != null;
 	}
 
-	private boolean isMetaAnnotated(AnnotationDescription desc,
-			Class<? extends Annotation> annotation, Set<AnnotationDescription> seen) {
-		seen.add(desc);
+	private AnnotationDescription findMetaAnnotation(AnnotationDescription desc,
+			Class<? extends Annotation> annotation) {
+		return findMetaAnnotation(desc, annotation, new HashSet<>());
+	}
+	
+	private AnnotationDescription findMetaAnnotation(AnnotationDescription desc,
+				Class<? extends Annotation> annotation, Set<AnnotationDescription> seen) {
+		log("Searching for "  + annotation + " in " + desc);
 		TypeDescription type = desc.getAnnotationType();
+		seen.add(desc);
 		if (type.represents(annotation)) {
-			return true;
+			return desc;
 		}
 		for (AnnotationDescription ann : type.getDeclaredAnnotations()) {
-			if (!seen.contains(ann) && isMetaAnnotated(ann, annotation, seen)) {
-				return true;
+			if (!seen.contains(ann)) {
+				AnnotationDescription found = findMetaAnnotation(ann, annotation, seen);
+				if (found!=null) {
+					return found;
+				}
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
