@@ -15,6 +15,7 @@
  */
 package slim;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,7 +39,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebApplicationContext;
 import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext;
+import org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ApplicationEvent;
@@ -55,6 +58,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * @author Dave Syer
@@ -106,19 +110,36 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			}
 			SpringApplication application = prepared.getSpringApplication();
 			WebApplicationType type = application.getWebApplicationType();
+			Class<?> contextType = getApplicationContextType(application);
 			if (type == WebApplicationType.NONE) {
 				// TODO: uncomment this
 				// (https://github.com/spring-projects/spring-boot/issues/14589)
 				// application.setApplicationContextClass(GenericApplicationContext.class);
 			}
 			else if (type == WebApplicationType.REACTIVE) {
-				application.setApplicationContextClass(
-						ReactiveWebServerApplicationContext.class);
+				if (contextType == AnnotationConfigReactiveWebApplicationContext.class) {
+					application.setApplicationContextClass(
+							ReactiveWebServerApplicationContext.class);
+				}
 			}
 			else if (type == WebApplicationType.SERVLET) {
-				application.setApplicationContextClass(
-						ServletWebServerApplicationContext.class);
+				if (contextType == AnnotationConfigServletWebServerApplicationContext.class) {
+					application.setApplicationContextClass(
+							ServletWebServerApplicationContext.class);
+				}
 			}
+		}
+	}
+
+	private Class<?> getApplicationContextType(SpringApplication application) {
+		Field field = ReflectionUtils.findField(SpringApplication.class,
+				"applicationContextClass");
+		ReflectionUtils.makeAccessible(field);
+		try {
+			return (Class<?>) ReflectionUtils.getField(field, application);
+		}
+		catch (Exception e) {
+			return null;
 		}
 	}
 

@@ -46,7 +46,6 @@
 		<start-class>app.main.SampleApplication</start-class>
 		<byte-buddy.version>1.8.21</byte-buddy.version>
 		<thin.version>1.0.15.RELEASE</thin.version>
-		<spring.version>5.1.0.BUILD-SNAPSHOT</spring.version>
 	</properties>
 
 
