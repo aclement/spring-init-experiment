@@ -46,6 +46,7 @@ import org.springframework.boot.web.servlet.context.ServletWebServerApplicationC
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.event.SmartApplicationListener;
@@ -112,9 +113,10 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			WebApplicationType type = application.getWebApplicationType();
 			Class<?> contextType = getApplicationContextType(application);
 			if (type == WebApplicationType.NONE) {
-				// TODO: uncomment this
-				// (https://github.com/spring-projects/spring-boot/issues/14589)
-				// application.setApplicationContextClass(GenericApplicationContext.class);
+				if (contextType == AnnotationConfigApplicationContext.class) {
+					application
+							.setApplicationContextClass(GenericApplicationContext.class);
+				}
 			}
 			else if (type == WebApplicationType.REACTIVE) {
 				if (contextType == AnnotationConfigReactiveWebApplicationContext.class) {
