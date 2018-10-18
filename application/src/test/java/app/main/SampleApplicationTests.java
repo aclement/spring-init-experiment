@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.google.gson.GsonBuilder;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -35,10 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SampleApplicationTests {
 
 	@Autowired
+	private GsonBuilder gb;
+	
+	@Autowired
 	private Bar bar;
 
 	@Test
 	public void test() {
+		assertThat(gb).isNotNull();
 		assertThat(bar).isNotNull();
 		assertThat(bar.getFoo().getValue()).isNotNull();
 	}

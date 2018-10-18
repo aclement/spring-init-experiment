@@ -4,11 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 @SpringBootConfiguration
-@Import({ SampleConfiguration.class, PropertyPlaceholderAutoConfiguration.class, ConfigurationPropertiesAutoConfiguration.class })
+@Import({ GsonAutoConfiguration.class, SampleConfiguration.class, PropertyPlaceholderAutoConfiguration.class, ConfigurationPropertiesAutoConfiguration.class })
 public class SampleApplication {
 	
 	public static void main(String[] args) {

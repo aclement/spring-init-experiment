@@ -8,6 +8,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.jar.JarFile;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
@@ -59,6 +62,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.ClassFileLocator.ForFolder;
+import net.bytebuddy.dynamic.ClassFileLocator.ForJarFile;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ImplementationDefinition;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default;
@@ -90,6 +95,7 @@ import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
+// TODO if types are missing in the project configuration (like pom dependencies missing) then CNFE will occur during plugin processing - needs handling appropriately
 public class SlimConfigurationPlugin implements Plugin {
 
 	private Generic Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext;
@@ -114,7 +120,10 @@ public class SlimConfigurationPlugin implements Plugin {
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
 			TypeDescription typeDescription, ClassFileLocator locator) {
 		try {
+			// Set context classloader?
+			
 			File targetClassesFolder = locateTargetClasses(locator);
+			setContextClassLoader(locator);
 			if (targetClassesFolder == null) {
 				log("Unable to determine target/classes folder for module");
 				targetClassesFolder = new File("target/classes");
@@ -159,6 +168,8 @@ public class SlimConfigurationPlugin implements Plugin {
 				log("Saving: " + moduleClassType.getTypeDescription() + " in "
 						+ targetClassesFolder);
 				moduleClassType.saveIn(targetClassesFolder);
+				
+				createModuleForAutoConfiguration("org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration", locator, targetClassesFolder);
 			}
 			builder = addInitializerMethod(builder, initializerClassType);
 
@@ -168,6 +179,51 @@ public class SlimConfigurationPlugin implements Plugin {
 			throw new RuntimeException(e);
 		}
 
+	}
+	
+
+	/**
+	 * For any specified auto-configuration this will create the module. For example, passing 
+	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration"
+	 * will create "org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule" and
+	 * the initializer "org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule$Initializer".
+	 * 
+	 * @param autoConfigurationClass
+	 * @param locator
+	 */
+	private void createModuleForAutoConfiguration(String autoConfigurationClass, ClassFileLocator locator, File targetFolder) throws Exception {
+		log("Creating module for "+autoConfigurationClass);
+		log("Can we do it in this project? ");
+		Class c = null;
+		try {
+			c = Class.forName(autoConfigurationClass);
+			System.out.println("yes");
+		} catch (ClassNotFoundException cnfe) {
+			System.out.println("no");
+		}
+		if (c==null) {
+			return;
+		}
+		String moduleName = autoConfigurationClass+"Module";
+		String moduleInitializerName = moduleName+"$Initializer";
+
+		DynamicType newModuleInitializerType = null;
+		log("Creating module initializer (the inner class) called "+moduleInitializerName);
+		try {
+			TypeDescription newModuleInitializer = new TypeDescription.Latent(moduleInitializerName, Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
+			newModuleInitializerType = initializerClassFactory.make(new TypeDescription.ForLoadedType(c), moduleInitializerName, locator);
+			newModuleInitializerType.saveIn(targetFolder);		
+			log("Saving new module initializer: "+newModuleInitializerType.getTypeDescription().getActualName());
+		} catch (Throwable t) {
+			log("Problem creating module initializer "+t.getMessage());
+			t.printStackTrace();
+		}
+
+		log("Creating module called "+moduleName);
+		TypeDescription newModule = new TypeDescription.Latent(moduleName, Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
+		DynamicType moduleClassType = moduleClassFactory.make(newModule,locator,  newModuleInitializerType);
+		moduleClassType.saveIn(targetFolder);
+		log("Saving new module: " + moduleClassType.getTypeDescription().getActualName() + " in " + targetFolder);
 	}
 
 	private String toString(TypeDescription[] tds) {
@@ -207,6 +263,46 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 		catch (Exception e) {
 			return null;
+		}
+	}
+	
+	private void setContextClassLoader(ClassFileLocator compoundLocator) {
+		List<URL> classpathElements = new ArrayList<>();
+		try {
+			Field classFileLocatorsField = compoundLocator.getClass()
+					.getDeclaredField("classFileLocators");
+			classFileLocatorsField.setAccessible(true);
+			File found = null;
+			List<ClassFileLocator> classFileLocators = (List<ClassFileLocator>) classFileLocatorsField.get(compoundLocator);
+			for (ClassFileLocator classFileLocator : classFileLocators) {
+				if (classFileLocator instanceof ForFolder) {
+					Field folderField = classFileLocator.getClass().getDeclaredField("folder");
+					folderField.setAccessible(true);
+					File ff = (File) folderField.get(classFileLocator);
+					System.out.println(">"+ff.toString());
+					classpathElements.add(new File(ff.toString()).toURI().toURL());
+//					if (ff.toString().endsWith("target/classes")) {
+//						found = ff;
+//						break;
+//					}
+					continue;
+				}
+				if (classFileLocator instanceof ForJarFile) {
+					Field jarFileField = classFileLocator.getClass().getDeclaredField("jarFile");
+					jarFileField.setAccessible(true);
+					JarFile jarFile = (JarFile)jarFileField.get(classFileLocator);
+					System.out.println(">"+jarFile.getName());
+					classpathElements.add(new File(jarFile.getName()).toURI().toURL());
+					continue;
+				}
+				throw new IllegalStateException("WTF is this? "+classFileLocator.getClass().getName());
+			}
+			ClassLoader ccl = Thread.currentThread().getContextClassLoader();
+			URLClassLoader ucl = new URLClassLoader(classpathElements.toArray(new URL[0]),ccl);
+			Thread.currentThread().setContextClassLoader(ucl);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -844,6 +940,12 @@ public class SlimConfigurationPlugin implements Plugin {
 
 		public DynamicType make(TypeDescription configurationTypeDescription,
 				ClassFileLocator locator) throws Exception {
+			String initializerTypeName = configurationTypeDescription.getTypeName() + "$Initializer";
+			return make(configurationTypeDescription, initializerTypeName, locator);
+		}
+		
+		public DynamicType make(TypeDescription configurationTypeDescription, String configurationInitializerTypeDescription, ClassFileLocator locator) throws Exception {
+			
 			DynamicType.Builder<?> builder = new ByteBuddy().subclass(
 					Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext,
 					Default.NO_CONSTRUCTORS).visit(new EnableFramesComputing());
@@ -852,7 +954,7 @@ public class SlimConfigurationPlugin implements Plugin {
 			log("Generating initializer for " + configurationTypeDescription.getName());
 
 			builder = builder.modifiers(Modifier.STATIC)
-					.name(configurationTypeDescription.getTypeName() + "$Initializer");
+					.name(configurationInitializerTypeDescription);
 			builder.annotateType(AnnotationDescription.Builder
 					.ofType(InitializerMapping.class)
 					.defineTypeArray("value",
@@ -1080,8 +1182,13 @@ public class SlimConfigurationPlugin implements Plugin {
 		private List<AnnotationDescription> fetchConditionalAnnotations(
 				TypeDescription typeDescription) {
 			List<AnnotationDescription> result = new ArrayList<>();
-			AnnotationList list = typeDescription.getDeclaredAnnotations()
+			AnnotationList list = null;
+			try {
+				list = typeDescription.getDeclaredAnnotations()
 					.filter(this::isConditionalAnnotation);
+			} catch (Throwable t) {
+				throw new RuntimeException("Can't check annotations on "+typeDescription.getActualName(),t);
+			}
 			for (AnnotationDescription ad : list) {
 				result.add(ad);
 			}
@@ -1126,6 +1233,9 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 
 		private String toModuleName(String typename) {
+			if (typename.endsWith("Module")) {
+				return typename; // nothing to do for now
+			}
 			if (typename.endsWith("Configuration")) {
 				return typename.substring(0, typename.indexOf("Configuration"))
 						+ "Module";
@@ -1137,6 +1247,11 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 
 		public DynamicType make(TypeDescription typeDescription, ClassFileLocator locator,
+				TypeDescription... typesWithInitializeMethods) throws Exception {
+			return make(typeDescription,locator, null, typesWithInitializeMethods);
+		}
+		
+		public DynamicType make(TypeDescription typeDescription, ClassFileLocator locator,DynamicType initializerClassType,
 				TypeDescription... typesWithInitializeMethods) throws Exception {
 			log("Generating module for " + typeDescription.getName() + " calling");
 			for (TypeDescription td : typesWithInitializeMethods) {
@@ -1186,6 +1301,10 @@ public class SlimConfigurationPlugin implements Plugin {
 					.defineMethod("initializers", Type_ListOfACI, Modifier.PUBLIC)
 					.intercept(
 							new Implementation.Simple(new ByteCodeAppender.Simple(code)));
+			
+			if (initializerClassType!=null) {
+				builder = addInitializerMethod(builder, initializerClassType);
+			}
 
 			return builder.make();
 		}

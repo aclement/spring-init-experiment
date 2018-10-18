@@ -1,0 +1,68 @@
+Classfile /Users/aclement/forks/spring-init-experiment/application/target/classes/org/springframework/boot/autoconfigure/gson/GsonAutoConfigurationModule.class
+  Last modified Oct 12, 2018; size 586 bytes
+  MD5 checksum 34befab9747f76b618d95c88d6961105
+public class org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule implements slim.Module
+  minor version: 0
+  major version: 52
+  flags: ACC_PUBLIC, ACC_SUPER
+Constant pool:
+   #1 = Utf8               org/springframework/boot/autoconfigure/gson/GsonAutoConfigurationModule
+   #2 = Class              #1             // org/springframework/boot/autoconfigure/gson/GsonAutoConfigurationModule
+   #3 = Utf8               java/lang/Object
+   #4 = Class              #3             // java/lang/Object
+   #5 = Utf8               slim/Module
+   #6 = Class              #5             // slim/Module
+   #7 = Utf8               initializers
+   #8 = Utf8               ()Ljava/util/List;
+   #9 = Utf8               ()Ljava/util/List<Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;>;
+  #10 = Utf8               org/springframework/context/ApplicationContextInitializer
+  #11 = Class              #10            // org/springframework/context/ApplicationContextInitializer
+  #12 = Utf8               java/util/Arrays
+  #13 = Class              #12            // java/util/Arrays
+  #14 = Utf8               asList
+  #15 = Utf8               ([Ljava/lang/Object;)Ljava/util/List;
+  #16 = NameAndType        #14:#15        // asList:([Ljava/lang/Object;)Ljava/util/List;
+  #17 = Methodref          #13.#16        // java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
+  #18 = Utf8               <init>
+  #19 = Utf8               ()V
+  #20 = NameAndType        #18:#19        // "<init>":()V
+  #21 = Methodref          #4.#20         // java/lang/Object."<init>":()V
+  #22 = Utf8               Code
+  #23 = Utf8               Signature
+{
+  public org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokespecial #21                 // Method java/lang/Object."<init>":()V
+         4: return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  public java.util.List<org.springframework.context.ApplicationContextInitializer<org.springframework.context.support.GenericApplicationContext>> initializers();
+    descriptor: ()Ljava/util/List;
+    flags: ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: iconst_0
+         1: anewarray     #11                 // class org/springframework/context/ApplicationContextInitializer
+         4: invokestatic  #17                 // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
+         7: areturn
+    Signature: #9                           // ()Ljava/util/List<Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;>;
+
+}
