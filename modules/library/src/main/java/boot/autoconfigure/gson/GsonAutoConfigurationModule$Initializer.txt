@@ -188,11 +188,6 @@ Constant pool:
          0: aload_0
          1: invokespecial #10                 // Method java/lang/Object."<init>":()V
          4: return
-      LineNumberTable:
-        line 60: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
-            0       5     0  this   Lboot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer;
 
   public void initialize(org.springframework.context.support.GenericApplicationContext);
     descriptor: (Lorg/springframework/context/support/GenericApplicationContext;)V
@@ -255,38 +250,6 @@ Constant pool:
        125: anewarray     #44                 // class org/springframework/beans/factory/config/BeanDefinitionCustomizer
        128: invokevirtual #63                 // Method org/springframework/context/support/GenericApplicationContext.registerBean:(Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V
        131: return
-      LineNumberTable:
-        line 65: 0
-        line 66: 15
-        line 67: 26
-        line 68: 41
-        line 69: 51
-        line 70: 64
-        line 71: 69
-        line 70: 79
-        line 76: 82
-        line 77: 95
-        line 78: 100
-        line 77: 110
-        line 81: 113
-        line 82: 116
-        line 83: 118
-        line 81: 128
-        line 87: 131
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
-            0     132     0  this   Lboot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer;
-            0     132     1 context   Lorg/springframework/context/support/GenericApplicationContext;
-           15     117     2 conditions   Lslim/ConditionService;
-      StackMapTable: number_of_entries = 3
-        frame_type = 252 /* append */
-          offset_delta = 82
-          locals = [ class slim/ConditionService ]
-        frame_type = 30 /* same */
-        frame_type = 17 /* same */
-    MethodParameters:
-      Name                           Flags
-      context
 
   public void initialize(org.springframework.context.ConfigurableApplicationContext);
     descriptor: (Lorg/springframework/context/ConfigurableApplicationContext;)V
@@ -298,10 +261,6 @@ Constant pool:
          2: checkcast     #19                 // class org/springframework/context/support/GenericApplicationContext
          5: invokevirtual #83                 // Method initialize:(Lorg/springframework/context/support/GenericApplicationContext;)V
          8: return
-      LineNumberTable:
-        line 1: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
 
   boot.autoconfigure.gson.GsonAutoConfigurationModule$Initializer(boot.autoconfigure.gson.GsonAutoConfigurationModule$Initializer);
     descriptor: (Lboot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer;)V
@@ -311,10 +270,6 @@ Constant pool:
          0: aload_0
          1: invokespecial #86                 // Method "<init>":()V
          4: return
-      LineNumberTable:
-        line 60: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
 
   private static org.springframework.boot.autoconfigure.gson.GsonProperties lambda$0();
     descriptor: ()Lorg/springframework/boot/autoconfigure/gson/GsonProperties;
@@ -327,34 +282,6 @@ Constant pool:
          7: areturn
       LineNumberTable:
         line 67: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
-
-  private static com.google.gson.GsonBuilder lambda$1(org.springframework.context.support.GenericApplicationContext);
-    descriptor: (Lorg/springframework/context/support/GenericApplicationContext;)Lcom/google/gson/GsonBuilder;
-    flags: ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
-    Code:
-      stack=5, locals=1, args_size=1
-         0: aload_0
-         1: ldc           #32                 // class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration
-         3: invokevirtual #92                 // Method org/springframework/context/support/GenericApplicationContext.getBean:(Ljava/lang/Class;)Ljava/lang/Object;
-         6: checkcast     #32                 // class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration
-         9: new           #93                 // class java/util/ArrayList
-        12: dup
-        13: aload_0
-        14: ldc           #73                 // class org/springframework/boot/autoconfigure/gson/GsonBuilderCustomizer
-        16: invokevirtual #95                 // Method org/springframework/context/support/GenericApplicationContext.getBeansOfType:(Ljava/lang/Class;)Ljava/util/Map;
-        19: invokeinterface #99,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
-        24: invokespecial #105                // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
-        27: invokevirtual #108                // Method org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration.gsonBuilder:(Ljava/util/List;)Lcom/google/gson/GsonBuilder;
-        30: areturn
-      LineNumberTable:
-        line 71: 0
-        line 72: 9
-        line 73: 14
-        line 74: 19
-        line 72: 24
-        line 74: 30
       LocalVariableTable:
         Start  Length  Slot  Name   Signature
 
@@ -379,6 +306,12 @@ Constant pool:
       LocalVariableTable:
         Start  Length  Slot  Name   Signature
 
+
+
+
+
+
+
   private static org.springframework.boot.autoconfigure.gson.GsonBuilderCustomizer lambda$3(org.springframework.context.support.GenericApplicationContext);
     descriptor: (Lorg/springframework/context/support/GenericApplicationContext;)Lorg/springframework/boot/autoconfigure/gson/GsonBuilderCustomizer;
     flags: ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
@@ -394,13 +327,31 @@ Constant pool:
         15: checkcast     #38                 // class org/springframework/boot/autoconfigure/gson/GsonProperties
         18: invokevirtual #118                // Method org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration.standardGsonBuilderCustomizer:(Lorg/springframework/boot/autoconfigure/gson/GsonProperties;)Lorg/springframework/boot/autoconfigure/gson/GsonAutoConfiguration$StandardGsonBuilderCustomizer;
         21: areturn
-      LineNumberTable:
-        line 83: 0
-        line 85: 9
-        line 84: 18
-        line 85: 21
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
+        
+        
+        
+        
+        
+        
+     
+  private static com.google.gson.GsonBuilder lambda$1(org.springframework.context.support.GenericApplicationContext);
+    descriptor: (Lorg/springframework/context/support/GenericApplicationContext;)Lcom/google/gson/GsonBuilder;
+    flags: ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=5, locals=1, args_size=1
+         0: aload_0
+         1: ldc           #32                 // class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration
+         3: invokevirtual #92                 // Method org/springframework/context/support/GenericApplicationContext.getBean:(Ljava/lang/Class;)Ljava/lang/Object;
+         6: checkcast     #32                 // class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration
+         9: new           #93                 // class java/util/ArrayList
+        12: dup
+        13: aload_0
+        14: ldc           #73                 // class org/springframework/boot/autoconfigure/gson/GsonBuilderCustomizer
+        16: invokevirtual #95                 // Method org/springframework/context/support/GenericApplicationContext.getBeansOfType:(Ljava/lang/Class;)Ljava/util/Map;
+        19: invokeinterface #99,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+        24: invokespecial #105                // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
+        27: invokevirtual #108                // Method org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration.gsonBuilder:(Ljava/util/List;)Lcom/google/gson/GsonBuilder;
+        30: areturn
 }
 SourceFile: "GsonAutoConfigurationModule.java"
 Signature: #124                         // Ljava/lang/Object;Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;
@@ -431,3 +382,6 @@ InnerClasses:
      private static #164= #1 of #162; //Initializer=class boot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer of class boot/autoconfigure/gson/GsonAutoConfigurationModule
      public static final #169= #165 of #167; //Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles
      static final #172= #170 of #32; //StandardGsonBuilderCustomizer=class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration$StandardGsonBuilderCustomizer of class org/springframework/boot/autoconfigure/gson/GsonAutoConfiguration
+
+     
+     

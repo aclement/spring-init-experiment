@@ -1,0 +1,94 @@
+boot.autoconfigure.mustache.MustacheAutoConfigurationModule$Initializer
+Class level annotations: 
+  @slim.InitializerMapping(value=[Lorg/springframework/boot/autoconfigure/mustache/MustacheAutoConfiguration;])
+
+
+FIELDS
+
+METHODS
+void <init>()
+0:    aload_0
+1:    invokespecial	java.lang.Object.<init> ()V (10)
+4:    return
+
+public volatile void initialize(org.springframework.context.ConfigurableApplicationContext)
+0:    aload_0
+1:    aload_1
+2:    checkcast		<org.springframework.context.support.GenericApplicationContext> (19)
+5:    invokevirtual	boot.autoconfigure.mustache.MustacheAutoConfigurationModule$Initializer.initialize (Lorg/springframework/context/support/GenericApplicationContext;)V (71)
+8:    return
+
+public void initialize(org.springframework.context.support.GenericApplicationContext context) [MethodParameters]
+0:    aload_1
+1:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBeanFactory ()Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory; (18)
+4:    ldc		slim.ConditionService (24)
+6:    invokeinterface	org.springframework.beans.factory.config.ConfigurableListableBeanFactory.getBean (Ljava/lang/Class;)Ljava/lang/Object; (26)	2	0
+11:   checkcast		<slim.ConditionService> (24)
+14:   astore_2
+15:   aload_2
+16:   ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+18:   invokeinterface	slim.ConditionService.matches (Ljava/lang/Class;)Z (34)	2	0
+23:   ifeq		#109
+26:   aload_1
+27:   ldc		org.springframework.boot.autoconfigure.mustache.MustacheProperties (38)
+29:   invokedynamic	#0.get ()Ljava/util/function/Supplier; (40)
+34:   iconst_0
+35:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (44)
+38:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (46)
+41:   aload_1
+42:   ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+44:   iconst_0
+45:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (44)
+48:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (50)
+51:   aload_2
+52:   ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+54:   ldc		com.samskivert.mustache.Mustache$Compiler (53)
+56:   invokeinterface	slim.ConditionService.matches (Ljava/lang/Class;Ljava/lang/Class;)Z (55)	3	0
+61:   ifeq		#80
+64:   aload_1
+65:   ldc		com.samskivert.mustache.Mustache$Compiler (53)
+67:   aload_1
+68:   invokedynamic	#1.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (58)
+73:   iconst_0
+74:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (44)
+77:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (46)
+80:   aload_2
+81:   ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+83:   ldc		com.samskivert.mustache.Mustache$TemplateLoader (61)
+85:   invokeinterface	slim.ConditionService.matches (Ljava/lang/Class;Ljava/lang/Class;)Z (55)	3	0
+90:   ifeq		#109
+93:   aload_1
+94:   ldc		com.samskivert.mustache.Mustache$TemplateLoader (61)
+96:   aload_1
+97:   invokedynamic	#2.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (63)
+102:  iconst_0
+103:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (44)
+106:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (46)
+109:  return
+
+private static org.springframework.boot.autoconfigure.mustache.MustacheProperties lambda$0()
+0:    new		<org.springframework.boot.autoconfigure.mustache.MustacheProperties> (38)
+3:    dup
+4:    invokespecial	org.springframework.boot.autoconfigure.mustache.MustacheProperties.<init> ()V (75)
+7:    areturn
+
+private static com.samskivert.mustache.Mustache$Compiler lambda$1(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (78)
+6:    checkcast		<org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration> (32)
+9:    aload_0
+10:   ldc		com.samskivert.mustache.Mustache$TemplateLoader (61)
+12:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (78)
+15:   checkcast		<com.samskivert.mustache.Mustache$TemplateLoader> (61)
+18:   invokevirtual	org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration.mustacheCompiler (Lcom/samskivert/mustache/Mustache$TemplateLoader;)Lcom/samskivert/mustache/Mustache$Compiler; (79)
+21:   areturn
+
+private static com.samskivert.mustache.Mustache$TemplateLoader lambda$2(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration (32)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (78)
+6:    checkcast		<org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration> (32)
+9:    invokevirtual	org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration.mustacheTemplateLoader ()Lorg/springframework/boot/autoconfigure/mustache/MustacheResourceTemplateLoader; (85)
+12:   areturn
+

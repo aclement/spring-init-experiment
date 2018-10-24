@@ -1,0 +1,35 @@
+boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated
+Class level annotations: 
+  @slim.ImportModule
+
+
+FIELDS
+
+METHODS
+void <init>()
+0:    aload_0
+1:    invokespecial	java.lang.Object.<init> ()V (8)
+4:    return
+
+public static org.springframework.context.ApplicationContextInitializer initializer() [Signature(()Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;)]
+0:    invokedynamic	#0.initialize ()Lorg/springframework/context/ApplicationContextInitializer; (18)
+5:    areturn
+
+private static void lambda$0(org.springframework.context.support.GenericApplicationContext context)
+0:    aload_0
+1:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBeanFactory ()Lorg/springframework/beans/factory/config/ConfigurableListableBeanFactory; (23)
+4:    ldc		slim.ConditionService (29)
+6:    invokeinterface	org.springframework.beans.factory.config.ConfigurableListableBeanFactory.getBean (Ljava/lang/Class;)Ljava/lang/Object; (31)	2	0
+11:   checkcast		<slim.ConditionService> (29)
+14:   astore_1
+15:   aload_1
+16:   ldc		org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration (37)
+18:   invokeinterface	slim.ConditionService.matches (Ljava/lang/Class;)Z (39)	2	0
+23:   ifeq		#37
+26:   new		<boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated$Initializer> (43)
+29:   dup
+30:   invokespecial	boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated$Initializer.<init> ()V (45)
+33:   aload_0
+34:   invokevirtual	boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated$Initializer.initialize (Lorg/springframework/context/support/GenericApplicationContext;)V (46)
+37:   return
+

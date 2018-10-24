@@ -40,7 +40,7 @@ import slim.ImportModule;
  *
  */
 // Generated from MustacheReactiveWebConfiguration
-@ImportModule(module = { MustacheAutoConfigurationModule.class,
+@ImportModule(module = {MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class MustacheReactiveWebConfigurationGenerated {
 

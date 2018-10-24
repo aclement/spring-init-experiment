@@ -1,0 +1,37 @@
+org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule
+Class level annotations: 
+  @org.springframework.context.annotation.Configuration(value=)
+  @org.springframework.context.annotation.Import(value=[Lorg/springframework/boot/autoconfigure/mustache/MustacheAutoConfiguration;])
+
+
+FIELDS
+
+METHODS
+public static org.springframework.context.ApplicationContextInitializer $$initializer() [Signature(()Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;)]
+0:    getstatic		java.lang.System.out Ljava/io/PrintStream; (20)
+3:    ldc		":debug: $$initializer method running for org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule$Initializer" (43)
+5:    invokevirtual	java.io.PrintStream.println (Ljava/lang/String;)V (28)
+8:    new		<org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule$Initializer> (45)
+11:   dup
+12:   aconst_null
+13:   invokespecial	org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule$Initializer.<init> (Lorg/springframework/boot/autoconfigure/mustache/MustacheAutoConfigurationModule$Initializer;)V (49)
+16:   areturn
+
+public void <init>()
+0:    aload_0
+1:    invokespecial	java.lang.Object.<init> ()V (52)
+4:    return
+
+public java.util.List initializers() [Signature(()Ljava/util/List<Lorg/springframework/context/ApplicationContextInitializer<Lorg/springframework/context/support/GenericApplicationContext;>;>;)]
+0:    getstatic		java.lang.System.out Ljava/io/PrintStream; (20)
+3:    ldc		":debug: executing the module initializers() method for org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule" (22)
+5:    invokevirtual	java.io.PrintStream.println (Ljava/lang/String;)V (28)
+8:    iconst_1
+9:    anewarray		<org.springframework.context.ApplicationContextInitializer> (30)
+12:   dup
+13:   iconst_0
+14:   invokestatic	org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule.$$initializer ()Lorg/springframework/context/ApplicationContextInitializer; (34)
+17:   aastore
+18:   invokestatic	java.util.Arrays.asList ([Ljava/lang/Object;)Ljava/util/List; (40)
+21:   areturn
+

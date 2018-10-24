@@ -1,0 +1,348 @@
+boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated$Initializer
+Class level annotations: 
+  @slim.InitializerMapping(value=[Lorg/springframework/boot/autoconfigure/web/reactive/WebFluxAutoConfiguration;])
+
+
+FIELDS
+
+METHODS
+void <init>()
+0:    aload_0
+1:    invokespecial	java.lang.Object.<init> ()V (10)
+4:    return
+
+public volatile void initialize(org.springframework.context.ConfigurableApplicationContext)
+0:    aload_0
+1:    aload_1
+2:    checkcast		<org.springframework.context.support.GenericApplicationContext> (27)
+5:    invokevirtual	boot.autoconfigure.web.reactive.WebFluxAutoConfigurationGenerated$Initializer.initialize (Lorg/springframework/context/support/GenericApplicationContext;)V (102)
+8:    return
+
+public void initialize(org.springframework.context.support.GenericApplicationContext context) [MethodParameters]
+0:    aload_1
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    aload_1
+4:    invokedynamic	#0.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (20)
+9:    iconst_0
+10:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+13:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+16:   aload_1
+17:   ldc		org.springframework.web.reactive.function.server.support.HandlerFunctionAdapter (32)
+19:   aload_1
+20:   invokedynamic	#1.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (34)
+25:   iconst_0
+26:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+29:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+32:   aload_1
+33:   ldc		"localeContextResolver" (35)
+35:   ldc		org.springframework.web.server.i18n.LocaleContextResolver (37)
+37:   aload_1
+38:   invokedynamic	#2.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (39)
+43:   iconst_0
+44:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+47:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (40)
+50:   aload_1
+51:   ldc		org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerAdapter (43)
+53:   aload_1
+54:   invokedynamic	#3.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (45)
+59:   iconst_0
+60:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+63:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+66:   aload_1
+67:   ldc		org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping (46)
+69:   aload_1
+70:   invokedynamic	#4.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (48)
+75:   iconst_0
+76:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+79:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+82:   aload_1
+83:   ldc		org.springframework.web.reactive.HandlerMapping (49)
+85:   aload_1
+86:   invokedynamic	#5.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (51)
+91:   iconst_0
+92:   anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+95:   invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+98:   aload_1
+99:   ldc		org.springframework.web.reactive.result.method.annotation.ResponseBodyResultHandler (52)
+101:  aload_1
+102:  invokedynamic	#6.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (54)
+107:  iconst_0
+108:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+111:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+114:  aload_1
+115:  ldc		org.springframework.web.reactive.result.method.annotation.ResponseEntityResultHandler (55)
+117:  aload_1
+118:  invokedynamic	#7.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (57)
+123:  iconst_0
+124:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+127:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+130:  aload_1
+131:  ldc		org.springframework.web.server.WebExceptionHandler (58)
+133:  aload_1
+134:  invokedynamic	#8.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (60)
+139:  iconst_0
+140:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+143:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+146:  aload_1
+147:  ldc		org.springframework.web.reactive.function.server.support.RouterFunctionMapping (61)
+149:  aload_1
+150:  invokedynamic	#9.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (63)
+155:  iconst_0
+156:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+159:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+162:  aload_1
+163:  ldc		"serverCodecConfigurer" (64)
+165:  ldc		org.springframework.http.codec.ServerCodecConfigurer (66)
+167:  aload_1
+168:  invokedynamic	#10.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (68)
+173:  iconst_0
+174:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+177:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (40)
+180:  aload_1
+181:  ldc		org.springframework.web.reactive.function.server.support.ServerResponseResultHandler (69)
+183:  aload_1
+184:  invokedynamic	#11.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (71)
+189:  iconst_0
+190:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+193:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+196:  aload_1
+197:  ldc		org.springframework.web.reactive.result.SimpleHandlerAdapter (72)
+199:  aload_1
+200:  invokedynamic	#12.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (74)
+205:  iconst_0
+206:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+209:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+212:  aload_1
+213:  ldc		org.springframework.web.reactive.result.view.ViewResolutionResultHandler (75)
+215:  aload_1
+216:  invokedynamic	#13.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (77)
+221:  iconst_0
+222:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+225:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+228:  aload_1
+229:  ldc		org.springframework.core.ReactiveAdapterRegistry (78)
+231:  aload_1
+232:  invokedynamic	#14.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (80)
+237:  iconst_0
+238:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+241:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+244:  aload_1
+245:  ldc		org.springframework.web.reactive.accept.RequestedContentTypeResolver (81)
+247:  aload_1
+248:  invokedynamic	#15.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (83)
+253:  iconst_0
+254:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+257:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+260:  aload_1
+261:  ldc		org.springframework.format.support.FormattingConversionService (84)
+263:  aload_1
+264:  invokedynamic	#16.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (86)
+269:  iconst_0
+270:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+273:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+276:  aload_1
+277:  ldc		org.springframework.validation.Validator (87)
+279:  aload_1
+280:  invokedynamic	#17.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (89)
+285:  iconst_0
+286:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+289:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+292:  aload_1
+293:  ldc		"webHandler" (90)
+295:  ldc		org.springframework.web.reactive.DispatcherHandler (92)
+297:  aload_1
+298:  invokedynamic	#18.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (94)
+303:  iconst_0
+304:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+307:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/String;Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (40)
+310:  aload_1
+311:  ldc		org.springframework.web.reactive.config.WebFluxConfigurer (95)
+313:  aload_1
+314:  invokedynamic	#19.get (Lorg/springframework/context/support/GenericApplicationContext;)Ljava/util/function/Supplier; (97)
+319:  iconst_0
+320:  anewarray		<org.springframework.beans.factory.config.BeanDefinitionCustomizer> (24)
+323:  invokevirtual	org.springframework.context.support.GenericApplicationContext.registerBean (Ljava/lang/Class;Ljava/util/function/Supplier;[Lorg/springframework/beans/factory/config/BeanDefinitionCustomizer;)V (26)
+326:  return
+
+private static boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper lambda$0(org.springframework.context.support.GenericApplicationContext)
+0:    new		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+3:    dup
+4:    aload_0
+5:    invokespecial	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.<init> (Lorg/springframework/context/support/GenericApplicationContext;)V (106)
+8:    areturn
+
+private static org.springframework.web.reactive.function.server.support.HandlerFunctionAdapter lambda$1(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.handlerFunctionAdapter ()Lorg/springframework/web/reactive/function/server/support/HandlerFunctionAdapter; (114)
+12:   areturn
+
+private static org.springframework.http.codec.ServerCodecConfigurer lambda$10(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.serverCodecConfigurer ()Lorg/springframework/http/codec/ServerCodecConfigurer; (167)
+12:   areturn
+
+private static org.springframework.web.reactive.function.server.support.ServerResponseResultHandler lambda$11(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.serverResponseResultHandler ()Lorg/springframework/web/reactive/function/server/support/ServerResponseResultHandler; (172)
+12:   areturn
+
+private static org.springframework.web.reactive.result.SimpleHandlerAdapter lambda$12(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.simpleHandlerAdapter ()Lorg/springframework/web/reactive/result/SimpleHandlerAdapter; (178)
+12:   areturn
+
+private static org.springframework.web.reactive.result.view.ViewResolutionResultHandler lambda$13(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.viewResolutionResultHandler ()Lorg/springframework/web/reactive/result/view/ViewResolutionResultHandler; (184)
+12:   areturn
+
+private static org.springframework.core.ReactiveAdapterRegistry lambda$14(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.webFluxAdapterRegistry ()Lorg/springframework/core/ReactiveAdapterRegistry; (190)
+12:   areturn
+
+private static org.springframework.web.reactive.accept.RequestedContentTypeResolver lambda$15(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.webFluxContentTypeResolver ()Lorg/springframework/web/reactive/accept/RequestedContentTypeResolver; (196)
+12:   areturn
+
+private static org.springframework.format.support.FormattingConversionService lambda$16(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.webFluxConversionService ()Lorg/springframework/format/support/FormattingConversionService; (202)
+12:   areturn
+
+private static org.springframework.validation.Validator lambda$17(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.webFluxValidator ()Lorg/springframework/validation/Validator; (208)
+12:   areturn
+
+private static org.springframework.web.reactive.DispatcherHandler lambda$18(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.webHandler ()Lorg/springframework/web/reactive/DispatcherHandler; (214)
+12:   areturn
+
+private static org.springframework.web.reactive.config.WebFluxConfigurer lambda$19(org.springframework.context.support.GenericApplicationContext)
+0:    new		<org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration$WebFluxConfig> (219)
+3:    dup
+4:    aload_0
+5:    ldc		org.springframework.boot.autoconfigure.web.ResourceProperties (221)
+7:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+10:   checkcast		<org.springframework.boot.autoconfigure.web.ResourceProperties> (221)
+13:   aload_0
+14:   ldc		org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties (223)
+16:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+19:   checkcast		<org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties> (223)
+22:   aload_0
+23:   aload_0
+24:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getAutowireCapableBeanFactory ()Lorg/springframework/beans/factory/config/AutowireCapableBeanFactory; (225)
+27:   ldc		org.springframework.web.reactive.result.method.HandlerMethodArgumentResolver (229)
+29:   invokeinterface	org.springframework.beans.factory.config.AutowireCapableBeanFactory.getBeanProvider (Ljava/lang/Class;)Lorg/springframework/beans/factory/ObjectProvider; (231)	2	0
+34:   aload_0
+35:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getAutowireCapableBeanFactory ()Lorg/springframework/beans/factory/config/AutowireCapableBeanFactory; (225)
+38:   ldc		org.springframework.boot.web.codec.CodecCustomizer (237)
+40:   invokeinterface	org.springframework.beans.factory.config.AutowireCapableBeanFactory.getBeanProvider (Ljava/lang/Class;)Lorg/springframework/beans/factory/ObjectProvider; (231)	2	0
+45:   aload_0
+46:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getAutowireCapableBeanFactory ()Lorg/springframework/beans/factory/config/AutowireCapableBeanFactory; (225)
+49:   ldc		org.springframework.boot.autoconfigure.web.reactive.ResourceHandlerRegistrationCustomizer (239)
+51:   invokeinterface	org.springframework.beans.factory.config.AutowireCapableBeanFactory.getBeanProvider (Ljava/lang/Class;)Lorg/springframework/beans/factory/ObjectProvider; (231)	2	0
+56:   aload_0
+57:   invokevirtual	org.springframework.context.support.GenericApplicationContext.getAutowireCapableBeanFactory ()Lorg/springframework/beans/factory/config/AutowireCapableBeanFactory; (225)
+60:   ldc		org.springframework.web.reactive.result.view.ViewResolver (241)
+62:   invokeinterface	org.springframework.beans.factory.config.AutowireCapableBeanFactory.getBeanProvider (Ljava/lang/Class;)Lorg/springframework/beans/factory/ObjectProvider; (231)	2	0
+67:   invokespecial	org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration$WebFluxConfig.<init> (Lorg/springframework/boot/autoconfigure/web/ResourceProperties;Lorg/springframework/boot/autoconfigure/web/reactive/WebFluxProperties;Lorg/springframework/beans/factory/ListableBeanFactory;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;Lorg/springframework/beans/factory/ObjectProvider;)V (243)
+70:   areturn
+
+private static org.springframework.web.server.i18n.LocaleContextResolver lambda$2(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.localeContextResolver ()Lorg/springframework/web/server/i18n/LocaleContextResolver; (120)
+12:   areturn
+
+private static org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerAdapter lambda$3(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.requestMappingHandlerAdapter ()Lorg/springframework/web/reactive/result/method/annotation/RequestMappingHandlerAdapter; (125)
+12:   areturn
+
+private static org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerMapping lambda$4(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.requestMappingHandlerMapping ()Lorg/springframework/web/reactive/result/method/annotation/RequestMappingHandlerMapping; (131)
+12:   areturn
+
+private static org.springframework.web.reactive.HandlerMapping lambda$5(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.resourceHandlerMapping ()Lorg/springframework/web/reactive/HandlerMapping; (137)
+12:   areturn
+
+private static org.springframework.web.reactive.result.method.annotation.ResponseBodyResultHandler lambda$6(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.responseBodyResultHandler ()Lorg/springframework/web/reactive/result/method/annotation/ResponseBodyResultHandler; (143)
+12:   areturn
+
+private static org.springframework.web.reactive.result.method.annotation.ResponseEntityResultHandler lambda$7(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.responseEntityResultHandler ()Lorg/springframework/web/reactive/result/method/annotation/ResponseEntityResultHandler; (149)
+12:   areturn
+
+private static org.springframework.web.server.WebExceptionHandler lambda$8(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.responseStatusExceptionHandler ()Lorg/springframework/web/server/WebExceptionHandler; (155)
+12:   areturn
+
+private static org.springframework.web.reactive.function.server.support.RouterFunctionMapping lambda$9(org.springframework.context.support.GenericApplicationContext)
+0:    aload_0
+1:    ldc		boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper (18)
+3:    invokevirtual	org.springframework.context.support.GenericApplicationContext.getBean (Ljava/lang/Class;)Ljava/lang/Object; (110)
+6:    checkcast		<boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper> (18)
+9:    invokevirtual	boot.autoconfigure.web.reactive.EnableWebFluxConfigurationWrapper.routerFunctionMapping ()Lorg/springframework/web/reactive/function/server/support/RouterFunctionMapping; (161)
+12:   areturn
+

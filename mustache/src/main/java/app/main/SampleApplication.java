@@ -9,6 +9,7 @@ import boot.autoconfigure.mustache.MustacheAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 
 @SpringBootConfiguration
+// TODO should import autoconfigs and get modules for free?
 @Import({MustacheAutoConfigurationModule.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
 public class SampleApplication {
 

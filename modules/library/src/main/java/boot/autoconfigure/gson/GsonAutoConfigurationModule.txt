@@ -71,19 +71,6 @@ Constant pool:
   #62 = Utf8               InnerClasses
   #63 = Utf8               Initializer
 {
-  public boot.autoconfigure.gson.GsonAutoConfigurationModule();
-    descriptor: ()V
-    flags: ACC_PUBLIC
-    Code:
-      stack=1, locals=1, args_size=1
-         0: aload_0
-         1: invokespecial #10                 // Method java/lang/Object."<init>":()V
-         4: return
-      LineNumberTable:
-        line 47: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
-            0       5     0  this   Lboot/autoconfigure/gson/GsonAutoConfigurationModule;
 
   public java.util.List<org.springframework.context.ApplicationContextInitializer<org.springframework.context.support.GenericApplicationContext>> initializers();
     descriptor: ()Ljava/util/List;
@@ -102,12 +89,6 @@ Constant pool:
         17: aastore
         18: invokestatic  #40                 // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
         21: areturn
-      LineNumberTable:
-        line 51: 0
-        line 52: 8
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
-            0      22     0  this   Lboot/autoconfigure/gson/GsonAutoConfigurationModule;
 
   public static org.springframework.context.ApplicationContextInitializer<org.springframework.context.support.GenericApplicationContext> initializer();
     descriptor: ()Lorg/springframework/context/ApplicationContextInitializer;
@@ -120,10 +101,16 @@ Constant pool:
          4: aconst_null
          5: invokespecial #49                 // Method boot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer."<init>":(Lboot/autoconfigure/gson/GsonAutoConfigurationModule$Initializer;)V
          8: areturn
-      LineNumberTable:
-        line 56: 0
-      LocalVariableTable:
-        Start  Length  Slot  Name   Signature
+         
+  public boot.autoconfigure.gson.GsonAutoConfigurationModule();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokespecial #10                 // Method java/lang/Object."<init>":()V
+         4: return
+         
 }
 SourceFile: "GsonAutoConfigurationModule.java"
 RuntimeVisibleAnnotations:
