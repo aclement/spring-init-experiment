@@ -5,4 +5,4 @@ boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule,\
 boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule,\
 boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule,\
 org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule,\
-boot.autoconfigure.mustache.MustacheAutoConfigurationModule
+org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule

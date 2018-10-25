@@ -48,7 +48,6 @@
 //
 //	@Override
 //	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-//		System.out.println("Wibble!");
 //		return Arrays.asList(GsonAutoConfigurationModule.initializer());
 //	}
 //
