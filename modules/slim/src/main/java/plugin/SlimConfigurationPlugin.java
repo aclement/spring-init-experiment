@@ -112,21 +112,16 @@ public class SlimConfigurationPlugin implements Plugin {
 						System.out.println("Skipping " + config);
 					}
 				}
-				DynamicType moduleClassType = moduleClassFactory.make(typeDescription, locator,
-						configSubset.toArray(new TypeDescription[0]));
+				DynamicType moduleClassType = moduleClassFactory.make(typeDescription, locator, configSubset.toArray(new TypeDescription[0]));
 				builder = addSlimConfigurationAnnotation(builder, moduleClassType);
 				log("Saving: " + moduleClassType.getTypeDescription() + " in " + targetClassesFolder);
 				moduleClassType.saveIn(targetClassesFolder);
 
 				// Here we go, testing module creation:
-				createModuleIfReachable("org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration", locator,
-						targetClassesFolder);
-				createModuleIfReachable("org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration", locator,
-						targetClassesFolder);
-				createModuleIfReachable("org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration", locator,
-						targetClassesFolder);
-				createModuleIfReachable("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerAutoConfiguration",
-						locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration", locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration", locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration", locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerAutoConfiguration", locator, targetClassesFolder);
 			}
 			builder = Common.addInitializerMethod(builder, initializerClassType);
 
@@ -137,8 +132,7 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	}
 
-	public void createModuleIfReachable(String autoConfigurationClassName, ClassFileLocator locator, File targetClassesFolder)
-			throws Exception {
+	public void createModuleIfReachable(String autoConfigurationClassName, ClassFileLocator locator, File targetClassesFolder) throws Exception {
 		if (ClassUtils.isPresent(autoConfigurationClassName, Thread.currentThread().getContextClassLoader())) {
 			createModuleForAutoConfiguration(autoConfigurationClassName, locator, targetClassesFolder);
 		} else {
@@ -148,17 +142,12 @@ public class SlimConfigurationPlugin implements Plugin {
 	}
 
 	/**
-	 * For any specified auto-configuration this will create the module. For
-	 * example, passing
-	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration" will
-	 * create
-	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule" and
-	 * the initializer
+	 * For any specified auto-configuration this will create the module. For example, passing
+	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration" will create
+	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule" and the initializer
 	 * "org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule$Initializer".
-	 * 
 	 */
-	private void createModuleForAutoConfiguration(String autoConfigurationClass, ClassFileLocator locator, File targetFolder)
-			throws Exception {
+	private void createModuleForAutoConfiguration(String autoConfigurationClass, ClassFileLocator locator, File targetFolder) throws Exception {
 		log("\n\n\n:debug: creating module for " + autoConfigurationClass);
 		String moduleName = autoConfigurationClass + "Module";
 		String moduleInitializerName = moduleName + "$Initializer";
@@ -172,46 +161,53 @@ public class SlimConfigurationPlugin implements Plugin {
 		DynamicType newModuleInitializerType = null;
 		log(":debug: creating module initializer (the inner class) called " + moduleInitializerName);
 		try {
-			TypeDescription newModuleInitializer = new TypeDescription.Latent(moduleInitializerName, Opcodes.ACC_PUBLIC,
-					TypeDescription.Generic.OBJECT);
+			TypeDescription newModuleInitializer = new TypeDescription.Latent(moduleInitializerName, Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
 			newModuleInitializerType = initializerClassFactory.make(
-					new TypeDescription.ForLoadedType(
-							ClassUtils.forName(autoConfigurationClass, Thread.currentThread().getContextClassLoader())),
+					new TypeDescription.ForLoadedType(ClassUtils.forName(autoConfigurationClass, Thread.currentThread().getContextClassLoader())),
 					moduleInitializerName, locator);
 			newModuleInitializerType.saveIn(targetFolder);
 		} catch (Throwable t) {
 			throw new IllegalStateException("Problem creating module initializer " + moduleInitializerName, t);
 		}
 
-		// Does the auto configuration class have any import references to other
-		// configuration
+		// Does the auto configuration class have any @Import references to other configuration?
+		// TODO what if the types about to be generated here already exist?
 		List<plugin.internal.Type> importedConfigurationTypes = findImports(ts.resolveDotted(autoConfigurationClass));
+		augmentImportedConfigurationTypes(autoConfigurationClass,importedConfigurationTypes);
 		if (importedConfigurationTypes.size() != 0) {
-			log("Generating initializers for the @Imported references from configuration " + toShortName(autoConfigurationClass)
-					+ ": " + importedConfigurationTypes);
+			log("Generating initializers for the @Imported references from configuration " + toShortName(autoConfigurationClass) + ": "
+					+ importedConfigurationTypes);
 			try {
 				for (Type t : importedConfigurationTypes) {
-					Class clazz = Class.forName(t.getName().replace("/", "."), false,
-							Thread.currentThread().getContextClassLoader());
+					Class clazz = Class.forName(t.getName().replace("/", "."), false, Thread.currentThread().getContextClassLoader());
 					DynamicType initializer = initializerClassFactory.make(new TypeDescription.ForLoadedType(clazz),
 							moduleName + "$" + t.getShortName() + "_" + "Initializer", locator);
 					initializer.saveIn(targetFolder);
 					initializerTypes.add(initializer.getTypeDescription());
 				}
 			} catch (Throwable t) {
-				throw new IllegalStateException("Problem creating module initializer inner class for imported configurations: "
-						+ importedConfigurationTypes, t);
+				throw new IllegalStateException("Problem creating module initializer inner class for imported configurations: " + importedConfigurationTypes,
+						t);
 			}
 		}
 
 		try {
 			log("Generating module code for " + moduleName);
 			TypeDescription newModule = new TypeDescription.Latent(moduleName, Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
-			DynamicType moduleClassType = moduleClassFactory.make(newModule, autoConfigurationClass, locator,
-					newModuleInitializerType, null, initializerTypes.toArray(new TypeDescription[] {}));
+			DynamicType moduleClassType = moduleClassFactory.make(newModule, autoConfigurationClass, locator, newModuleInitializerType, null,
+					initializerTypes.toArray(new TypeDescription[] {}));
 			moduleClassType.saveIn(targetFolder);
 		} catch (Throwable t) {
 			throw new IllegalStateException("Unexpected problem generating code for module " + moduleName);
+		}
+	}
+
+	private void augmentImportedConfigurationTypes(String autoConfigurationClass, List<Type> importedConfigurationTypes) {
+		// TODO [quirk] shouldn't be custom where will this information come from?
+		if (autoConfigurationClass.equals("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerAutoConfiguration")) {
+			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration"));
+			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.ErrorWebFluxConfiguration"));
+			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration"));
 		}
 	}
 
@@ -430,8 +426,7 @@ public class SlimConfigurationPlugin implements Plugin {
 		log("Finding imports for " + typeDescription);
 		Collection<TypeDescription> result = new LinkedHashSet<>();
 		for (AnnotationDescription imports : findImports(typeDescription)) {
-			MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(Import.class)
-					.getDeclaredMethods();
+			MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(Import.class).getDeclaredMethods();
 			InDefinedShape IMPORTS = methodList.filter(named("value")).getOnly();
 			TypeDescription[] types = (TypeDescription[]) imports.getValue(IMPORTS).resolve();
 			for (TypeDescription type : types) {
@@ -443,7 +438,6 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 		return result.toArray(new TypeDescription[0]);
 	}
-
 
 	private Predicate<plugin.internal.Annotation> annotationNamePredicate(Type annotationType) {
 		return a -> {
@@ -477,8 +471,8 @@ public class SlimConfigurationPlugin implements Plugin {
 	private Builder<?> addSlimConfigurationAnnotation(DynamicType.Builder<?> builder, DynamicType initializerClassType) {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
-		return builder.annotateType(AnnotationDescription.Builder.ofType(ImportModule.class)
-				.defineTypeArray("module", initializers.toArray(new TypeDescription[0])).build());
+		return builder.annotateType(
+				AnnotationDescription.Builder.ofType(ImportModule.class).defineTypeArray("module", initializers.toArray(new TypeDescription[0])).build());
 	}
 
 	@Override
@@ -486,7 +480,6 @@ public class SlimConfigurationPlugin implements Plugin {
 		log("Matching: " + target);
 		return !Common.hasAnnotation(target, ImportModule.class) && Common.hasAnnotation(target, Configuration.class);
 	}
-
 
 	private void log(String message) {
 		System.out.println(message);
