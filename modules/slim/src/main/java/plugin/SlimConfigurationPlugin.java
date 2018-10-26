@@ -41,6 +41,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -70,6 +71,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription.ForLoadedType;
 import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -183,6 +185,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				// Here we go, testing module creation:
 				createModuleIfReachable("org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration", locator, targetClassesFolder);
 				createModuleIfReachable("org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration", locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration", locator, targetClassesFolder);
 			}
 			builder = addInitializerMethod(builder, initializerClassType);
 
@@ -219,7 +222,7 @@ public class SlimConfigurationPlugin implements Plugin {
 	 * @param locator
 	 */
 	private void createModuleForAutoConfiguration(String autoConfigurationClass, ClassFileLocator locator, File targetFolder) throws Exception {		
-		log(":debug: creating module for " + autoConfigurationClass);
+		log("\n\n\n:debug: creating module for " + autoConfigurationClass);
 		Class c = null;
 		try {
 			c = Class.forName(autoConfigurationClass,false,Thread.currentThread().getContextClassLoader());
@@ -247,8 +250,9 @@ public class SlimConfigurationPlugin implements Plugin {
 			newModuleInitializerType.saveIn(targetFolder);
 			log("Saving new module initializer: " + newModuleInitializerType.getTypeDescription().getActualName());
 		} catch (Throwable t) {
-			log("Problem creating module initializer1 " + t.getMessage());
-			t.printStackTrace();
+			throw new IllegalStateException("Problem creating module initializer inner class "+moduleInitializerName, t);
+//			log("Problem creating module initializer1 " + t.getMessage());
+//			t.printStackTrace();
 		}
 		
 		// Does the auto configuration class have any import references to other configuration
@@ -262,8 +266,9 @@ public class SlimConfigurationPlugin implements Plugin {
 				initializerTypes.add(initializer.getTypeDescription());
 			}
 		} catch (Throwable t) {
-			log("Problem creating module initializer: " + t.getMessage());
-			t.printStackTrace();
+			throw new IllegalStateException("Problem creating module initializer inner class for imported configurations: "+importedConfigurationTypes, t);
+//			log("Problem creating module initializer: " + t.getMessage());
+//			t.printStackTrace();
 		}
 
 		log("Creating module called " + moduleName);
@@ -1147,18 +1152,29 @@ public class SlimConfigurationPlugin implements Plugin {
 			builder = builder.defineConstructor(Visibility.PRIVATE)
 					.intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()));
 
+			// Create the initialize() method
 			List<StackManipulation> code = new ArrayList<>();
+			builder = generateCodeForInitializeMethod(configurationTypeDescription, builder, target, code, true);
+			builder = builder.method(named("initialize").and(isDeclaredBy(ApplicationContextInitializer.class)))
+					.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
+
+			return builder.make();
+		}
+
+		private DynamicType.Builder<?> generateCodeForInitializeMethod(TypeDescription configurationTypeDescription,
+				DynamicType.Builder<?> builder, TypeDescription target, List<StackManipulation> code, boolean isOutermost) {
 			Label typeConditionsFailJumpTarget = new Label();
 			code.addAll(getCodeToPrintln(":debug: Processing type level conditions on "+configurationTypeDescription.getName()));
-			processConfigurationTypeLevelConditions(configurationTypeDescription, fallbackConditionHandler, code,
-					typeConditionsFailJumpTarget);
+			processConfigurationTypeLevelConditions(configurationTypeDescription, fallbackConditionHandler, code, typeConditionsFailJumpTarget);
 			code.addAll(getCodeToPrintln(":debug: Passed condition checks on "+configurationTypeDescription.getName()));
 
-			// Store a reusable empty array of BeanDefinitionCustomizer
-			code.add(ArrayFactory
-					.forType(new TypeDescription.ForLoadedType(BeanDefinitionCustomizer.class).asGenericType())
-					.withValues(Collections.emptyList()));
-			code.add(MethodVariableAccess.REFERENCE.storeAt(2));
+			if (isOutermost) {
+				// Store a reusable empty array of BeanDefinitionCustomizer
+				code.add(ArrayFactory
+						.forType(new TypeDescription.ForLoadedType(BeanDefinitionCustomizer.class).asGenericType())
+						.withValues(Collections.emptyList()));
+				code.add(MethodVariableAccess.REFERENCE.storeAt(2));
+			}
 
 			// @EnableConfigurationProperties(GsonProperties.class) transfers into:
 			// context.registerBean(GsonProperties.class, () -> new GsonProperties());
@@ -1190,18 +1206,15 @@ public class SlimConfigurationPlugin implements Plugin {
 					code.addAll(createRegisterBeanCode2(target, type, supplierLambdaName));
 				}
 			}
-			
 
-			// TODO: mark the bean definition somehow so it doesn't get
-			// processed by ConfigurationClassPostProcessor
+			// TODO: mark the bean definition somehow so it doesn't get processed by ConfigurationClassPostProcessor
 			// Call context.registerBean(SampleConfiguration.class)
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 			code.add(ClassConstant.of(configurationTypeDescription));
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(2));
 			code.add(MethodInvocation.invoke(registerBean));
 
-			for (MethodDescription.InDefinedShape methodDescription : configurationTypeDescription.getDeclaredMethods()
-					.filter(isAnnotatedWith(Bean.class))) {
+			for (MethodDescription.InDefinedShape methodDescription : configurationTypeDescription.getDeclaredMethods().filter(isAnnotatedWith(Bean.class))) {
 
 				ParameterList<net.bytebuddy.description.method.ParameterDescription.InDefinedShape> parameters = methodDescription
 						.getParameters();
@@ -1214,6 +1227,13 @@ public class SlimConfigurationPlugin implements Plugin {
 					TypeDescription argumentType = parameterErasures2.get(a);
 					// Computation of this parameter may depend on the bean param, is it a
 					// collection?
+					
+					if (argumentType.represents(ApplicationContext.class)) {
+						// Example: See Jackson2ObjectMapperBuilderCustomizerConfiguration - the @Bean factory method takes one
+						stackManipulations.add(MethodVariableAccess.REFERENCE.loadFrom(0));
+						stackManipulations.add(TypeCasting.to(new TypeDescription.ForLoadedType(ApplicationContext.class)));
+					} else
+					
 					if (argumentType.equals(listTD)) {
 						TypeDescription collectionTypeParameterDescriptor = parameters.asTypeList()
 								.get(methodDescription.isStatic() ? a : a - 1).getTypeArguments().get(0).asErasure();
@@ -1254,11 +1274,30 @@ public class SlimConfigurationPlugin implements Plugin {
 
 				code.addAll(createRegisterBeanCode(target, methodDescription));
 			}
+			
+			// Look at the inner types of the auto configuration class
+			if (configurationTypeDescription.getName().contains("Jackson")) {
+				TypeList memberTypes = configurationTypeDescription.getDeclaredTypes();
+				for (TypeDescription memberType: memberTypes) {
+					boolean b = false;
+					try {
+						b = hasAnnotation(memberType, Configuration.class);
+					} catch (Throwable t) {
+						throw new IllegalStateException("Problem checking hasAnnotation() on "+memberType.getName(), t);
+					}
+					if (b) {
+						log(":debug: generating bean registration code for member type "+memberType.getName());
+						builder = generateCodeForInitializeMethod(memberType, builder, target, code, false);
+					}
+				}
+			}
 
 			code.add(new InsertLabel(typeConditionsFailJumpTarget));
-			code.add(MethodReturn.VOID);
+			if (isOutermost) {
+				code.add(MethodReturn.VOID);
+			}
 
-			if (needsConditionService) {
+			if (needsConditionService && isOutermost) {
 				TypeDescription conditionServiceTypeDescription = new TypeDescription.ForLoadedType(
 						ConditionService.class);
 				code.add(0, MethodVariableAccess.REFERENCE.loadFrom(1));
@@ -1268,12 +1307,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				code.add(4, TypeCasting.to(conditionServiceTypeDescription));
 				code.add(5, MethodVariableAccess.REFERENCE.storeAt(3));
 			}
-
-			// Create the initialize() method
-			builder = builder.method(named("initialize").and(isDeclaredBy(ApplicationContextInitializer.class)))
-					.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
-
-			return builder.make();
+			return builder;
 		}
 
 		private void processConfigurationTypeLevelConditions(TypeDescription configurationTypeDescription,
@@ -1479,15 +1513,15 @@ public class SlimConfigurationPlugin implements Plugin {
 			for (AnnotationDescription ad : list) {
 				result.add(ad);
 			}
-			while (typeDescription.isNestedClass()) {
-				typeDescription = typeDescription.getEnclosingType();
-				// System.out.println("Collecting conditions from outer class
-				// "+typeDescription);
-				list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
-				for (AnnotationDescription ad : list) {
-					result.add(ad);
-				}
-			}
+//			while (typeDescription.isNestedClass()) {
+//				typeDescription = typeDescription.getEnclosingType();
+//				// System.out.println("Collecting conditions from outer class
+//				// "+typeDescription);
+//				list = typeDescription.getDeclaredAnnotations().filter(this::isConditionalAnnotation);
+//				for (AnnotationDescription ad : list) {
+//					result.add(ad);
+//				}
+//			}
 			return result;
 		}
 
@@ -1550,7 +1584,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				ClassFileLocator locator, DynamicType initializerClassType,
 				TypeDescription[] typesWithInitializeMethods,
 				TypeDescription[] initializersForOtherImportedConfigurations) throws Exception {
-			log("\n\n\nGenerating module for " + typeDescription.getName() + " calling");
+			log("Generating module for " + typeDescription.getName() + " calling");
 
 			if (typesWithInitializeMethods== null || typesWithInitializeMethods.length == 0) {
 				log("NOTHING");
@@ -1579,7 +1613,9 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			// @ImportModule(module = ContextAutoConfigurationModule.class)
 			// TODO: [needs proper solution]
-			if (moduleName.endsWith("GsonAutoConfigurationModule") || moduleName.endsWith("MustacheAutoConfigurationModule")) {
+			if (moduleName.endsWith("GsonAutoConfigurationModule") || 
+				moduleName.endsWith("MustacheAutoConfigurationModule") ||
+				moduleName.endsWith("JacksonAutoConfigurationModule")) {
 				builder = builder.annotateType(AnnotationDescription.Builder.ofType(ImportModule.class)
 						.defineTypeArray("module",
 								new TypeDescription[] { new TypeDescription.Latent("boot.autoconfigure.context.ContextAutoConfigurationModule", Opcodes.ACC_PUBLIC,
@@ -1663,6 +1699,8 @@ public class SlimConfigurationPlugin implements Plugin {
 
 			if (initializerClassType != null) {
 				builder = addInitializerMethod(builder, initializerClassType);
+			} else {
+				log(":debug: ?? no initializer class type ??");
 			}
 			
 			if (initializersForOtherImportedConfigurations != null) {

@@ -1,8 +1,8 @@
 slim.Module=\
 boot.autoconfigure.context.ContextAutoConfigurationModule,\
-boot.autoconfigure.jackson.JacksonAutoConfigurationModule,\
 boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule,\
 boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule,\
 boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule,\
 org.springframework.boot.autoconfigure.gson.GsonAutoConfigurationModule,\
-org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule
+org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule,\
+org.springframework.boot.autoconfigure.jackson.JacksonAutoConfigurationModule

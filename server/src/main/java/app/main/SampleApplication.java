@@ -3,6 +3,7 @@
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -17,7 +18,8 @@ import reactor.core.publisher.Mono;
 
 @SpringBootConfiguration
 // @EnableAutoConfiguration
-@Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class })
+// TODO [check-with-dave] had to add JacksonAutoConfiguration - is that expected pulled in via another route?
+@Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class, JacksonAutoConfiguration.class })
 public class SampleApplication {
 	
 	@Value("${app.value}")

@@ -9,3 +9,4 @@ boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule
 
 
 org.springframework.boot.autoconfigure.mustache.MustacheAutoConfigurationModule
+org.springframework.boot.autoconfigure.jackson.JacksonAutoConfigurationModule

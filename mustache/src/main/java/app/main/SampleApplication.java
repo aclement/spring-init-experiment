@@ -2,6 +2,7 @@ package app.main;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +13,7 @@ import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration
 @SpringBootConfiguration
 // TODO should import autoconfigs and get modules for free?
 //@Import({MustacheAutoConfigurationModule.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
-@Import({MustacheAutoConfiguration.class, ReactiveWebServerFactoryAutoConfigurationModule.class})
+@Import({MustacheAutoConfiguration.class, ReactiveWebServerFactoryAutoConfigurationModule.class, JacksonAutoConfiguration.class})
 public class SampleApplication {
 
 	@Bean
