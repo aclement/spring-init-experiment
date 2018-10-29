@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.env.PropertyResolver;
-
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
@@ -31,6 +27,8 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Label;
+import plugin.Methods;
+import plugin.Types;
 import plugin.custom.IfEq;
 import plugin.custom.IfNe;
 
@@ -44,22 +42,16 @@ public class ConditionalOnPropertyHandler extends BaseConditionalHandler {
 	protected MethodDescription.InDefinedShape havingValueProperty;
 
 	public ConditionalOnPropertyHandler() {
-		super(ConditionalOnProperty.class);
-		try {
-			prefixProperty = new MethodDescription.ForLoadedMethod(ConditionalOnProperty.class.getMethod("prefix"));
-			nameProperty = new MethodDescription.ForLoadedMethod(ConditionalOnProperty.class.getMethod("name"));
-			matchIfMissingProperty = new MethodDescription.ForLoadedMethod(
-					ConditionalOnProperty.class.getMethod("matchIfMissing"));
-			havingValueProperty = new MethodDescription.ForLoadedMethod(
-					ConditionalOnProperty.class.getMethod("havingValue"));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		super(Types.ConditionalOnProperty());
+		prefixProperty = Methods.findMethod(Types.ConditionalOnProperty(),"prefix");
+		nameProperty = Methods.findMethod(Types.ConditionalOnProperty(),"name");
+		matchIfMissingProperty = Methods.findMethod(Types.ConditionalOnProperty(),"matchIfMissing");
+		havingValueProperty = Methods.findMethod(Types.ConditionalOnProperty(),"havingValue");
 	}
 
 	@Override
 	public boolean accept(AnnotationDescription description) {
-		if (!description.getAnnotationType().represents(ConditionalOnProperty.class)) {
+		if (!description.getAnnotationType().equals(Types.ConditionalOnProperty())) {
 			return false;
 		}
 		AnnotationValue<?, ?> av = description.getValue(havingValueProperty);
@@ -124,8 +116,7 @@ public class ConditionalOnPropertyHandler extends BaseConditionalHandler {
 			}
 
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
-			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-					GenericApplicationContext.class.getMethod("getEnvironment"))));
+			code.add(MethodInvocation.invoke(Methods.getEnvironment()));
 			code.add(MethodVariableAccess.REFERENCE.storeAt(4));
 
 			for (String propertyString : properties) {
@@ -133,8 +124,8 @@ public class ConditionalOnPropertyHandler extends BaseConditionalHandler {
 						+ propertyString + "'");
 				code.add(MethodVariableAccess.REFERENCE.loadFrom(4));
 				code.add(new TextConstant(propertyString));
-				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						PropertyResolver.class.getMethod("containsProperty", String.class))));
+				code.add(MethodInvocation.invoke(Methods.containsProperty()
+						));
 				if (matchIfMissing) {
 					code.add(new IfNe(conditionFailsLabel));
 				} else {

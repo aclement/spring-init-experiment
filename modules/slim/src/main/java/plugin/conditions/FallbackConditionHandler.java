@@ -27,8 +27,8 @@ import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Label;
+import plugin.Methods;
 import plugin.custom.IfEq;
-import slim.ConditionService;
 
 /**
  * @author Andy Clement
@@ -50,15 +50,13 @@ public class FallbackConditionHandler implements ConditionalHandler {
 				code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
 				code.add(ClassConstant.of(((MethodDescription) annotatedElement).getDeclaringType().asErasure()));
 				code.add(ClassConstant.of(((MethodDescription) annotatedElement).getReturnType().asErasure()));
-				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						ConditionService.class.getMethod("matches", Class.class, Class.class))));
+				code.add(MethodInvocation.invoke(Methods.matches2()));
 				code.add(new IfEq(conditionFailsLabel));
 			} else {
 				// Call ConditionService.matches(Class)
 				code.add(MethodVariableAccess.REFERENCE.loadFrom(3));
 				code.add(ClassConstant.of((TypeDescription) annotatedElement));
-				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						ConditionService.class.getMethod("matches", Class.class))));
+				code.add(MethodInvocation.invoke(Methods.matches()));
 				code.add(new IfEq(conditionFailsLabel));
 			}
 			return code;

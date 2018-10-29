@@ -21,10 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -40,8 +36,6 @@ import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.jar.asm.Opcodes;
-import slim.ImportModule;
-import slim.Module;
 
 class ModuleClassFactory {
 
@@ -83,14 +77,14 @@ class ModuleClassFactory {
 				}
 			}
 			String moduleName = toModuleName(typeDescription.getTypeName());
-			DynamicType.Builder<?> builder = new ByteBuddy().subclass(Module.class).name(moduleName);
+			DynamicType.Builder<?> builder = new ByteBuddy().subclass(Types.Module()).name(moduleName);
 			log("Module: " + moduleName);
 
 			builder = addAtConfigurationAnnotation(builder);
 
 			if (autoConfigurationClass != null) {
 				// @Import(GsonAutoConfiguration.class)
-				builder = builder.annotateType(AnnotationDescription.Builder.ofType(Import.class)
+				builder = builder.annotateType(AnnotationDescription.Builder.ofType(Types.Import())
 						.defineTypeArray("value",
 								// TypeDescription newModule = new TypeDescription.Latent(moduleName,
 								// Opcodes.ACC_PUBLIC,
@@ -107,16 +101,16 @@ class ModuleClassFactory {
 			if (moduleName.endsWith("GsonAutoConfigurationModule")
 					|| moduleName.endsWith("MustacheAutoConfigurationModule")
 					|| moduleName.endsWith("JacksonAutoConfigurationModule")) {
-				builder = builder.annotateType(AnnotationDescription.Builder.ofType(ImportModule.class)
+				builder = builder.annotateType(AnnotationDescription.Builder.ofType(Types.ImportModule())
 						.defineTypeArray("module",
 								new TypeDescription[] { new TypeDescription.Latent(
 										"boot.autoconfigure.context.ContextAutoConfigurationModule", Opcodes.ACC_PUBLIC,
 										TypeDescription.Generic.OBJECT,
-										new TypeDescription.ForLoadedType(Module.class).asGenericType()) })
+										Types.Module().asGenericType()) })
 						.build());
 			}
 
-			Generic Type_ACI = TypeDescription.Generic.Builder.rawType(ApplicationContextInitializer.class).build();
+			Generic Type_ACI = TypeDescription.Generic.Builder.rawType(Types.ApplicationContextInitializer()).build();
 
 			List<StackManipulation> code = new ArrayList<>();
 			List<StackManipulation> eachElement = new ArrayList<>();
@@ -124,7 +118,7 @@ class ModuleClassFactory {
 
 			Generic Type_ListOfACI = TypeDescription.Generic.Builder
 					.parameterizedType(new TypeDescription.ForLoadedType(List.class),
-							Common.Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext)
+							Types.ParameterizedApplicationContextInitializerWithGenericApplicationContext())
 					.build();
 
 			if (typesWithInitializeMethods != null) {
@@ -181,12 +175,12 @@ class ModuleClassFactory {
 			}
 
 			code.add(ArrayFactory
-					.forType(new TypeDescription.ForLoadedType(ApplicationContextInitializer.class).asGenericType())
+					.forType(Types.ApplicationContextInitializer().asGenericType())
 					.withValues(eachElement));
 
 			code.add(MethodInvocation
 					.invoke(new MethodDescription.ForLoadedMethod(Arrays.class.getMethod("asList", Object[].class))));
-			code.add(MethodReturn.of(Common.Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext));
+			code.add(MethodReturn.of(Types.ParameterizedApplicationContextInitializerWithGenericApplicationContext()));
 
 			builder = builder.defineMethod("initializers", Type_ListOfACI, Modifier.PUBLIC)
 					.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
@@ -214,7 +208,7 @@ class ModuleClassFactory {
 		}
 
 		private Builder<?> addAtConfigurationAnnotation(DynamicType.Builder<?> builder) {
-			return builder.annotateType(AnnotationDescription.Builder.ofType(Configuration.class).build());
+			return builder.annotateType(AnnotationDescription.Builder.ofType(Types.Configuration()).build());
 		}
 
 	}

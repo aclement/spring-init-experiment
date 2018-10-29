@@ -23,16 +23,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.support.GenericApplicationContext;
-
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription.InDefinedShape;
 import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.DynamicType.Builder.MethodDefinition.ImplementationDefinition;
 import net.bytebuddy.implementation.Implementation;
@@ -47,15 +42,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 
 public class Common {
-
-	static Generic Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext;
-
-	static {
-		Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext = TypeDescription.Generic.Builder
-				.parameterizedType(new TypeDescription.ForLoadedType(ApplicationContextInitializer.class),
-						new TypeDescription.ForLoadedType(GenericApplicationContext.class))
-				.build();
-	}
 
 	/**
 	 * Generate code that will print the specified string. This code can then be
@@ -110,9 +96,9 @@ public class Common {
 		code.add(Duplication.SINGLE);
 		code.add(NullConstant.INSTANCE);
 		code.add(MethodInvocation.invoke(inDefinedShape));
-		code.add(MethodReturn.of(Common.Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext));
+		code.add(MethodReturn.of(Types.ParameterizedApplicationContextInitializerWithGenericApplicationContext()));
 		ImplementationDefinition<?> method = builder.defineMethod(name == null ? "$$initializer" : name,
-				Common.Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext, Visibility.PUBLIC,
+				Types.ParameterizedApplicationContextInitializerWithGenericApplicationContext(), net.bytebuddy.description.modifier.Visibility.PUBLIC,
 				Ownership.STATIC);
 		builder = method.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
 		return builder;
@@ -129,8 +115,27 @@ public class Common {
 		return null;
 	}
 
+	static AnnotationDescription findAnnotation(TypeDescription td, TypeDescription c) {
+		AnnotationList annotations = td.getDeclaredAnnotations();
+		for (AnnotationDescription annotation : annotations) {
+			if (annotation.getAnnotationType().equals(c)) {
+				return annotation;
+			}
+		}
+		return null;
+	}
+
+
 	static boolean hasAnnotation(TypeDescription target, Class<? extends Annotation> annotation) {
 		return target.getDeclaredAnnotations().stream().anyMatch(desc -> isMetaAnnotated(desc, annotation));
+	}
+
+	static boolean hasAnnotation(TypeDescription target, TypeDescription annotation) {
+		return target.getDeclaredAnnotations().stream().anyMatch(desc -> isMetaAnnotated(desc, annotation));
+	}
+
+	static boolean isMetaAnnotated(AnnotationDescription desc, TypeDescription annotation) {
+		return findMetaAnnotation(desc, annotation) != null;
 	}
 
 	static boolean isMetaAnnotated(AnnotationDescription desc, Class<? extends Annotation> annotation) {
@@ -138,6 +143,10 @@ public class Common {
 	}
 
 	static AnnotationDescription findMetaAnnotation(AnnotationDescription desc, Class<? extends Annotation> annotation) {
+		return findMetaAnnotation(desc, annotation, new HashSet<>());
+	}
+
+	static AnnotationDescription findMetaAnnotation(AnnotationDescription desc, TypeDescription annotation) {
 		return findMetaAnnotation(desc, annotation, new HashSet<>());
 	}
 
@@ -160,5 +169,33 @@ public class Common {
 		return null;
 	}
 
+	static AnnotationDescription findMetaAnnotation(AnnotationDescription desc, TypeDescription annotation,
+			Set<AnnotationDescription> seen) {
+//		log("Searching for " + annotation + " in " + desc);
+		TypeDescription type = desc.getAnnotationType();
+		seen.add(desc);
+		if (type.equals(annotation)) {
+			return desc;
+		}
+		for (AnnotationDescription ann : type.getDeclaredAnnotations()) {
+			if (!seen.contains(ann)) {
+				AnnotationDescription found = findMetaAnnotation(ann, annotation, seen);
+				if (found != null) {
+					return found;
+				}
+			}
+		}
+		return null;
+	}
 
+	public static boolean isPresent(String className, ClassLoader classLoader) {
+		try {
+			Class.forName(className, false, classLoader);
+			return true;
+		}
+		catch (Throwable ex) {
+			// Class or one of its dependencies is not present...
+			return false;
+		}
+	}
 }

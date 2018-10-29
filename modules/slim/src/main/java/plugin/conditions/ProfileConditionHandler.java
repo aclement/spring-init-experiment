@@ -19,14 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
-
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
@@ -34,6 +28,8 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Label;
+import plugin.Methods;
+import plugin.Types;
 import plugin.custom.IfEq;
 
 /**
@@ -41,12 +37,12 @@ import plugin.custom.IfEq;
  */
 public class ProfileConditionHandler extends BaseConditionalHandler {
 	public ProfileConditionHandler() {
-		super(Profile.class);
+		super(Types.Profile());
 	}
 
 	@Override
 	public boolean accept(AnnotationDescription description) {
-		return description.getAnnotationType().represents(Profile.class);
+		return description.getAnnotationType().equals(Types.Profile());
 	}
 
 	@Override
@@ -76,14 +72,11 @@ public class ProfileConditionHandler extends BaseConditionalHandler {
 			// IFEQ L7
 
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
-			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-					GenericApplicationContext.class.getMethod("getEnvironment"))));
+			code.add(MethodInvocation.invoke(Methods.getEnvironment()));
 			code.add(ArrayFactory.forType(new TypeDescription.ForLoadedType(String.class).asGenericType())
 					.withValues(profilesArrayEntries));
-			code.add(MethodInvocation.invoke(
-					new MethodDescription.ForLoadedMethod(Profiles.class.getDeclaredMethod("of", String[].class))));
-			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-					Environment.class.getDeclaredMethod("acceptsProfiles", Profiles.class))));
+			code.add(MethodInvocation.invoke(Methods.of()));
+			code.add(MethodInvocation.invoke(Methods.acceptsProfiles()));
 			code.add(new IfEq(conditionFailsLabel));
 			return code;
 		} catch (Exception e) {

@@ -16,6 +16,7 @@
 package plugin.conditions;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * @author Andy Clement
@@ -23,13 +24,9 @@ import net.bytebuddy.description.method.MethodDescription;
 public abstract class BaseConditionalHandler implements ConditionalHandler {
 	protected MethodDescription.InDefinedShape valueProperty;
 
-	public BaseConditionalHandler(Class<?> annotationConditionClass) {
-		if (annotationConditionClass != null) {
-			try {
-				valueProperty = new MethodDescription.ForLoadedMethod(annotationConditionClass.getMethod("value"));
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+	public BaseConditionalHandler(TypeDescription  annotationConditionTypeDescription) {
+		if (annotationConditionTypeDescription != null) {
+			valueProperty = annotationConditionTypeDescription.getDeclaredMethods().filter(em -> em.getName().equals("value")).get(0);
 		}
 	}
 }

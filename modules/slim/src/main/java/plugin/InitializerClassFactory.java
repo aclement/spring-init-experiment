@@ -20,30 +20,14 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.AbstractApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -83,8 +67,6 @@ import plugin.conditions.FallbackConditionHandler;
 import plugin.conditions.ProfileConditionHandler;
 import plugin.custom.EnableFramesComputing;
 import plugin.custom.InsertLabel;
-import slim.ConditionService;
-import slim.InitializerMapping;
 
 // TODO change name to avoid clash ($$Initializer?)
 /**
@@ -115,37 +97,12 @@ import slim.InitializerMapping;
  */
 class InitializerClassFactory {
 
-	private final MethodDescription.InDefinedShape registerBean, registerBeanWithSupplier, getBean, lambdaMeta, get, getBeanFactory, getBeansOfType, map_values,
-			arraylist_ctor;
 	private List<ConditionalHandler> conditionalHandlers = new ArrayList<>();
 	private boolean needsConditionService;
 	private FallbackConditionHandler fallbackConditionHandler;
 
-	private TypeDescription listTD;
-
 	public InitializerClassFactory() {
-		try {
-			getBeanFactory = new MethodDescription.ForLoadedMethod(GenericApplicationContext.class.getMethod("getBeanFactory"));
-			registerBean = new MethodDescription.ForLoadedMethod(
-					GenericApplicationContext.class.getMethod("registerBean", Class.class, BeanDefinitionCustomizer[].class));
-			registerBeanWithSupplier = new MethodDescription.ForLoadedMethod(
-					GenericApplicationContext.class.getMethod("registerBean", Class.class, Supplier.class, BeanDefinitionCustomizer[].class));
-			getBean = new MethodDescription.ForLoadedMethod(BeanFactory.class.getMethod("getBean", Class.class));
-			arraylist_ctor = new MethodDescription.ForLoadedConstructor(ArrayList.class.getConstructor(Collection.class));
-			getBeansOfType = new MethodDescription.ForLoadedMethod(AbstractApplicationContext.class.getMethod("getBeansOfType", Class.class));
-			lambdaMeta = new MethodDescription.ForLoadedMethod(LambdaMetafactory.class.getMethod("metafactory", MethodHandles.Lookup.class, String.class,
-					MethodType.class, MethodType.class, MethodHandle.class, MethodType.class));
-			map_values = new MethodDescription.ForLoadedMethod(java.util.Map.class.getMethod("values"));
-			get = new MethodDescription.ForLoadedMethod(Supplier.class.getMethod("get"));
-			listTD = new TypeDescription.ForLoadedType(java.util.List.class);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
 		conditionalHandlers.add(new ConditionalOnClassHandler());
-		// results in :
-//			java.lang.IllegalStateException: org.springframework.context.support.GenericApplicationContext@52719fb6 has not been refreshed yet
-//			at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1070) ~[spring-context-5.1.2.BUILD-SNAPSHOT.jar:5.1.2.BUILD-SNAPSHOT]
-//			at org.springframework.context.support.AbstractApplicationContext.getBeanNamesForType(AbstractApplicationContext.java:1191) ~[sp
 		conditionalHandlers.add(new ConditionalOnMissingBeanHandler());
 		conditionalHandlers.add(new ProfileConditionHandler());
 		conditionalHandlers.add(new ConditionalOnPropertyHandler());
@@ -166,14 +123,14 @@ class InitializerClassFactory {
 			throws Exception {
 
 		DynamicType.Builder<?> builder = new ByteBuddy()
-				.subclass(Common.Type_ParameterizedApplicationContextInitializerWithGenericApplicationContext, Default.NO_CONSTRUCTORS)
+				.subclass(Types.ParameterizedApplicationContextInitializerWithGenericApplicationContext(), Default.NO_CONSTRUCTORS)
 				.visit(new EnableFramesComputing());
 
 		// TODO how to do logging from a bytebuddy plugin?
 		log("Generating initializer for " + configurationTypeDescription.getName());
 
 		builder = builder.modifiers(Modifier.STATIC).name(configurationInitializerTypeDescription);
-		builder = builder.annotateType(AnnotationDescription.Builder.ofType(InitializerMapping.class)
+		builder = builder.annotateType(AnnotationDescription.Builder.ofType(Types.InitializerMapping())
 				.defineTypeArray("value", new TypeDescription[] { configurationTypeDescription }).build());
 
 		TypeDescription target = builder.make().getTypeDescription();
@@ -193,7 +150,7 @@ class InitializerClassFactory {
 		// Create the initialize() method
 		List<StackManipulation> code = new ArrayList<>();
 		builder = generateCodeForInitializeMethod(configurationTypeDescription, builder, target, code, true);
-		builder = builder.method(named("initialize").and(isDeclaredBy(ApplicationContextInitializer.class)))
+		builder = builder.method(named("initialize").and(isDeclaredBy(Types.ApplicationContextInitializer())))
 				.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(code)));
 
 		return builder.make();
@@ -208,17 +165,16 @@ class InitializerClassFactory {
 
 		if (isOutermost) {
 			// Store a reusable empty array of BeanDefinitionCustomizer
-			code.add(ArrayFactory.forType(new TypeDescription.ForLoadedType(BeanDefinitionCustomizer.class).asGenericType())
+			code.add(ArrayFactory.forType(Types.BeanDefinitionCustomizer().asGenericType())
 					.withValues(Collections.emptyList()));
 			code.add(MethodVariableAccess.REFERENCE.storeAt(2));
 		}
 
 		// @EnableConfigurationProperties(GsonProperties.class) transfers into:
 		// context.registerBean(GsonProperties.class, () -> new GsonProperties());
-		AnnotationDescription enableConfigurationProperties = Common.findAnnotation(configurationTypeDescription, EnableConfigurationProperties.class);
+		AnnotationDescription enableConfigurationProperties = Common.findAnnotation(configurationTypeDescription, Types.EnableConfigurationProperties());
 		if (enableConfigurationProperties != null) {
-			MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(EnableConfigurationProperties.class)
-					.getDeclaredMethods();
+			MethodList<MethodDescription.InDefinedShape> methodList = Types.EnableConfigurationProperties().getDeclaredMethods();
 			InDefinedShape ECP_Value = methodList.filter(named("value")).getOnly();
 			TypeDescription[] types = (TypeDescription[]) enableConfigurationProperties.getValue(ECP_Value).resolve();
 			for (TypeDescription type : types) {
@@ -234,7 +190,7 @@ class InitializerClassFactory {
 					tdname = tdname.substring(tdname.lastIndexOf(".") + 1);
 				}
 				String supplierLambdaName = "init_" + tdname;
-				builder = builder.defineMethod(supplierLambdaName, type.asErasure(), Visibility.PRIVATE, Ownership.STATIC).withParameters(BeanFactory.class)
+				builder = builder.defineMethod(supplierLambdaName, type.asErasure(), Visibility.PRIVATE, Ownership.STATIC).withParameters(Types.BeanFactory())
 						.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(insns)));
 				code.addAll(createRegisterBeanCode2(target, type, supplierLambdaName));
 			}
@@ -246,9 +202,9 @@ class InitializerClassFactory {
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 		code.add(ClassConstant.of(configurationTypeDescription));
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(2));
-		code.add(MethodInvocation.invoke(registerBean));
+		code.add(MethodInvocation.invoke(Methods.registerBean()));
 
-		for (MethodDescription.InDefinedShape methodDescription : configurationTypeDescription.getDeclaredMethods().filter(isAnnotatedWith(Bean.class))) {
+		for (MethodDescription.InDefinedShape methodDescription : configurationTypeDescription.getDeclaredMethods().filter(isAnnotatedWith(Types.Bean()))) {
 
 			ParameterList<net.bytebuddy.description.method.ParameterDescription.InDefinedShape> parameters = methodDescription.getParameters();
 			TypeList parameterErasures = parameters.asTypeList().asErasures();
@@ -261,24 +217,22 @@ class InitializerClassFactory {
 				// Computation of this parameter may depend on the bean param, is it a
 				// collection?
 
-				if (argumentType.represents(ApplicationContext.class)) {
+				if (argumentType.equals(Types.ApplicationContext())) { // was represents(ApplicationContext.class)) {
 					// Example: See Jackson2ObjectMapperBuilderCustomizerConfiguration - the @Bean
 					// factory method takes one
 					stackManipulations.add(MethodVariableAccess.REFERENCE.loadFrom(0));
-					stackManipulations.add(TypeCasting.to(new TypeDescription.ForLoadedType(ApplicationContext.class)));
-				} else
-
-				if (argumentType.equals(listTD)) {
+					stackManipulations.add(TypeCasting.to(Types.ApplicationContext()));
+				} else if (argumentType.equals(Types.List())) {
 					TypeDescription collectionTypeParameterDescriptor = parameters.asTypeList().get(methodDescription.isStatic() ? a : a - 1).getTypeArguments()
 							.get(0).asErasure();
 					stackManipulations.add(TypeCreation.of(new TypeDescription.ForLoadedType(ArrayList.class)));
 					stackManipulations.add(Duplication.SINGLE);
 					stackManipulations.add(MethodVariableAccess.REFERENCE.loadFrom(0));
-					stackManipulations.add(TypeCasting.to(new TypeDescription.ForLoadedType(AbstractApplicationContext.class)));
+					stackManipulations.add(TypeCasting.to(Types.AbstractApplicationContext()));//new TypeDescription.ForLoadedType(AbstractApplicationContext.class)));
 					stackManipulations.add(ClassConstant.of(collectionTypeParameterDescriptor));
-					stackManipulations.add(MethodInvocation.invoke(getBeansOfType));
-					stackManipulations.add(MethodInvocation.invoke(map_values));
-					stackManipulations.add(MethodInvocation.invoke(arraylist_ctor));
+					stackManipulations.add(MethodInvocation.invoke(Methods.getBeansOfType()));
+					stackManipulations.add(MethodInvocation.invoke(Methods.mapValues()));
+					stackManipulations.add(MethodInvocation.invoke(Methods.arraylistCtor()));
 //				         9: new           #93                 // class java/util/ArrayList
 //				         12: dup
 //				         13: aload_0
@@ -291,7 +245,7 @@ class InitializerClassFactory {
 					// Call BeanFactory.getBean(Class)
 					stackManipulations.add(MethodVariableAccess.REFERENCE.loadFrom(0));
 					stackManipulations.add(ClassConstant.of(argumentType));
-					stackManipulations.add(MethodInvocation.invoke(getBean));
+					stackManipulations.add(MethodInvocation.invoke(Methods.getBean()));
 				}
 
 				stackManipulations.add(TypeCasting.to(argumentType));
@@ -301,7 +255,7 @@ class InitializerClassFactory {
 
 			builder = builder
 					.defineMethod("init_" + methodDescription.getName(), methodDescription.getReturnType().asErasure(), Visibility.PRIVATE, Ownership.STATIC)
-					.withParameters(BeanFactory.class).intercept(new Implementation.Simple(new ByteCodeAppender.Simple(stackManipulations)));
+					.withParameters(Types.BeanFactory()).intercept(new Implementation.Simple(new ByteCodeAppender.Simple(stackManipulations)));
 
 			code.addAll(createRegisterBeanCode(target, methodDescription));
 		}
@@ -312,7 +266,7 @@ class InitializerClassFactory {
 			for (TypeDescription memberType : memberTypes) {
 				boolean b = false;
 				try {
-					b = Common.hasAnnotation(memberType, Configuration.class);
+					b = Common.hasAnnotation(memberType, Types.Configuration());
 				} catch (Throwable t) {
 					throw new IllegalStateException("Problem checking hasAnnotation() on " + memberType.getName(), t);
 				}
@@ -329,11 +283,11 @@ class InitializerClassFactory {
 		}
 
 		if (needsConditionService && isOutermost) {
-			TypeDescription conditionServiceTypeDescription = new TypeDescription.ForLoadedType(ConditionService.class);
+			TypeDescription conditionServiceTypeDescription = Types.ConditionService();
 			code.add(0, MethodVariableAccess.REFERENCE.loadFrom(1));
-			code.add(1, MethodInvocation.invoke(getBeanFactory));
+			code.add(1, MethodInvocation.invoke(Methods.getBeanFactory()));
 			code.add(2, ClassConstant.of(conditionServiceTypeDescription));
-			code.add(3, MethodInvocation.invoke(getBean));
+			code.add(3, MethodInvocation.invoke(Methods.getBean()));
 			code.add(4, TypeCasting.to(conditionServiceTypeDescription));
 			code.add(5, MethodVariableAccess.REFERENCE.storeAt(3));
 		}
@@ -438,14 +392,14 @@ class InitializerClassFactory {
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 		MethodDescription.InDefinedShape lambda = new MethodDescription.Latent(initializerType, supplierLambdaName, Modifier.PRIVATE | Modifier.STATIC,
 				Collections.emptyList(), td.asGenericType(),
-				Collections.singletonList(new ParameterDescription.Token(new TypeDescription.ForLoadedType(BeanFactory.class).asGenericType())),
+				Collections.singletonList(new ParameterDescription.Token(Types.BeanFactory().asGenericType())),
 				Collections.emptyList(), Collections.emptyList(), null, null);
-		code.add(MethodInvocation.invoke(lambdaMeta).dynamic("get", new TypeDescription.ForLoadedType(Supplier.class),
-				Collections.singletonList(new TypeDescription.ForLoadedType(BeanFactory.class)),
-				Arrays.asList(JavaConstant.MethodType.of(get).asConstantPoolValue(), JavaConstant.MethodHandle.of(lambda).asConstantPoolValue(),
+		code.add(MethodInvocation.invoke(Methods.metafactory()).dynamic("get", new TypeDescription.ForLoadedType(Supplier.class),
+				Collections.singletonList(Types.BeanFactory()),
+				Arrays.asList(JavaConstant.MethodType.of(Methods.get()).asConstantPoolValue(), JavaConstant.MethodHandle.of(lambda).asConstantPoolValue(),
 						JavaConstant.MethodType.of(td.asErasure(), Collections.emptyList()).asConstantPoolValue())));
-		code.add(ArrayFactory.forType(new TypeDescription.ForLoadedType(BeanDefinitionCustomizer.class).asGenericType()).withValues(Collections.emptyList()));
-		code.add(MethodInvocation.invoke(registerBeanWithSupplier));
+		code.add(ArrayFactory.forType(Types.BeanDefinitionCustomizer().asGenericType()).withValues(Collections.emptyList()));
+		code.add(MethodInvocation.invoke(Methods.registerBeanWithSupplier()));
 		return code;
 	}
 
@@ -491,14 +445,14 @@ class InitializerClassFactory {
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 		MethodDescription.InDefinedShape lambda = new MethodDescription.Latent(initializerType, "init_" + methodDescription.getName(),
 				Modifier.PRIVATE | Modifier.STATIC, Collections.emptyList(), methodDescription.getReturnType().asRawType(),
-				Collections.singletonList(new ParameterDescription.Token(new TypeDescription.ForLoadedType(BeanFactory.class).asGenericType())),
+				Collections.singletonList(new ParameterDescription.Token(Types.BeanFactory().asGenericType())),
 				Collections.emptyList(), Collections.emptyList(), null, null);
-		code.add(MethodInvocation.invoke(lambdaMeta).dynamic("get", new TypeDescription.ForLoadedType(Supplier.class),
-				Collections.singletonList(new TypeDescription.ForLoadedType(BeanFactory.class)),
-				Arrays.asList(JavaConstant.MethodType.of(get).asConstantPoolValue(), JavaConstant.MethodHandle.of(lambda).asConstantPoolValue(),
+		code.add(MethodInvocation.invoke(Methods.metafactory()).dynamic("get", new TypeDescription.ForLoadedType(Supplier.class),
+				Collections.singletonList(Types.BeanFactory()),
+				Arrays.asList(JavaConstant.MethodType.of(Methods.get()).asConstantPoolValue(), JavaConstant.MethodHandle.of(lambda).asConstantPoolValue(),
 						JavaConstant.MethodType.of(methodDescription.getReturnType().asErasure(), Collections.emptyList()).asConstantPoolValue())));
-		code.add(ArrayFactory.forType(new TypeDescription.ForLoadedType(BeanDefinitionCustomizer.class).asGenericType()).withValues(Collections.emptyList()));
-		code.add(MethodInvocation.invoke(registerBeanWithSupplier));
+		code.add(ArrayFactory.forType(Types.BeanDefinitionCustomizer().asGenericType()).withValues(Collections.emptyList()));
+		code.add(MethodInvocation.invoke(Methods.registerBeanWithSupplier()));
 		code.add(new InsertLabel(conditionsFailJumpTarget));
 		return code;
 	}
@@ -532,13 +486,27 @@ class InitializerClassFactory {
 	}
 
 	public boolean isConditionalAnnotation(AnnotationDescription annoDescription) {
-		return isAnnotated(annoDescription, Conditional.class, new HashSet<>());
+		return isAnnotated(annoDescription, Types.Conditional(), new HashSet<>());
 	}
 
 	private boolean isAnnotated(AnnotationDescription desc, Class<? extends Annotation> annotationClass, Set<AnnotationDescription> seen) {
 		seen.add(desc);
 		TypeDescription type = desc.getAnnotationType();
 		if (type.represents(annotationClass)) {
+			return true;
+		}
+		for (AnnotationDescription ann : type.getDeclaredAnnotations()) {
+			if (!seen.contains(ann) && isAnnotated(ann, annotationClass, seen)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isAnnotated(AnnotationDescription desc, TypeDescription annotationClass, Set<AnnotationDescription> seen) {
+		seen.add(desc);
+		TypeDescription type = desc.getAnnotationType();
+		if (type.equals(annotationClass)) {
 			return true;
 		}
 		for (AnnotationDescription ann : type.getDeclaredAnnotations()) {

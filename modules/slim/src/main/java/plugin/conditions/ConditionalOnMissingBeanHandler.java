@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.support.GenericApplicationContext;
-
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
@@ -32,6 +28,8 @@ import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Label;
+import plugin.Methods;
+import plugin.Types;
 import plugin.custom.ArrayLength;
 import plugin.custom.IfNe;
 
@@ -41,12 +39,12 @@ import plugin.custom.IfNe;
 public class ConditionalOnMissingBeanHandler extends BaseConditionalHandler {
 
 	public ConditionalOnMissingBeanHandler() {
-		super(ConditionalOnMissingBean.class);
+		super(Types.ConditionalOnMissingBean());
 	}
 
 	@Override
 	public boolean accept(AnnotationDescription description) {
-		return description.getAnnotationType().represents(ConditionalOnMissingBean.class);
+		return description.getAnnotationType().equals(Types.ConditionalOnMissingBean());
 	}
 
 	@Override
@@ -62,13 +60,11 @@ public class ConditionalOnMissingBeanHandler extends BaseConditionalHandler {
 			// What to call: if
 			// (context.getBeanFactory().getBeanNamesForType(Gson.class).length == 0)
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1)); // Load context
-			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-					GenericApplicationContext.class.getMethod("getBeanFactory"))));
+			code.add(MethodInvocation.invoke(Methods.getBeanFactory()));
 			TypeDescription returnTypeOfBeanMethod = ((MethodDescription.InDefinedShape) annotatedElement)
 					.getReturnType().asErasure();
 			code.add(ClassConstant.of(returnTypeOfBeanMethod));
-			code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-					ConfigurableListableBeanFactory.class.getMethod("getBeanNamesForType", Class.class))));
+			code.add(MethodInvocation.invoke(Methods.getBeanNamesForType()));
 			code.add(new ArrayLength());
 			code.add(new IfNe(conditionFailsLabel));
 			return code;

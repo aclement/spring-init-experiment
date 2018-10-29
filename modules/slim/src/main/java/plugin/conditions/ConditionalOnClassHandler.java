@@ -19,18 +19,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.util.ClassUtils;
-
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.jar.asm.Label;
+import plugin.Methods;
+import plugin.Types;
 import plugin.custom.IfEq;
 
 /**
@@ -38,12 +36,12 @@ import plugin.custom.IfEq;
  */
 public class ConditionalOnClassHandler extends BaseConditionalHandler {
 	public ConditionalOnClassHandler() {
-		super(ConditionalOnClass.class);
+		super(Types.ConditionalOnClass());
 	}
 
 	@Override
 	public boolean accept(AnnotationDescription description) {
-		return description.getAnnotationType().represents(ConditionalOnClass.class);
+		return description.getAnnotationType().equals(Types.ConditionalOnClass());
 	}
 
 	@Override
@@ -59,8 +57,7 @@ public class ConditionalOnClassHandler extends BaseConditionalHandler {
 				code.add(new TextConstant(clazz.getName()));
 				code.add(NullConstant.INSTANCE);
 				// Call ClassUtils.isPresent("com.foo.Bar", null)
-				code.add(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(
-						ClassUtils.class.getMethod("isPresent", String.class, ClassLoader.class))));
+				code.add(MethodInvocation.invoke(Methods.isPresent()));
 				code.add(new IfEq(conditionFailsLabel));
 			}
 			return code;

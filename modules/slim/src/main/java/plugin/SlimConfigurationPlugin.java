@@ -35,11 +35,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.util.ClassUtils;
-
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -49,13 +44,12 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.ClassFileLocator.ForFolder;
 import net.bytebuddy.dynamic.ClassFileLocator.ForJarFile;
+import net.bytebuddy.dynamic.ClassFileLocator.Resolution;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.jar.asm.Opcodes;
 import plugin.internal.Type;
 import plugin.internal.TypeSystem;
-import slim.ImportModule;
-import slim.Module;
 
 public class SlimConfigurationPlugin implements Plugin {
 
@@ -72,6 +66,9 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	@Override
 	public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator locator) {
+		Types.verify();
+		Methods.verify();
+		
 		try {
 			// Set context classloader?
 
@@ -87,7 +84,7 @@ public class SlimConfigurationPlugin implements Plugin {
 			initializerClassType.saveIn(targetClassesFolder);
 			// TODO: fix this so it creates a module properly (and only when needed - one
 			// per app)
-			if (Common.hasAnnotation(typeDescription, SpringBootConfiguration.class)) {
+			if (Common.hasAnnotation(typeDescription, Types.SpringBootConfiguration())) {
 				TypeDescription[] configs = findConfigs(typeDescription);
 				log("Discovering @Import on " + typeDescription.getActualName() + ", found: " + toString(configs));
 				// CRUDE - Create a subset of the configs where those that have module
@@ -102,7 +99,7 @@ public class SlimConfigurationPlugin implements Plugin {
 					System.out.println(config.getSimpleName());
 					// Exclude spring library imports (they won't have the $$initializer
 					// method)
-					if (!Common.hasAnnotation(config, ImportModule.class) && config.getName().startsWith("org.springframework")) {
+					if (!Common.hasAnnotation(config, Types.ImportModule()) && config.getName().startsWith("org.springframework")) {
 						skip = true;
 					}
 					if (!skip) {
@@ -132,8 +129,9 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	}
 
+	
 	public void createModuleIfReachable(String autoConfigurationClassName, ClassFileLocator locator, File targetClassesFolder) throws Exception {
-		if (ClassUtils.isPresent(autoConfigurationClassName, Thread.currentThread().getContextClassLoader())) {
+		if (Common.isPresent(autoConfigurationClassName, Thread.currentThread().getContextClassLoader())) {
 			createModuleForAutoConfiguration(autoConfigurationClassName, locator, targetClassesFolder);
 		} else {
 			log(":debug: Unable to create module for " + autoConfigurationClassName + " not reachable here");
@@ -163,7 +161,7 @@ public class SlimConfigurationPlugin implements Plugin {
 		try {
 			TypeDescription newModuleInitializer = new TypeDescription.Latent(moduleInitializerName, Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
 			newModuleInitializerType = initializerClassFactory.make(
-					new TypeDescription.ForLoadedType(ClassUtils.forName(autoConfigurationClass, Thread.currentThread().getContextClassLoader())),
+					TypeDescription.ForLoadedType.of(Class.forName(autoConfigurationClass, false, Thread.currentThread().getContextClassLoader())),
 					moduleInitializerName, locator);
 			newModuleInitializerType.saveIn(targetFolder);
 		} catch (Throwable t) {
@@ -171,7 +169,7 @@ public class SlimConfigurationPlugin implements Plugin {
 		}
 
 		// Does the auto configuration class have any @Import references to other configuration?
-		// TODO what if the types about to be generated here already exist?
+		// TODO what if the types about to be generated here already exist due to earlier processing?
 		List<plugin.internal.Type> importedConfigurationTypes = findImports(ts.resolveDotted(autoConfigurationClass));
 		augmentImportedConfigurationTypes(autoConfigurationClass,importedConfigurationTypes);
 		if (importedConfigurationTypes.size() != 0) {
@@ -180,6 +178,9 @@ public class SlimConfigurationPlugin implements Plugin {
 			try {
 				for (Type t : importedConfigurationTypes) {
 					Class clazz = Class.forName(t.getName().replace("/", "."), false, Thread.currentThread().getContextClassLoader());
+					System.out.println("CLZ: Loading "+t.getName()+", loaded by "+clazz.getClassLoader().toString());
+					Resolution r = locator.locate(t.getName().replace("/", "."));
+					System.out.println("CLZ2: loading "+t.getName()+" ... "+r.getClass().toString());
 					DynamicType initializer = initializerClassFactory.make(new TypeDescription.ForLoadedType(clazz),
 							moduleName + "$" + t.getShortName() + "_" + "Initializer", locator);
 					initializer.saveIn(targetFolder);
@@ -426,11 +427,11 @@ public class SlimConfigurationPlugin implements Plugin {
 		log("Finding imports for " + typeDescription);
 		Collection<TypeDescription> result = new LinkedHashSet<>();
 		for (AnnotationDescription imports : findImports(typeDescription)) {
-			MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(Import.class).getDeclaredMethods();
+			MethodList<MethodDescription.InDefinedShape> methodList = Types.Import().getDeclaredMethods();
 			InDefinedShape IMPORTS = methodList.filter(named("value")).getOnly();
 			TypeDescription[] types = (TypeDescription[]) imports.getValue(IMPORTS).resolve();
 			for (TypeDescription type : types) {
-				if (!type.isAssignableTo(Module.class)) {
+				if (!type.isAssignableTo(Types.Module())) {
 					log("Import " + type);
 					result.add(type);
 				}
@@ -460,7 +461,7 @@ public class SlimConfigurationPlugin implements Plugin {
 	private List<AnnotationDescription> findImports(TypeDescription typeDescription) {
 		List<AnnotationDescription> result = new ArrayList<>();
 		for (AnnotationDescription candidate : typeDescription.getDeclaredAnnotations()) {
-			AnnotationDescription found = Common.findMetaAnnotation(candidate, Import.class);
+			AnnotationDescription found = Common.findMetaAnnotation(candidate, Types.Import());
 			if (found != null) {
 				result.add(found);
 			}
@@ -472,13 +473,13 @@ public class SlimConfigurationPlugin implements Plugin {
 		List<TypeDescription> initializers = new ArrayList<>();
 		initializers.add(initializerClassType.getTypeDescription());
 		return builder.annotateType(
-				AnnotationDescription.Builder.ofType(ImportModule.class).defineTypeArray("module", initializers.toArray(new TypeDescription[0])).build());
+				AnnotationDescription.Builder.ofType(Types.ImportModule()).defineTypeArray("module", initializers.toArray(new TypeDescription[0])).build());
 	}
 
 	@Override
 	public boolean matches(TypeDescription target) {
 		log("Matching: " + target);
-		return !Common.hasAnnotation(target, ImportModule.class) && Common.hasAnnotation(target, Configuration.class);
+		return !Common.hasAnnotation(target, Types.ImportModule()) && Common.hasAnnotation(target, Types.Configuration());
 	}
 
 	private void log(String message) {
