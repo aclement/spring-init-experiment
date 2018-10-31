@@ -13,7 +13,7 @@ import lib.enable.EnableBar;
 // TODO: make this work with `@Import(ConfigurationPropertiesAutoConfiguration.class)`
 @Import(ContextAutoConfigurationModule.class)
 public class SampleApplication {
-	
+
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(SampleApplication.class);
 		app.setApplicationContextClass(GenericApplicationContext.class);
