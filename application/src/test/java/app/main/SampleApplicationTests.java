@@ -30,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  */
 // TODO: fix this in the run listener
-@SpringBootTest(properties = "spring.main.application-context-class="
-		+ "org.springframework.context.support.GenericApplicationContext")
+@SpringBootTest
 @RunWith(SpringRunner.class)
 public class SampleApplicationTests {
 

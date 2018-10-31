@@ -114,7 +114,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			WebApplicationType type = application.getWebApplicationType();
 			Class<?> contextType = getApplicationContextType(application);
 			if (type == WebApplicationType.NONE) {
-				if (contextType == AnnotationConfigApplicationContext.class) {
+				if (contextType == AnnotationConfigApplicationContext.class
+						|| contextType == null) {
 					application
 							.setApplicationContextClass(GenericApplicationContext.class);
 				}

@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.support.GenericApplicationContext;
 
 @SpringBootConfiguration
 @Import({ SampleApplicationModule.class, SampleConfiguration.class,
@@ -14,9 +14,13 @@ import org.springframework.context.support.GenericApplicationContext;
 public class SampleApplication {
 
 	public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(SampleApplication.class);
-		// TODO: remove this (https://github.com/spring-projects/spring-boot/issues/14589)
-		app.setApplicationContextClass(GenericApplicationContext.class);
+		// TODO: remove custom subclass when Spring Boot supports more flexible custom
+		// bean definition loaders
+		SpringApplication app = new SpringApplication(SampleApplication.class) {
+			@Override
+			protected void load(ApplicationContext context, Object[] sources) {
+			}
+		};
 		app.setLogStartupInfo(false);
 		app.run(args);
 	}
