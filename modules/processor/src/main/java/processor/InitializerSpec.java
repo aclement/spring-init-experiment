@@ -32,6 +32,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
@@ -126,18 +127,34 @@ public class InitializerSpec {
 	private void createBeanMethod(MethodSpec.Builder builder,
 			ExecutableElement beanMethod, TypeElement type) {
 
-		String parameterVariables = getParameters(beanMethod, this::parameter)
+		String parameterVariables = getParameters(beanMethod, this::parameterAccessor)
 				.collect(Collectors.joining(", "));
 
-		Object[] parameterTypes = getParameters(beanMethod,
-				p -> TypeName.get(types.erasure(p.asType()))).toArray();
+		Object[] parameterTypes = getParameters(beanMethod, this::beanMethodParam)
+				.toArray();
+
 		Object[] args = new Object[parameterTypes.length + 1];
+
 		System.arraycopy(parameterTypes, 0, args, 1, parameterTypes.length);
 		args[0] = returnType(beanMethod, beanMethod.getReturnType());
 
 		builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
 				+ "\", $T.class, " + supplier(type, beanMethod, parameterVariables) + ")",
 				args);
+	}
+
+	private TypeName beanMethodParam(VariableElement variableElement) {
+		TypeMirror type = types.erasure(variableElement.asType());
+		if (variableElement.asType().toString().contains("ObjectProvider")) {
+			if (variableElement.asType() instanceof DeclaredType) {
+				DeclaredType declaredType = (DeclaredType) variableElement.asType();
+				List<? extends TypeMirror> types = declaredType.getTypeArguments();
+				if (!types.isEmpty()) {
+					type = types.iterator().next();
+				}
+			}
+		}
+		return TypeName.get(type);
 	}
 
 	private String supplier(TypeElement owner, ExecutableElement beanMethod,
@@ -179,10 +196,10 @@ public class InitializerSpec {
 		return types.erasure(type);
 	}
 
-	private String parameter(VariableElement p, int i) {
+	private String parameterAccessor(VariableElement p, int i) {
 		if (types.asElement(p.asType()).getSimpleName().toString()
 				.equals("ObjectProvider")) {
-			return "context.getProvider($T.class)";
+			return "context.getBeanProvider($T.class)";
 		}
 		return "context.getBean($T.class)";
 	}
