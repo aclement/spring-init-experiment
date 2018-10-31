@@ -18,14 +18,16 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 import reactor.core.publisher.Mono;
+import slim.ImportModule;
 
 @SpringBootConfiguration
 @Import({ PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class, JacksonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
+@ImportModule(module = SampleApplicationModule.class)
 public class SampleApplication {
-	
+
 	@Bean
 	public Foo foo() {
 		return new Foo();
@@ -33,8 +35,7 @@ public class SampleApplication {
 
 	@Bean
 	public RouterFunction<?> userEndpoints(Foo foo) {
-		return route(GET("/"),
-				request -> ok().body(Mono.just(foo), Foo.class));
+		return route(GET("/"), request -> ok().body(Mono.just(foo), Foo.class));
 	}
 
 	public static void main(String[] args) {

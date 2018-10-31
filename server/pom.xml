@@ -92,30 +92,16 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>net.bytebuddy</groupId>
-				<artifactId>byte-buddy-maven-plugin</artifactId>
-				<version>${byte-buddy.version}</version>
-				<dependencies>
-					<dependency>
-						<groupId>${project.groupId}</groupId>
-						<artifactId>slim</artifactId>
-						<version>${project.version}</version>
-					</dependency>
-				</dependencies>
-				<executions>
-					<execution>
-						<phase>compile</phase>
-						<goals>
-							<goal>transform</goal>
-						</goals>
-					</execution>
-				</executions>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<transformations>
-						<transformation>
-							<plugin>plugin.SlimConfigurationPlugin</plugin>
-						</transformation>
-					</transformations>
+					<annotationProcessorPaths>
+						<dependency>
+							<groupId>${project.groupId}</groupId>
+							<artifactId>processor</artifactId>
+							<version>${project.version}</version>
+						</dependency>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 		</plugins>

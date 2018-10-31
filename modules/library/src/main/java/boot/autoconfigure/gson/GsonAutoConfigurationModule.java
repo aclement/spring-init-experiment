@@ -42,7 +42,7 @@ import slim.Module;
  *
  */
 @Configuration
-@Import(GsonAutoConfiguration.class)
+@Import({ GsonAutoConfiguration.class, ContextAutoConfigurationModule.class })
 @ImportModule(module = ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 
@@ -61,7 +61,8 @@ public class GsonAutoConfigurationModule implements Module {
 
 		@Override
 		public void initialize(GenericApplicationContext context) {
-			ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
 			if (conditions.matches(GsonAutoConfiguration.class)) {
 				context.registerBean(GsonProperties.class, () -> new GsonProperties());
 				context.registerBean(GsonAutoConfiguration.class);

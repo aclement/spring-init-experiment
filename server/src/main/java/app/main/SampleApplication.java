@@ -1,4 +1,4 @@
-	package app.main;
+package app.main;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -13,13 +13,14 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import reactor.core.publisher.Mono;
-
+import slim.ImportModule;
 
 @SpringBootConfiguration
 // @EnableAutoConfiguration
-@Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class })
+@Import(ReactiveWebServerFactoryAutoConfigurationModule.class)
+@ImportModule(module = SampleApplicationModule.class)
 public class SampleApplication {
-	
+
 	@Value("${app.value}")
 	private String value;
 

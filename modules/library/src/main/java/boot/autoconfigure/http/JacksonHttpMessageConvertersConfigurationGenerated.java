@@ -34,8 +34,8 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2HttpMessageConverterConfiguration;
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2XmlHttpMessageConverterConfiguration;
 import slim.ConditionService;
-import slim.InitializerMapping;
 import slim.ImportModule;
+import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -61,7 +61,8 @@ public class JacksonHttpMessageConvertersConfigurationGenerated {
 				if (conditions.matches(
 						MappingJackson2HttpMessageConverterConfiguration.class,
 						MappingJackson2HttpMessageConverter.class)) {
-					context.registerBean(MappingJackson2HttpMessageConverterConfiguration.class);
+					context.registerBean(
+							MappingJackson2HttpMessageConverterConfiguration.class);
 					context.registerBean(MappingJackson2HttpMessageConverter.class,
 							() -> context.getBean(
 									MappingJackson2HttpMessageConverterConfiguration.class)
@@ -74,7 +75,8 @@ public class JacksonHttpMessageConvertersConfigurationGenerated {
 				if (conditions.matches(
 						MappingJackson2XmlHttpMessageConverterConfiguration.class,
 						MappingJackson2XmlHttpMessageConverter.class)) {
-					context.registerBean(MappingJackson2XmlHttpMessageConverterConfiguration.class);
+					context.registerBean(
+							MappingJackson2XmlHttpMessageConverterConfiguration.class);
 					context.registerBean(MappingJackson2XmlHttpMessageConverter.class,
 							() -> context.getBean(
 									MappingJackson2XmlHttpMessageConverterConfiguration.class)

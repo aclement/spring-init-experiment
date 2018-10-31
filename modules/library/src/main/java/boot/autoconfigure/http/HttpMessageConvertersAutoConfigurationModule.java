@@ -45,8 +45,8 @@ import slim.Module;
  */
 // TODO: add Jackson and Jsonb
 @Configuration
-@Import({ HttpMessageConvertersAutoConfiguration.class,
-		CodecsAutoConfiguration.class })
+@Import({ ContextAutoConfigurationModule.class, GsonAutoConfigurationModule.class,
+		HttpMessageConvertersAutoConfiguration.class, CodecsAutoConfiguration.class })
 @ImportModule(module = { ContextAutoConfigurationModule.class,
 		GsonAutoConfigurationModule.class })
 public class HttpMessageConvertersAutoConfigurationModule implements Module {

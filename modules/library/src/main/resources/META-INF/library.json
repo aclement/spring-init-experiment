@@ -1,57 +1,142 @@
 [
 	{
-		"name": "com.acme.SampleConfiguration",
-		"allDeclaredConstructors": true
+		"name": "io.netty.channel.socket.nio.NioServerSocketChannel",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
 	},
 	{
-		"name": "com.acme.SampleConfiguration$Initializer",
-		"allDeclaredConstructors": true
+		"name": "org.springframework.http.codec.support.DefaultServerCodecConfigurer",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
 	},
 	{
-		"name": "com.acme.SampleApplication",
-		"allDeclaredConstructors": true,
+		"name": "org.springframework.boot.web.reactive.context.ReactiveWebServerApplicationContext",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
+	},
+	{
+		"name": "org.springframework.context.annotation.AnnotationConfigApplicationContext",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
+	},
+	{
+		"name": "org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.web.server.WebServerFactoryCustomizerBeanPostProcessor",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.context.properties.ConversionServiceDeducer$Factory",
+        "allPublicMethods": true,
+        "allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": [
+					"org.springframework.boot.autoconfigure.web.ServerProperties",
+					"org.springframework.boot.autoconfigure.web.ResourceProperties",
+					"org.springframework.beans.factory.ObjectProvider",
+					"org.springframework.http.codec.ServerCodecConfigurer",
+					"org.springframework.context.ApplicationContext"
+				]
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": [
+					"org.springframework.beans.factory.ObjectProvider"
+				]
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": [
+					"org.springframework.beans.factory.ObjectProvider",
+					"org.springframework.beans.factory.ObjectProvider"
+				]
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration$WebFluxConfig",
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": [
+					"org.springframework.boot.autoconfigure.web.ResourceProperties",
+					"org.springframework.boot.autoconfigure.web.reactive.WebFluxProperties",
+					"org.springframework.beans.factory.ListableBeanFactory",
+					"org.springframework.beans.factory.ObjectProvider",
+					"org.springframework.beans.factory.ObjectProvider",
+					"org.springframework.beans.factory.ObjectProvider",
+					"org.springframework.beans.factory.ObjectProvider"
+				]
+			}
+		]
+	},
+	{
+		"name": "org.springframework.boot.context.properties.ConversionServiceDeducer$Factory",
+		"allPublicMethods": true
+	},
+	{
+		"name": "reactor.core.publisher.Mono",
+		"allPublicFields": true,
+		"allPublicMethods": true,
+		"allDeclaredMethods": true,
 		"allDeclaredFields": true
 	},
 	{
-		"name": "com.acme.SampleApplication$Initializer",
-		"allDeclaredConstructors": true
+		"name": "org.springframework.context.ApplicationContextAware",
+		"allPublicFields": true,
+		"allPublicMethods": true,
+		"allDeclaredMethods": true,
+		"allDeclaredFields": true
 	},
 	{
-		"name": "plugin.SlimConfigurationInstaller",
-		"allDeclaredConstructors": true
-	},
-	{
-		"name": "plugin.SlimConfigurationClassPostProcessor",
-		"allDeclaredConstructors": true,
-		"allDeclaredMethods": true
-	},
-    {
-		"name": "org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor",
-		"allDeclaredConstructors": true
-	},
-    {
-		"name": "org.springframework.context.annotation.CommonAnnotationBeanPostProcessor",
-		"allDeclaredConstructors": true
-	},
-	{
-		"name": "org.springframework.context.event.EventListenerMethodProcessor",
-		"allDeclaredConstructors": true
-	},
-    {
-		"name": "org.springframework.context.event.DefaultEventListenerFactory",
-		"allDeclaredConstructors": true
-	},
-	{
-		"name": "org.apache.logging.log4j.message.ParameterizedMessageFactory",
-		"allDeclaredConstructors": true
-	},
-    {
-		"name": "org.apache.logging.log4j.message.ReusableMessageFactory",
-		"allDeclaredConstructors": true
-	},
-	{
-		"name": "org.apache.logging.log4j.message.DefaultFlowMessageFactory",
-		"allDeclaredConstructors": true
+		"name": "org.springframework.beans.factory.Aware",
+		"allPublicFields": true,
+		"allPublicMethods": true,
+		"allDeclaredMethods": true,
+		"allDeclaredFields": true
 	},
 	{
 		"name": "org.springframework.context.support.GenericApplicationContext",
@@ -134,10 +219,6 @@
 		"allDeclaredConstructors": true
 	},
 	{
-		"name": "org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesEnvironmentPostProcessor",
-		"allDeclaredConstructors": true
-	},
-	{
 		"name": "org.springframework.boot.diagnostics.analyzer.BeanCurrentlyInCreationFailureAnalyzer",
 		"allDeclaredConstructors": true
 	},
@@ -179,7 +260,12 @@
 	},
 	{
 		"name": "org.springframework.boot.diagnostics.analyzer.ValidationExceptionFailureAnalyzer",
-		"allDeclaredConstructors": true
+		"methods": [
+			{
+				"name": "<init>",
+				"parameterTypes": []
+			}
+		]
 	},
 	{
 		"name": "org.springframework.boot.diagnostics.analyzer.InvalidConfigurationPropertyNameFailureAnalyzer",
@@ -224,12 +310,29 @@
 	{
 		"name": "org.springframework.boot.web.context.ServerPortInfoApplicationContextInitializer",
 		"allDeclaredConstructors": true
-	},{
+	},
+	{
 		"name": "org.springframework.boot.liquibase.LiquibaseServiceLocatorApplicationListener",
 		"allDeclaredConstructors": true
 	},
 	{
-		"name": "org.springframework.boot.logging.java.JavaLoggingSystem",
+		"name": "org.springframework.boot.autoconfigure.freemarker.FreeMarkerTemplateAvailabilityProvider",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.mustache.MustacheTemplateAvailabilityProvider",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAvailabilityProvider",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.thymeleaf.ThymeleafTemplateAvailabilityProvider",
+		"allDeclaredConstructors": true
+	},
+	{
+		"name": "org.springframework.boot.autoconfigure.web.servlet.JspTemplateAvailabilityProvider",
 		"allDeclaredConstructors": true
 	},
 	{
