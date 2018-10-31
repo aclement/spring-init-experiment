@@ -19,7 +19,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,9 +187,6 @@ class InitializerClassFactory {
 		if (enableConfigurationProperties != null) {
 			log(":ifactory: Processing @EnableConfigurationProperties");
 			TypeDescription[] types = Common.fetchTypeDescriptions(enableConfigurationProperties, "value");
-//			MethodList<MethodDescription.InDefinedShape> methodList = Types.EnableConfigurationProperties().getDeclaredMethods();
-//			InDefinedShape ECP_Value = methodList.filter(named("value")).getOnly();
-//			TypeDescription[] types = (TypeDescription[]) enableConfigurationProperties.getValue(ECP_Value).resolve();
 			for (TypeDescription type : types) {
 				// TODO [loose ends] need to get the right ctor, not the first one
 				MethodDescription.InDefinedShape ctor = type.getDeclaredMethods().filter((em) -> em.isConstructor()).get(0);
@@ -206,7 +202,7 @@ class InitializerClassFactory {
 				String supplierLambdaName = "init_" + tdname;
 				builder = builder.defineMethod(supplierLambdaName, type.asErasure(), Visibility.PRIVATE, Ownership.STATIC).withParameters(Types.BeanFactory())
 						.intercept(new Implementation.Simple(new ByteCodeAppender.Simple(insns)));
-				code.addAll(createRegisterBeanCode2(target, type, supplierLambdaName));
+				code.addAll(createRegisterBeanCodeForECP(target, type, supplierLambdaName));
 			}
 		}
 
@@ -301,7 +297,6 @@ class InitializerClassFactory {
 		}
 
 		// Look at the inner types of the auto configuration class
-//		if (configurationTypeDescription.getName().contains("Jackson")) {
 		TypeList memberTypes = configurationTypeDescription.getDeclaredTypes();
 		log(":ifactory: Processing inner type of "+configurationTypeDescription);
 		for (TypeDescription memberType : memberTypes) {
@@ -316,7 +311,6 @@ class InitializerClassFactory {
 				builder = generateCodeForInitializeMethod(memberType, builder, target, code, false);
 			}
 		}
-//		}
 
 		code.add(new InsertLabel(typeConditionsFailJumpTarget));
 		if (isOutermost) {
@@ -375,11 +369,6 @@ class InitializerClassFactory {
 		}
 	}
 
-//		private TypeDescription getLatentType(String typename) {
-//			new TypeDescription.Latent(autoConfigurationClass, Opcodes.ACC_PUBLIC,
-//					TypeDescription.Generic.OBJECT) }
-//		}
-
 	public DynamicType make(TypeDescription configurationTypeDescription, ClassFileLocator locator) throws Exception {
 		String initializerTypeName = configurationTypeDescription.getTypeName() + "$Initializer";
 		return make(configurationTypeDescription, initializerTypeName, locator);
@@ -391,54 +380,8 @@ class InitializerClassFactory {
 	}
 
 	// For EnableConfigurationProperties
-	private List<StackManipulation> createRegisterBeanCode2(TypeDescription initializerType, TypeDescription td, String supplierLambdaName) {
+	private List<StackManipulation> createRegisterBeanCodeForECP(TypeDescription initializerType, TypeDescription td, String supplierLambdaName) {
 		List<StackManipulation> code = new ArrayList<>();
-
-		// TODO would be better to create the registerBean code than wrap it
-		// recursively in condition checks
-//			AnnotationList conditionalAnnotations = fetchConditionalAnnotations(methodDescription);
-//			Label conditionsFailJumpTarget = new Label();
-//			boolean fallbackRequired = false;
-//			for (AnnotationDescription annoDescription : conditionalAnnotations) {
-//				boolean handled = false;
-//				for (ConditionalHandler handler : conditionalHandlers) {
-//					if (handler.accept(annoDescription)) {
-//						handled = true;
-//						break;
-//					}
-//				}
-//				if (!handled) {
-//					log("Due to existence of " + annoDescription + " on " + methodDescription
-//							+ " the fallback handler is being used for all conditions for this method");
-//					fallbackRequired = true;
-//				}
-//			}
-//			if (fallbackRequired) {
-//				needsConditionService = true;
-//				code.addAll(fallbackConditionHandler.computeStackManipulations(null, methodDescription,
-//						conditionsFailJumpTarget));
-//			} else {
-//				for (AnnotationDescription annoDescription : conditionalAnnotations) {
-//					for (ConditionalHandler handler : conditionalHandlers) {
-//						if (handler.accept(annoDescription)) {
-//							code.addAll(handler.computeStackManipulations(annoDescription, methodDescription,
-//									conditionsFailJumpTarget));
-//						}
-//					}
-//				}
-//			}
-//			net.bytebuddy.description.field.FieldDescription.InDefinedShape sysoutfield = new TypeDescription.ForLoadedType(System.class).getDeclaredFields().filter(em -> em.getActualName().equals("out")).get(0);
-//			code.add(FieldAccess.STATIC.forField(sysoutfield).read());
-//			code.add(new TextConstant("miracle"));
-//			InDefinedShape printlnMethod = new TypeDescription.ForLoadedType(PrintStream.class).getDeclaredMethods().filter(em ->em.getActualName().equals("println")).get(0);
-//			code.add(MethodInvocation.invoke(printlnMethod));
-
-		// Create code to call registerBean
-
-//	         0: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
-//	         3: ldc           #3                  // String aa
-//	         5: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
-
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
 		code.add(ClassConstant.of(td.asErasure()));
 		code.add(MethodVariableAccess.REFERENCE.loadFrom(1));
@@ -539,20 +482,6 @@ class InitializerClassFactory {
 
 	public boolean isConditionalAnnotation(AnnotationDescription annoDescription) {
 		return isAnnotated(annoDescription, Types.Conditional(), new HashSet<>());
-	}
-
-	private boolean isAnnotated(AnnotationDescription desc, Class<? extends Annotation> annotationClass, Set<AnnotationDescription> seen) {
-		seen.add(desc);
-		TypeDescription type = desc.getAnnotationType();
-		if (type.represents(annotationClass)) {
-			return true;
-		}
-		for (AnnotationDescription ann : type.getDeclaredAnnotations()) {
-			if (!seen.contains(ann) && isAnnotated(ann, annotationClass, seen)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private boolean isAnnotated(AnnotationDescription desc, TypeDescription annotationClass, Set<AnnotationDescription> seen) {
