@@ -31,8 +31,7 @@ import lib.enable.Bar;
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties = "spring.main.application-context-class="
-		+ "org.springframework.context.support.GenericApplicationContext")
+@SpringBootTest
 @RunWith(SpringRunner.class)
 public class FunctionalApplicationTests {
 
