@@ -14,7 +14,6 @@ import org.springframework.context.support.GenericApplicationContext;
 public class SampleApplication {
 
 	public static void main(String[] args) {
-
 		SpringApplication app = new SpringApplication(SampleApplication.class);
 		// TODO: remove this (https://github.com/spring-projects/spring-boot/issues/14589)
 		app.setApplicationContextClass(GenericApplicationContext.class);

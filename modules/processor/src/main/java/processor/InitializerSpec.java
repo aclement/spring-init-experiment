@@ -37,6 +37,7 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
@@ -95,7 +96,13 @@ public class InitializerSpec {
 		builder.addModifiers(type.getModifiers().toArray(new Modifier[0]));
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addMethod(createInitializer());
+		builder.addAnnotation(initializerMappingAnnotation());
 		return builder.build();
+	}
+
+	private AnnotationSpec initializerMappingAnnotation() {
+		return AnnotationSpec.builder(SpringClassNames.INITIALIZER_MAPPING)
+				.addMember("value", "$T.class", configurationType).build();
 	}
 
 	private MethodSpec createInitializer() {
