@@ -91,9 +91,6 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (event instanceof ApplicationContextInitializedEvent) {
 			ApplicationContextInitializedEvent initialized = (ApplicationContextInitializedEvent) event;
 			ConfigurableApplicationContext context = initialized.getApplicationContext();
-			if (!isEnabled(context.getEnvironment())) {
-				return;
-			}
 			if (!(context instanceof GenericApplicationContext)) {
 				throw new IllegalStateException(
 						"ApplicationContext must be a GenericApplicationContext");
@@ -102,6 +99,10 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			ConditionService conditions = new ModuleInstallerConditionService(generic,
 					context.getEnvironment(), context);
 			initialize(generic, conditions);
+			if (!isEnabled(context.getEnvironment())) {
+				return;
+			}
+			functional(generic, conditions);
 			apply(generic, initialized.getSpringApplication(), conditions);
 		}
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
@@ -149,14 +150,18 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		return environment.getProperty("spring.functional.enabled", Boolean.class, true);
 	}
 
-	private void initialize(GenericApplicationContext context,
+	private void functional(GenericApplicationContext context,
 			ConditionService conditions) {
-		context.registerBean(ConditionService.class, () -> conditions);
 		context.registerBean(
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class,
 				() -> new SlimConfigurationClassPostProcessor());
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
+	}
+
+	private void initialize(GenericApplicationContext context,
+			ConditionService conditions) {
+		context.registerBean(ConditionService.class, () -> conditions);
 		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
 				.loadFactoryNames(Module.class, context.getClassLoader()));
 		for (String typeName : autoTypeNames) {
