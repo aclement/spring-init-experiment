@@ -253,4 +253,8 @@ public class Types {
 		return getTypeDescription(Coretypename.List);
 	}
 
+	public static Object Object() {
+		return getTypeDescription(Coretypename.Object);
+	}
+
 }

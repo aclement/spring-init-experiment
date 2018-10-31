@@ -12,14 +12,16 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
-import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
+//import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import reactor.core.publisher.Mono;
 
 
 @SpringBootConfiguration
 // @EnableAutoConfiguration
 // TODO [check-with-dave] had to add JacksonAutoConfiguration - is that expected pulled in via another route?
-@Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class, JacksonAutoConfiguration.class })
+//@Import(value = { ReactiveWebServerFactoryAutoConfigurationModule.class, JacksonAutoConfiguration.class })
+@Import(value = { ReactiveWebServerFactoryAutoConfiguration.class, JacksonAutoConfiguration.class })
 public class SampleApplication {
 	
 	@Value("${app.value}")

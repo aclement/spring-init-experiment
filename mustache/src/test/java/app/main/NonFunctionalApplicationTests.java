@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dave Syer
  *
  */
+/*
 @SpringBootTest(properties="spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
 public class NonFunctionalApplicationTests {
@@ -53,3 +54,4 @@ public class NonFunctionalApplicationTests {
 	}
 
 }
+*/

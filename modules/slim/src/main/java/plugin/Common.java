@@ -15,6 +15,8 @@
  */
 package plugin;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -25,6 +27,8 @@ import java.util.Set;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.MethodDescription.InDefinedShape;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.type.TypeDescription;
@@ -61,6 +65,10 @@ public class Common {
 				.filter(em -> em.getActualName().equals("println") && em.toString().contains("String")).get(0);
 		code.add(MethodInvocation.invoke(printlnMethod));
 		return code;
+	}
+
+	static boolean hasNoArgConstructor(TypeDescription td) {
+		return td.getDeclaredMethods().filter(em -> em.isConstructor() && em.getParameters().size()==0).size()!=0;
 	}
 
 	static DynamicType.Builder<?> addInitializerMethod(DynamicType.Builder<?> builder, DynamicType initializerClassType) {
@@ -197,5 +205,19 @@ public class Common {
 			// Class or one of its dependencies is not present...
 			return false;
 		}
+	}
+
+	/**
+	 * Fetch an array of TypeDescriptions from a particular property named in an annotation (typically 'value').
+	 * 
+	 * @param annotationDescription
+	 * @param propertyName
+	 * @return
+	 */
+	public static TypeDescription[] fetchTypeDescriptions(AnnotationDescription annotationDescription, String propertyName) {
+		MethodList<MethodDescription.InDefinedShape> methodList = annotationDescription.getAnnotationType().getDeclaredMethods();
+		InDefinedShape property = methodList.filter(named(propertyName)).getOnly();
+		TypeDescription[] types = (TypeDescription[]) annotationDescription.getValue(property).resolve();
+		return types;
 	}
 }

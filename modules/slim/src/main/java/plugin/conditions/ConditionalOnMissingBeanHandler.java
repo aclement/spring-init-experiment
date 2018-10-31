@@ -53,17 +53,21 @@ public class ConditionalOnMissingBeanHandler extends BaseConditionalHandler {
 		try {
 			List<StackManipulation> code = new ArrayList<>();
 			AnnotationValue<?, ?> value = annoDescription.getValue(valueProperty);
-			// TODO don't ignore that value since sometimes don't want to use the
-			// return type of the annotated method
-			// TypeDescription[] classes = (TypeDescription[]) value.resolve();
-
+			TypeDescription[] conditionalTypes = (TypeDescription[]) value.resolve();
 			// What to call: if
 			// (context.getBeanFactory().getBeanNamesForType(Gson.class).length == 0)
 			code.add(MethodVariableAccess.REFERENCE.loadFrom(1)); // Load context
 			code.add(MethodInvocation.invoke(Methods.getBeanFactory()));
-			TypeDescription returnTypeOfBeanMethod = ((MethodDescription.InDefinedShape) annotatedElement)
-					.getReturnType().asErasure();
-			code.add(ClassConstant.of(returnTypeOfBeanMethod));
+			TypeDescription beanType = null;
+			// TODO [loose end] Support specifying types in annotation and not using method return
+			if (annotatedElement instanceof MethodDescription.InDefinedShape) {
+				beanType = ((MethodDescription.InDefinedShape) annotatedElement)
+						.getReturnType().asErasure();
+			} else {
+				// TODO [loose end] Support multiple types specified
+				beanType = conditionalTypes[0];
+			}
+			code.add(ClassConstant.of(beanType));
 			code.add(MethodInvocation.invoke(Methods.getBeanNamesForType()));
 			code.add(new ArrayLength());
 			code.add(new IfNe(conditionFailsLabel));

@@ -149,6 +149,10 @@ public class TypeSystem {
 			throw new RuntimeException("Unexpectedly unable to load bytedata from input stream", e);
 		}
 	}
+	
+	public Type dotResolve(String classname) {
+		return resolveSlashed(classname.replace(".", "/"));
+	}
 
 	public Type resolve(String classname) {
 		if (classname.contains(".")) {

@@ -39,6 +39,9 @@ public class Type {
 	public final static Type MISSING = new Type(null, null);	
 	public static final List<Annotation> NO_ANNOTATIONS = Collections.emptyList();
 	
+	public String toString() {
+		return getName();
+	}
 
 	private TypeSystem typeSystem;
 	private List<Annotation> annotations = null;

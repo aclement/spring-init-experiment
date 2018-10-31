@@ -20,6 +20,7 @@ package plugin;
  * @author Andy Clement
  */
 public enum Coretypename {
+	Object("java.lang.Object"),
 	Class("java.lang.Class"),
 	Supplier("java.util.function.Supplier"),
 	PropertyResolver("org.springframework.core.env.PropertyResolver"),

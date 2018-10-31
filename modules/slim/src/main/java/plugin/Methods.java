@@ -91,6 +91,9 @@ public class Methods {
 				case registerBeanWithSupplier:
 					result = findMethod(Types.GenericApplicationContext(), Coremethodname.registerBeanWithSupplier, Types.Class(),Types.Supplier(), Types.BeanDefinitionCustomizerArray());
 					break;
+				case registerBeanWithSupplierIncludingName:
+					result = findMethod(Types.GenericApplicationContext(), Coremethodname.registerBeanWithSupplier, Types.String(), Types.Class(),Types.Supplier(), Types.BeanDefinitionCustomizerArray());
+					break;
 				default:
 					throw new IllegalStateException(name.toString());
 				}
@@ -149,6 +152,10 @@ public class Methods {
 	
 	public static InDefinedShape registerBeanWithSupplier() {
 		return Methods.get(Coremethodname.registerBeanWithSupplier);
+	}
+	
+	public static InDefinedShape registerBeanWithSupplierIncludingName() {
+		return Methods.get(Coremethodname.registerBeanWithSupplierIncludingName);
 	}
 
 	public static InDefinedShape getBean() {

@@ -118,7 +118,7 @@ public class SlimConfigurationPlugin implements Plugin {
 				createModuleIfReachable("org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration", locator, targetClassesFolder);
 				createModuleIfReachable("org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration", locator, targetClassesFolder);
 				createModuleIfReachable("org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration", locator, targetClassesFolder);
-				createModuleIfReachable("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerAutoConfiguration", locator, targetClassesFolder);
+				createModuleIfReachable("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration", locator, targetClassesFolder);
 			}
 			builder = Common.addInitializerMethod(builder, initializerClassType);
 
@@ -178,9 +178,7 @@ public class SlimConfigurationPlugin implements Plugin {
 			try {
 				for (Type t : importedConfigurationTypes) {
 					Class clazz = Class.forName(t.getName().replace("/", "."), false, Thread.currentThread().getContextClassLoader());
-					System.out.println("CLZ: Loading "+t.getName()+", loaded by "+clazz.getClassLoader().toString());
 					Resolution r = locator.locate(t.getName().replace("/", "."));
-					System.out.println("CLZ2: loading "+t.getName()+" ... "+r.getClass().toString());
 					DynamicType initializer = initializerClassFactory.make(new TypeDescription.ForLoadedType(clazz),
 							moduleName + "$" + t.getShortName() + "_" + "Initializer", locator);
 					initializer.saveIn(targetFolder);
@@ -205,10 +203,25 @@ public class SlimConfigurationPlugin implements Plugin {
 
 	private void augmentImportedConfigurationTypes(String autoConfigurationClass, List<Type> importedConfigurationTypes) {
 		// TODO [quirk] shouldn't be custom where will this information come from?
-		if (autoConfigurationClass.equals("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerAutoConfiguration")) {
-			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration"));
-			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.ErrorWebFluxConfiguration"));
-			importedConfigurationTypes.add(ts.resolve("org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration"));
+		if (autoConfigurationClass.equals("org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration")) {
+			importedConfigurationTypes.add(ts.dotResolve("org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration"));
+			importedConfigurationTypes.add(ts.dotResolve("org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration"));
+			importedConfigurationTypes.add(ts.dotResolve("org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration"));
+			// Let's remove these ones:
+			//		ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class,
+			//		ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class,
+			//		ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class })
+			// Just for now as I don't want to add those 3 jars to the project
+			Iterator<Type> iterator = importedConfigurationTypes.iterator();
+			while (iterator.hasNext()) {
+				Type t = iterator.next();
+				if (t.toString().equals("org/springframework/boot/autoconfigure/web/reactive/ReactiveWebServerFactoryConfiguration$EmbeddedJetty") || 
+					t.toString().equals("org/springframework/boot/autoconfigure/web/reactive/ReactiveWebServerFactoryConfiguration$EmbeddedTomcat") || 
+					t.toString().equals("org/springframework/boot/autoconfigure/web/reactive/ReactiveWebServerFactoryConfiguration$EmbeddedUndertow") || 
+					t.toString().equals("org/springframework/boot/autoconfigure/web/reactive/ReactiveWebServerFactoryConfiguration$EmbeddedNetty")) {
+					iterator.remove();
+				}
+			}
 		}
 	}
 

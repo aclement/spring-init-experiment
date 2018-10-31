@@ -24,6 +24,7 @@ public enum Coremethodname {
 	getBeanFactory("getBeanFactory"), // On GenericApplicationContext
 	registerBean("registerBean"), // On GenericApplicationContext
 	registerBeanWithSupplier("registerBean"), 
+	registerBeanWithSupplierIncludingName("registerBean"),
 	getBean("getBean"), // BeanFactory.getBean(Class)
 	arraylistCtor("java.util.ArrayList"), // ArrayList.init(Collection)
 	getBeansOfType("getBeansOfType"), // AbstractApplicationContext.getBeansOfType(Class)
