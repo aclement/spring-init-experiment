@@ -35,7 +35,6 @@ import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.gson.GsonAutoConfigurationModule;
 import boot.autoconfigure.http.codec.CodecsAutoConfigurationGenerated;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
@@ -47,8 +46,6 @@ import slim.Module;
 @Configuration
 @Import({ ContextAutoConfigurationModule.class, GsonAutoConfigurationModule.class,
 		HttpMessageConvertersAutoConfiguration.class, CodecsAutoConfiguration.class })
-@ImportModule(module = { ContextAutoConfigurationModule.class,
-		GsonAutoConfigurationModule.class })
 public class HttpMessageConvertersAutoConfigurationModule implements Module {
 
 	@Override

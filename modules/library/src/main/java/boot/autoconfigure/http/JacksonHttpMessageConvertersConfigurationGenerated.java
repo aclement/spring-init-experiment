@@ -34,14 +34,12 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2HttpMessageConverterConfiguration;
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2XmlHttpMessageConverterConfiguration;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
  *
  */
-@ImportModule
 public class JacksonHttpMessageConvertersConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {

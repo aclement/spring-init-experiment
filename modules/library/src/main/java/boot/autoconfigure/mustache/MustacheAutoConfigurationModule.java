@@ -31,7 +31,6 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
@@ -40,13 +39,13 @@ import slim.Module;
  *
  */
 @Configuration
-@Import(MustacheAutoConfiguration.class)
-@ImportModule(module = ContextAutoConfigurationModule.class)
+@Import({ MustacheAutoConfiguration.class, ContextAutoConfigurationModule.class })
 public class MustacheAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(new Initializer(), MustacheReactiveWebConfigurationGenerated.initializer());
+		return Arrays.asList(new Initializer(),
+				MustacheReactiveWebConfigurationGenerated.initializer());
 	}
 
 	@InitializerMapping(MustacheAutoConfiguration.class)

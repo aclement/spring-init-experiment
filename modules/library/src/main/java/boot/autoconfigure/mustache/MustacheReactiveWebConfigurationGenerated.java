@@ -30,18 +30,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.Ordered;
 
-import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
 // Generated from MustacheReactiveWebConfiguration
-@ImportModule(module = { MustacheAutoConfigurationModule.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class MustacheReactiveWebConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {

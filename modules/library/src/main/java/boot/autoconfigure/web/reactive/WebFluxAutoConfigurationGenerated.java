@@ -34,10 +34,8 @@ import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 import org.springframework.web.server.i18n.LocaleContextResolver;
 
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 
-@ImportModule
 class WebFluxAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
@@ -117,10 +115,14 @@ class WebFluxAutoConfigurationGenerated {
 			context.registerBean(WebFluxConfigurer.class,
 					() -> new WebFluxConfig(context.getBean(ResourceProperties.class),
 							context.getBean(WebFluxProperties.class), context,
-							context.getAutowireCapableBeanFactory().getBeanProvider(HandlerMethodArgumentResolver.class),
-							context.getAutowireCapableBeanFactory().getBeanProvider(CodecCustomizer.class),
-							context.getAutowireCapableBeanFactory().getBeanProvider(ResourceHandlerRegistrationCustomizer.class),
-							context.getAutowireCapableBeanFactory().getBeanProvider(ViewResolver.class)));
+							context.getAutowireCapableBeanFactory()
+									.getBeanProvider(HandlerMethodArgumentResolver.class),
+							context.getAutowireCapableBeanFactory()
+									.getBeanProvider(CodecCustomizer.class),
+							context.getAutowireCapableBeanFactory().getBeanProvider(
+									ResourceHandlerRegistrationCustomizer.class),
+							context.getAutowireCapableBeanFactory()
+									.getBeanProvider(ViewResolver.class)));
 		}
 
 	}

@@ -34,7 +34,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
@@ -43,10 +42,9 @@ import slim.Module;
  *
  */
 @Configuration
-@Import({ ReactiveWebServerFactoryAutoConfiguration.class,
-		WebFluxAutoConfiguration.class, ErrorWebFluxAutoConfiguration.class,
-		HttpHandlerAutoConfiguration.class })
-@ImportModule(module = { HttpMessageConvertersAutoConfigurationModule.class,
+@Import({ ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
+		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class,
+		HttpMessageConvertersAutoConfigurationModule.class,
 		ReactorCoreAutoConfigurationModule.class })
 public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 

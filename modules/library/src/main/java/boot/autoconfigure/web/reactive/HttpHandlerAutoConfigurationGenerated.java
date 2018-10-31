@@ -24,13 +24,11 @@ import org.springframework.web.server.adapter.WebHttpHandlerBuilder;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ImportModule
 class HttpHandlerAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {

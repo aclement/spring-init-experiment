@@ -33,7 +33,6 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
@@ -43,7 +42,6 @@ import slim.Module;
  */
 @Configuration
 @Import({ GsonAutoConfiguration.class, ContextAutoConfigurationModule.class })
-@ImportModule(module = ContextAutoConfigurationModule.class)
 public class GsonAutoConfigurationModule implements Module {
 
 	@Override

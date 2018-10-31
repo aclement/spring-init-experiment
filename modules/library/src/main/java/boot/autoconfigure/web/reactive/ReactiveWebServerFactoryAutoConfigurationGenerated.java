@@ -26,13 +26,11 @@ import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ImportModule
 class ReactiveWebServerFactoryAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
@@ -43,10 +41,10 @@ class ReactiveWebServerFactoryAutoConfigurationGenerated {
 	private static final class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 
-
 		@Override
 		public void initialize(GenericApplicationContext context) {
-			ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
+			ConditionService conditions = context.getBeanFactory()
+					.getBean(ConditionService.class);
 			if (conditions.matches(ReactiveWebServerFactoryAutoConfiguration.class)) {
 				ReactiveWebServerFactoryAutoConfiguration config = new ReactiveWebServerFactoryAutoConfiguration();
 				// From @Import

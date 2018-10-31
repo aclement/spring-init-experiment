@@ -35,13 +35,11 @@ import org.springframework.util.MimeType;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ImportModule
 public class CodecsAutoConfigurationGenerated {
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
 		return new Initializer();

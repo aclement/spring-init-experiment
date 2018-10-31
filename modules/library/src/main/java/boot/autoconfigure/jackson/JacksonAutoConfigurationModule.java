@@ -60,7 +60,6 @@ import org.springframework.util.ReflectionUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.ImportModule;
 import slim.InitializerMapping;
 import slim.Module;
 
@@ -69,8 +68,7 @@ import slim.Module;
  *
  */
 @Configuration
-@Import(JacksonAutoConfiguration.class)
-@ImportModule(module = ContextAutoConfigurationModule.class)
+@Import({ JacksonAutoConfiguration.class, ContextAutoConfigurationModule.class })
 public class JacksonAutoConfigurationModule implements Module {
 
 	@Override

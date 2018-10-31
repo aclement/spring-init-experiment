@@ -32,13 +32,11 @@ import org.springframework.web.reactive.result.view.ViewResolver;
 
 import slim.ConditionService;
 import slim.InitializerMapping;
-import slim.ImportModule;
 
 /**
  * @author Dave Syer
  *
  */
-@ImportModule
 class ErrorWebFluxAutoConfigurationGenerated {
 
 	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
