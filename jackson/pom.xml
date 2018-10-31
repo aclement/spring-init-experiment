@@ -83,11 +83,11 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<annotationProcessorPaths>
-						<dependency>
+						<path>
 							<groupId>${project.groupId}</groupId>
 							<artifactId>processor</artifactId>
 							<version>${project.version}</version>
-						</dependency>
+						</path>
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
