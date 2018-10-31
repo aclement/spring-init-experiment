@@ -18,14 +18,12 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 import reactor.core.publisher.Mono;
-import slim.ImportModule;
 
 @SpringBootConfiguration
-@Import({ PropertyPlaceholderAutoConfiguration.class,
+@Import({ SampleApplicationModule.class, PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class, JacksonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
-@ImportModule(module = SampleApplicationModule.class)
 public class SampleApplication {
 
 	@Bean

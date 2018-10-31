@@ -244,6 +244,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								addModule(type);
 								processImportModule(conditions, type, seen);
 							}
+							else if (Module.class.isAssignableFrom(value)) {
+								@SuppressWarnings("unchecked")
+								Class<? extends Module> module = (Class<? extends Module>) value;
+								addModule(module);
+								seen.add(value);
+							}
 							processImports(conditions, value, seen);
 						}
 					}
@@ -267,6 +273,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 					}
 				}
 			}
+			seen.add(beanClass);
 		}
 	}
 
@@ -293,6 +300,7 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 
 	private ClassLoader classLoader;
 
+	@Override
 	public int getOrder() {
 		return Ordered.LOWEST_PRECEDENCE - 1;
 	}
@@ -349,9 +357,13 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 	}
 
 	private boolean slimConfiguration(Class<?> beanClass) {
-		ImportModule slim = beanClass.getAnnotation(ImportModule.class);
+		Import slim = beanClass.getAnnotation(Import.class);
 		if (slim != null) {
-			return true;
+			for (Class<?> module : slim.value()) {
+				if (Module.class.isAssignableFrom(module)) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}

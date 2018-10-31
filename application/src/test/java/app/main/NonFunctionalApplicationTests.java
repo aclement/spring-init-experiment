@@ -29,11 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dave Syer
  *
  */
-// TODO: fix this in the run listener
-@SpringBootTest(properties = "spring.main.application-context-class="
-		+ "org.springframework.context.support.GenericApplicationContext")
+@SpringBootTest(properties = "spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
-public class SampleApplicationTests {
+public class NonFunctionalApplicationTests {
 
 	@Autowired
 	private Bar bar;

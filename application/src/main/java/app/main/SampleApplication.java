@@ -7,15 +7,14 @@ import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoCon
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import slim.ImportModule;
-
 @SpringBootConfiguration
-@Import({ SampleConfiguration.class, PropertyPlaceholderAutoConfiguration.class,
+@Import({ SampleApplicationModule.class, SampleConfiguration.class,
+		PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class })
-@ImportModule(module = SampleApplicationModule.class)
 public class SampleApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication app = new SpringApplication(SampleApplication.class);
 		// TODO: remove this (https://github.com/spring-projects/spring-boot/issues/14589)
 		app.setApplicationContextClass(GenericApplicationContext.class);

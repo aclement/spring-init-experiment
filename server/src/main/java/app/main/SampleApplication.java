@@ -13,12 +13,11 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import reactor.core.publisher.Mono;
-import slim.ImportModule;
 
 @SpringBootConfiguration
 // @EnableAutoConfiguration
-@Import(ReactiveWebServerFactoryAutoConfigurationModule.class)
-@ImportModule(module = SampleApplicationModule.class)
+@Import({ SampleApplicationModule.class,
+		ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Value("${app.value}")

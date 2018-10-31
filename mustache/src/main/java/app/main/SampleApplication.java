@@ -7,12 +7,10 @@ import org.springframework.context.annotation.Import;
 
 import boot.autoconfigure.mustache.MustacheAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
-import slim.ImportModule;
 
 @SpringBootConfiguration
-@Import({ MustacheAutoConfigurationModule.class,
+@Import({ SampleApplicationModule.class, MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class })
-@ImportModule(module = SampleApplicationModule.class)
 public class SampleApplication {
 
 	@Bean

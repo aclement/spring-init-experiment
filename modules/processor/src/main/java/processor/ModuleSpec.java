@@ -78,8 +78,8 @@ public class ModuleSpec {
 		if (this.processed) {
 			return;
 		}
-		this.module = module.toBuilder().addAnnotation(importAnnotation())
-				.addMethod(createInitializers()).build();
+		this.module = importAnnotation(module.toBuilder()).addMethod(createInitializers())
+				.build();
 		this.processed = true;
 	}
 
@@ -104,13 +104,16 @@ public class ModuleSpec {
 		return builder.build();
 	}
 
-	private AnnotationSpec importAnnotation() {
-		AnnotationSpec.Builder builder = AnnotationSpec.builder(SpringClassNames.IMPORT);
+	private TypeSpec.Builder importAnnotation(TypeSpec.Builder type) {
 		Object[] array = types(initializers);
+		if (array.length == 0) {
+			return type;
+		}
+		AnnotationSpec.Builder builder = AnnotationSpec.builder(SpringClassNames.IMPORT);
 		builder.addMember("value",
 				array.length > 1 ? ("{" + typeParams(array.length) + "}") : "$T.class",
 				array);
-		return builder.build();
+		return type.addAnnotation(builder.build());
 	}
 
 	private String newInstances(int count) {
@@ -138,7 +141,10 @@ public class ModuleSpec {
 	private Object[] types(Collection<InitializerSpec> collection) {
 		List<Object> list = new ArrayList<>();
 		for (InitializerSpec object : collection) {
-			list.add(ClassName.get(object.getConfigurationType()));
+			if (!rootType.getQualifiedName()
+					.equals(object.getConfigurationType().getQualifiedName())) {
+				list.add(ClassName.get(object.getConfigurationType()));
+			}
 		}
 		return list.toArray(new Object[0]);
 	}
