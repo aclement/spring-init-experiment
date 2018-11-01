@@ -254,6 +254,10 @@ public class ModuleSpec {
 
 		@Override
 		public Boolean visitType(TypeMirror t, Object p) {
+			if (types.asElement(t) == null
+					|| ((TypeElement) types.asElement(t)).getQualifiedName() == null) {
+				return false;
+			}
 			return ((TypeElement) types.asElement(t)).getQualifiedName().toString()
 					.equals(getClassName());
 		}
