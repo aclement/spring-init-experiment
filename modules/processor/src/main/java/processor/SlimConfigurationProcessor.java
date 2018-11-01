@@ -81,7 +81,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			}
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot open spring.factories");
+			messager.printMessage(Kind.NOTE, "Cannot open spring.factories for reading");
 		}
 		String values = properties.getProperty(SpringClassNames.MODULE.toString());
 		if (values == null) {
@@ -105,7 +105,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			}
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot open spring.factories");
+			messager.printMessage(Kind.NOTE, "Cannot open spring.factories for writing");
 		}
 	}
 
