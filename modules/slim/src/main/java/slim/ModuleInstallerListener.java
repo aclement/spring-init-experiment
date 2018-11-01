@@ -54,6 +54,7 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.ImportSelector;
@@ -280,11 +281,19 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								for (String select : selected) {
 									if (ClassUtils.isPresent(select,
 											context.getClassLoader())) {
-										context.registerBean(select,
-												ClassUtils.resolveClassName(select,
-														context.getClassLoader()));
+										Class<?> clazz = ClassUtils.resolveClassName(
+												select, context.getClassLoader());
+										if (clazz.getAnnotation(
+												Configuration.class) != null) {
+											processImports(context, conditions, clazz,
+													seen);
+										}
+										else {
+											context.registerBean(clazz);
+										}
 									}
 								}
+								// TODO: support for deferred import selector
 							}
 							processImports(context, conditions, value, seen);
 						}
