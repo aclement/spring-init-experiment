@@ -1,4 +1,4 @@
-package app.condition.type;
+package app.condition.bean;
 
 public class Bar {
 

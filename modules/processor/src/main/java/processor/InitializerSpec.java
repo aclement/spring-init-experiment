@@ -127,16 +127,33 @@ public class InitializerSpec {
 		// TODO: pick out the constructor more carefully
 		builder.addStatement("context.registerBean($T.class, () -> new $T())", type,
 				type);
+		boolean conditionsAvailable = conditional;
 		for (ExecutableElement method : getBeanMethods(type)) {
-			createBeanMethod(builder, method, type);
+			conditionsAvailable |= createBeanMethod(builder, method, type,
+					conditionsAvailable);
 		}
 		if (conditional) {
 			builder.endControlFlow();
 		}
 	}
 
-	private void createBeanMethod(MethodSpec.Builder builder,
-			ExecutableElement beanMethod, TypeElement type) {
+	private boolean createBeanMethod(MethodSpec.Builder builder,
+			ExecutableElement beanMethod, TypeElement type, boolean conditionsAvailable) {
+
+		TypeMirror returnType = returnType(beanMethod, beanMethod.getReturnType());
+
+		boolean conditional = ElementUtils.hasAnnotation(beanMethod,
+				SpringClassNames.CONDITIONAL.toString());
+		if (conditional) {
+			if (!conditionsAvailable) {
+				builder.addStatement(
+						"$T conditions = context.getBeanFactory().getBean($T.class)",
+						SpringClassNames.CONDITION_SERVICE,
+						SpringClassNames.CONDITION_SERVICE);
+			}
+			builder.beginControlFlow("if (conditions.matches($T.class, $T.class))", type,
+					returnType);
+		}
 
 		String parameterVariables = getParameters(beanMethod, this::parameterAccessor)
 				.collect(Collectors.joining(", "));
@@ -146,13 +163,20 @@ public class InitializerSpec {
 
 		Object[] args = new Object[parameterTypes.length + 2];
 
-		args[0] = returnType(beanMethod, beanMethod.getReturnType());
+		args[0] = returnType;
 		args[1] = type;
 		System.arraycopy(parameterTypes, 0, args, 2, parameterTypes.length);
 
 		builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
 				+ "\", $T.class, " + supplier(type, beanMethod, parameterVariables) + ")",
 				args);
+
+		if (conditional) {
+			builder.endControlFlow();
+		}
+
+		return conditional;
+
 	}
 
 	private TypeName beanMethodParam(VariableElement variableElement) {

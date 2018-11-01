@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.condition.type;
+package app.condition.bean;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FunctionalApplicationTests {
 
 	@Autowired
+	private Foo foo;
+
+	@Autowired(required = false)
 	private Bar bar;
 
 	@Autowired
@@ -43,7 +46,8 @@ public class FunctionalApplicationTests {
 
 	@Test
 	public void test() {
-		assertThat(bar).isNotNull();
+		assertThat(foo).isNotNull();
+		assertThat(bar).isNull();
 		assertThat(context.getBeanNamesForType(CommandLineRunner.class)).isEmpty();
 	}
 

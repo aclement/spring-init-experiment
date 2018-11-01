@@ -1,4 +1,4 @@
-package app.condition.type;
+package app.condition.bean;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -26,25 +26,21 @@ public class SampleApplication {
 @Configuration
 class SampleConfiguration {
 
+	@Value("${app.value}")
+	private String message;
+
 	@Bean
 	public Foo foo() {
 		return new Foo();
 	}
 
+	@ConditionalOnClass(name = "not.going.to.be.There")
 	@Bean
 	public Bar bar(Foo foo) {
 		return new Bar(foo);
 	}
 
-}
-
-@Configuration
-@ConditionalOnClass(name = "not.going.to.be.There")
-class ConditionalConfiguration {
-
-	@Value("${app.value}")
-	private String message;
-
+	@ConditionalOnClass(name = "not.going.to.be.There")
 	@Bean
 	public CommandLineRunner runner(Bar bar) {
 		return args -> {
