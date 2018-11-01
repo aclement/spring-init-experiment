@@ -12,7 +12,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, PropertyPlaceholderAutoConfiguration.class,
+@Import({ SampleApplicationModule.class, SampleConfiguration.class,
+		PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class })
 public class SampleApplication {
 

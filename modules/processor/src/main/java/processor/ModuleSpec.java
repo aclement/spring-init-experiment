@@ -20,10 +20,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.AnnotationValueVisitor;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -38,13 +46,16 @@ import com.squareup.javapoet.TypeSpec.Builder;
  */
 public class ModuleSpec {
 
+	private Types types;
+
 	private TypeSpec module;
 	private String pkg;
 	private Set<InitializerSpec> initializers = new HashSet<>();
 	private boolean processed = false;
 	private TypeElement rootType;
 
-	public ModuleSpec(TypeElement type) {
+	public ModuleSpec(Types types, TypeElement type) {
+		this.types = types;
 		this.rootType = type;
 		this.module = createModule(type);
 		this.pkg = ClassName.get(type).packageName();
@@ -72,6 +83,10 @@ public class ModuleSpec {
 
 	public void addInitializer(InitializerSpec initializer) {
 		this.initializers.add(initializer);
+	}
+
+	public String getClassName() {
+		return ClassName.get(pkg, module.name).toString();
 	}
 
 	public void process() {
@@ -141,12 +156,33 @@ public class ModuleSpec {
 	private Object[] types(Collection<InitializerSpec> collection) {
 		List<Object> list = new ArrayList<>();
 		for (InitializerSpec object : collection) {
-			if (!rootType.getQualifiedName()
-					.equals(object.getConfigurationType().getQualifiedName())) {
-				list.add(ClassName.get(object.getConfigurationType()));
+			// This prevents an app from @Importing itself (libraries don't usually do
+			// it). We could add another annotation to signal the "module-root" or
+			// something, but this seems OK for now.
+			if (isSelfImport(object)) {
+				continue;
 			}
+			list.add(ClassName.get(object.getConfigurationType()));
 		}
 		return list.toArray(new Object[0]);
+	}
+
+	private boolean isSelfImport(InitializerSpec initializer) {
+		AnnotationMirror imported = ElementUtils.getAnnotation(rootType,
+				SpringClassNames.IMPORT.toString());
+		if (imported == null) {
+			return false;
+		}
+		Map<? extends ExecutableElement, ? extends AnnotationValue> values = imported
+				.getElementValues();
+		TypeFinder typeFinder = new TypeFinder();
+		for (ExecutableElement element : values.keySet()) {
+			if (values.get(element).accept(typeFinder, null)) {
+				return true;
+			}
+		}
+		return rootType.getQualifiedName()
+				.equals(initializer.getConfigurationType().getQualifiedName());
 	}
 
 	private Object[] array(Object first, Collection<InitializerSpec> collection) {
@@ -157,6 +193,97 @@ public class ModuleSpec {
 			array[i++] = ClassName.bestGuess(object.getInitializer().name);
 		}
 		return array;
+	}
+
+	private class TypeFinder implements AnnotationValueVisitor<Boolean, Object> {
+
+		@Override
+		public Boolean visit(AnnotationValue av, Object p) {
+			return av.accept(this, p);
+		}
+
+		@Override
+		public Boolean visit(AnnotationValue av) {
+			return av.accept(this, null);
+		}
+
+		@Override
+		public Boolean visitBoolean(boolean b, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitByte(byte b, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitChar(char c, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitDouble(double d, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitFloat(float f, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitInt(int i, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitLong(long i, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitShort(short s, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitString(String s, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitType(TypeMirror t, Object p) {
+			return ((TypeElement) types.asElement(t)).getQualifiedName().toString()
+					.equals(getClassName());
+		}
+
+		@Override
+		public Boolean visitEnumConstant(VariableElement c, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitAnnotation(AnnotationMirror a, Object p) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitArray(List<? extends AnnotationValue> vals, Object p) {
+			for (AnnotationValue value : vals) {
+				// TODO: really?
+				if (this.visit(value) || value.toString().equals("<error>")) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public Boolean visitUnknown(AnnotationValue av, Object p) {
+			return false;
+		}
+
 	}
 
 }

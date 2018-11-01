@@ -18,6 +18,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
@@ -90,11 +91,12 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			module.process();
 			for (InitializerSpec initializer : module.getInitializers()) {
 				messager.printMessage(Kind.NOTE,
-						"Writing Initializer " + initializer.getInitializer(),
+						"Writing Initializer " + ClassName.get(initializer.getPackage(),
+								initializer.getInitializer().name),
 						initializer.getConfigurationType());
 				write(initializer.getInitializer(), initializer.getPackage());
 			}
-			messager.printMessage(Kind.NOTE, "Writing Module " + module.getModule(),
+			messager.printMessage(Kind.NOTE, "Writing Module " + module.getClassName(),
 					module.getRootType());
 			write(module.getModule(), module.getPackage());
 		}

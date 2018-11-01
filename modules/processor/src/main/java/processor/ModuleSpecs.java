@@ -47,7 +47,7 @@ public class ModuleSpecs {
 	}
 
 	public void addModule(TypeElement module) {
-		ModuleSpec value = new ModuleSpec(module);
+		ModuleSpec value = new ModuleSpec(this.types, module);
 		modules.put(value.getPackage(), value);
 	}
 
@@ -61,7 +61,37 @@ public class ModuleSpecs {
 				}
 			}
 		}
+		for (InitializerSpec initializer : new HashSet<>(initializers)) {
+			String pkg = initializer.getPackage();
+			for (String root : findRoots(initializers)) {
+				if (root.equals(pkg) || pkg.startsWith(root + ".")) {
+					if (!modules.containsKey(root)) {
+						modules.put(root, new ModuleSpec(this.types,
+								initializer.getConfigurationType()));
+					}
+					modules.get(root).addInitializer(initializer);
+					initializers.remove(initializer);
+				}
+			}
+		}
 		return modules.values();
+	}
+
+	private Set<String> findRoots(Set<InitializerSpec> initializers) {
+		Set<String> roots = new HashSet<>();
+		for (InitializerSpec initializer : initializers) {
+			roots.add(initializer.getPackage());
+		}
+		for (InitializerSpec initializer : initializers) {
+			String pkg = initializer.getPackage();
+			for (String root : new HashSet<>(roots)) {
+				// Remove sub-packages
+				if (pkg.startsWith(root + ".")) {
+					roots.remove(pkg);
+				}
+			}
+		}
+		return roots;
 	}
 
 }
