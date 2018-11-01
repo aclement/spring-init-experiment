@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.registrar;
+package app.selector;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,16 +25,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import lib.registrar.Bar;
+import lib.selector.Bar;
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties = {
-		"spring.main.application-context-class="
-				+ "org.springframework.context.support.GenericApplicationContext",
-		"spring.functional.enabled=false" })
+@SpringBootTest(properties = "spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
 public class SampleApplicationTests {
 

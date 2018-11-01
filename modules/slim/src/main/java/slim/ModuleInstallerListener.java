@@ -30,8 +30,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.Aware;
 import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
@@ -46,9 +50,13 @@ import org.springframework.boot.web.servlet.context.ServletWebServerApplicationC
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.context.annotation.ImportSelector;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
@@ -56,7 +64,10 @@ import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.SpringFactoriesLoader;
+import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -216,21 +227,21 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 						application.getClassLoader());
 			}
 			if (type != null) {
-				extract(conditions, type, seen);
+				extract(context, conditions, type, seen);
 			}
 		}
 		apply(context);
 	}
 
-	private void extract(ConditionService conditions, Class<?> beanClass,
-			Set<Class<?>> seen) {
+	private void extract(GenericApplicationContext context, ConditionService conditions,
+			Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
-			processImports(conditions, beanClass, seen);
+			processImports(context, conditions, beanClass, seen);
 		}
 	}
 
-	private void processImports(ConditionService conditions, Class<?> beanClass,
-			Set<Class<?>> seen) {
+	private void processImports(GenericApplicationContext context,
+			ConditionService conditions, Class<?> beanClass, Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
 			if (conditions.matches(beanClass)) {
 				Set<Import> imports = AnnotatedElementUtils
@@ -249,7 +260,33 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								addModule(module);
 								seen.add(value);
 							}
-							processImports(conditions, value, seen);
+							else if (ImportBeanDefinitionRegistrar.class
+									.isAssignableFrom(value)) {
+								ImportBeanDefinitionRegistrar registrar = BeanUtils
+										.instantiateClass(value,
+												ImportBeanDefinitionRegistrar.class);
+								invokeAwareMethods(registrar, context.getEnvironment(),
+										context, context);
+								registrar.registerBeanDefinitions(
+										new StandardAnnotationMetadata(value), context);
+							}
+							else if (ImportSelector.class.isAssignableFrom(value)) {
+								ImportSelector registrar = BeanUtils
+										.instantiateClass(value, ImportSelector.class);
+								invokeAwareMethods(registrar, context.getEnvironment(),
+										context, context);
+								String[] selected = registrar.selectImports(
+										new StandardAnnotationMetadata(value));
+								for (String select : selected) {
+									if (ClassUtils.isPresent(select,
+											context.getClassLoader())) {
+										context.registerBean(select,
+												ClassUtils.resolveClassName(select,
+														context.getClassLoader()));
+									}
+								}
+							}
+							processImports(context, conditions, value, seen);
 						}
 					}
 				}
@@ -271,6 +308,30 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		else {
 			initializers.addAll(
 					BeanUtils.instantiateClass(type, Module.class).initializers());
+		}
+	}
+
+	public static void invokeAwareMethods(Object target, Environment environment,
+			ResourceLoader resourceLoader, BeanDefinitionRegistry registry) {
+
+		if (target instanceof Aware) {
+			if (target instanceof BeanClassLoaderAware) {
+				ClassLoader classLoader = (registry instanceof ConfigurableBeanFactory
+						? ((ConfigurableBeanFactory) registry).getBeanClassLoader()
+						: resourceLoader.getClassLoader());
+				if (classLoader != null) {
+					((BeanClassLoaderAware) target).setBeanClassLoader(classLoader);
+				}
+			}
+			if (target instanceof BeanFactoryAware && registry instanceof BeanFactory) {
+				((BeanFactoryAware) target).setBeanFactory((BeanFactory) registry);
+			}
+			if (target instanceof EnvironmentAware) {
+				((EnvironmentAware) target).setEnvironment(environment);
+			}
+			if (target instanceof ResourceLoaderAware) {
+				((ResourceLoaderAware) target).setResourceLoader(resourceLoader);
+			}
 		}
 	}
 

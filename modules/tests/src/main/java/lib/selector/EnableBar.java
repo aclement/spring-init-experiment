@@ -14,34 +14,24 @@
  * limitations under the License.
  */
 
-package app.registrar;
+package lib.selector;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import lib.registrar.Bar;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties = "spring.main.application-context-class="
-		+ "org.springframework.context.support.GenericApplicationContext")
-@RunWith(SpringRunner.class)
-public class FunctionalApplicationTests {
-
-	@Autowired
-	private Bar bar;
-
-	@Test
-	public void test() {
-		assertThat(bar).isNotNull();
-	}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+@Import(SampleRegistrar.class)
+public @interface EnableBar {
 
 }
