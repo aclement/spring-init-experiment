@@ -1,7 +1,10 @@
 package processor;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -17,6 +20,8 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -33,6 +38,10 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private Messager messager;
 
+	private ModuleSpecs specs;
+
+	private boolean processed;
+
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
@@ -40,6 +49,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.elements = processingEnv.getElementUtils();
 		this.filer = processingEnv.getFiler();
 		this.messager = processingEnv.getMessager();
+		this.specs = new ModuleSpecs(this.types, this.elements);
 	}
 
 	@Override
@@ -50,9 +60,53 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
-		Set<TypeElement> types = collectTypes(roundEnv);
-		process(types);
+		if (roundEnv.processingOver()) {
+			updateFactories();
+		}
+		else if (!processed) {
+			Set<TypeElement> types = collectTypes(roundEnv);
+			process(types);
+			processed = true;
+		}
 		return true;
+	}
+
+	private void updateFactories() {
+		Properties properties = new Properties();
+		try {
+			FileObject resource = filer.getResource(StandardLocation.CLASS_OUTPUT, "",
+					"META-INF/spring.factories");
+			try (InputStream stream = resource.openInputStream()) {
+				properties.load(stream);
+			}
+		}
+		catch (IOException e) {
+			messager.printMessage(Kind.NOTE, "Cannot open spring.factories");
+		}
+		String values = properties.getProperty(SpringClassNames.MODULE.toString());
+		if (values == null) {
+			values = "";
+		}
+		StringBuilder builder = new StringBuilder(values);
+		for (ModuleSpec module : specs.getModules()) {
+			if (!values.contains(module.getClassName())) {
+				if (builder.length() > 0) {
+					builder.append(",");
+				}
+				builder.append(module.getClassName());
+			}
+		}
+		properties.setProperty(SpringClassNames.MODULE.toString(), builder.toString());
+		try {
+			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+					"META-INF/spring.factories");
+			try (OutputStream stream = resource.openOutputStream();) {
+				properties.store(stream, "Created by " + getClass().getName());
+			}
+		}
+		catch (IOException e) {
+			messager.printMessage(Kind.NOTE, "Cannot open spring.factories");
+		}
 	}
 
 	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
@@ -74,7 +128,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	}
 
 	private void process(Set<TypeElement> types) {
-		ModuleSpecs specs = new ModuleSpecs(this.types, this.elements);
 		for (TypeElement type : types) {
 			if (ElementUtils.hasAnnotation(type,
 					SpringClassNames.CONFIGURATION.toString())) {
