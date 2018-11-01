@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.scan;
+package app.nested;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

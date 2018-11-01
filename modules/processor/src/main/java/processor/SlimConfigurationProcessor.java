@@ -50,8 +50,27 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
-		process(ElementFilter.typesIn(roundEnv.getRootElements()));
+		Set<TypeElement> types = collectTypes(roundEnv);
+		process(types);
 		return true;
+	}
+
+	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
+		Set<TypeElement> types = new HashSet<>(
+				ElementFilter.typesIn(roundEnv.getRootElements()));
+		for (TypeElement type : new HashSet<>(types)) {
+			collectTypes(type, types);
+		}
+		return types;
+	}
+
+	private void collectTypes(TypeElement type, Set<TypeElement> types) {
+		for (Element element : type.getEnclosedElements()) {
+			if (element instanceof TypeElement) {
+				types.add((TypeElement) element);
+				collectTypes((TypeElement) element, types);
+			}
+		}
 	}
 
 	private void process(Set<TypeElement> types) {

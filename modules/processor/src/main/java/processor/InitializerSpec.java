@@ -94,7 +94,6 @@ public class InitializerSpec {
 		ClassName className = ClassName.get(type)
 				.peerClass(ClassName.get(type).simpleName() + "Initializer");
 		Builder builder = TypeSpec.classBuilder(className);
-		builder.addModifiers(type.getModifiers().toArray(new Modifier[0]));
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addMethod(createInitializer());
 		builder.addAnnotation(initializerMappingAnnotation());
@@ -133,10 +132,11 @@ public class InitializerSpec {
 		Object[] parameterTypes = getParameters(beanMethod, this::beanMethodParam)
 				.toArray();
 
-		Object[] args = new Object[parameterTypes.length + 1];
+		Object[] args = new Object[parameterTypes.length + 2];
 
-		System.arraycopy(parameterTypes, 0, args, 1, parameterTypes.length);
 		args[0] = returnType(beanMethod, beanMethod.getReturnType());
+		args[1] = type;
+		System.arraycopy(parameterTypes, 0, args, 2, parameterTypes.length);
 
 		builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
 				+ "\", $T.class, " + supplier(type, beanMethod, parameterVariables) + ")",
@@ -170,9 +170,7 @@ public class InitializerSpec {
 				exception = true;
 			}
 		}
-		String wrapper = owner.getSimpleName().toString();
-		String code = "context.getBean(" + wrapper + ".class)."
-				+ beanMethod.getSimpleName() + "("
+		String code = "context.getBean($T.class)." + beanMethod.getSimpleName() + "("
 				+ (parameterVariables.isEmpty() ? "" : parameterVariables) + ")";
 		if (exception) {
 			return "() -> { try { return " + code
