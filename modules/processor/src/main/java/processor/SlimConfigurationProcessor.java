@@ -11,7 +11,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
@@ -76,11 +75,12 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private void process(Set<TypeElement> types) {
 		ModuleSpecs specs = new ModuleSpecs(this.types, this.elements);
 		for (TypeElement type : types) {
-			if (hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
+			if (ElementUtils.hasAnnotation(type,
+					SpringClassNames.CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @Configuration", type);
 				specs.addInitializer(type);
 			}
-			if (hasAnnotation(type,
+			if (ElementUtils.hasAnnotation(type,
 					SpringClassNames.SPRING_BOOT_CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @SpringBootConfiguration", type);
 				specs.addModule(type);
@@ -98,37 +98,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 					module.getRootType());
 			write(module.getModule(), module.getPackage());
 		}
-	}
-
-	private boolean hasAnnotation(Element element, String type) {
-		return getAnnotation(element, type) != null;
-	}
-
-	private AnnotationMirror getAnnotation(Element element, String type) {
-		return getAnnotation(element, type, new HashSet<>());
-	}
-
-	private AnnotationMirror getAnnotation(Element element, String type,
-			Set<AnnotationMirror> seen) {
-		if (element != null) {
-			for (AnnotationMirror annotation : element.getAnnotationMirrors()) {
-				if (annotation.getAnnotationType().toString().startsWith("java.lang")) {
-					continue;
-				}
-				if (type.equals(annotation.getAnnotationType().toString())) {
-					return annotation;
-				}
-				if (!seen.contains(annotation)) {
-					seen.add(annotation);
-					annotation = getAnnotation(annotation.getAnnotationType().asElement(),
-							type, seen);
-					if (annotation != null) {
-						return annotation;
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 	private void write(TypeSpec type, String packageName) {

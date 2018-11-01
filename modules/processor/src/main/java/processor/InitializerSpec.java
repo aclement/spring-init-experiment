@@ -115,11 +115,23 @@ public class InitializerSpec {
 	}
 
 	private void addBeanMethods(MethodSpec.Builder builder, TypeElement type) {
+		boolean conditional = ElementUtils.hasAnnotation(type,
+				SpringClassNames.CONDITIONAL.toString());
+		if (conditional) {
+			builder.addStatement(
+					"$T conditions = context.getBeanFactory().getBean($T.class)",
+					SpringClassNames.CONDITION_SERVICE,
+					SpringClassNames.CONDITION_SERVICE);
+			builder.beginControlFlow("if (conditions.matches($T.class))", type);
+		}
 		// TODO: pick out the constructor more carefully
 		builder.addStatement("context.registerBean($T.class, () -> new $T())", type,
 				type);
 		for (ExecutableElement method : getBeanMethods(type)) {
 			createBeanMethod(builder, method, type);
+		}
+		if (conditional) {
+			builder.endControlFlow();
 		}
 	}
 
