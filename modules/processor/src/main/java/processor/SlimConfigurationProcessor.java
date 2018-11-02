@@ -38,6 +38,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private ElementUtils utils;
 
+	private boolean processed;
+
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
@@ -59,8 +61,9 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		if (roundEnv.processingOver()) {
 			updateFactories();
 		}
-		else {
+		else if (!processed) {
 			process(collectTypes(roundEnv));
+			processed = true;
 		}
 		return true;
 	}
@@ -140,20 +143,16 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		for (ModuleSpec module : specs.getModules()) {
 			module.process();
-			if (module.isComplete()) {
-				for (InitializerSpec initializer : module.getInitializers()) {
-					messager.printMessage(Kind.NOTE,
-							"Writing Initializer "
-									+ ClassName.get(initializer.getPackage(),
-											initializer.getInitializer().name),
-							initializer.getConfigurationType());
-					write(initializer.getInitializer(), initializer.getPackage());
-				}
+			for (InitializerSpec initializer : module.getInitializers()) {
 				messager.printMessage(Kind.NOTE,
-						"Writing Module " + module.getClassName(), module.getRootType());
-				write(module.getModule(), module.getPackage());
-				module.freeze();
+						"Writing Initializer " + ClassName.get(initializer.getPackage(),
+								initializer.getInitializer().name),
+						initializer.getConfigurationType());
+				write(initializer.getInitializer(), initializer.getPackage());
 			}
+			messager.printMessage(Kind.NOTE, "Writing Module " + module.getClassName(),
+					module.getRootType());
+			write(module.getModule(), module.getPackage());
 		}
 	}
 

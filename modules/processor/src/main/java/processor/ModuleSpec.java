@@ -46,7 +46,6 @@ public class ModuleSpec {
 	private TypeElement rootType;
 
 	private ElementUtils utils;
-	private boolean frozen;
 
 	public ModuleSpec(ElementUtils utils) {
 		this(utils, null);
@@ -90,7 +89,7 @@ public class ModuleSpec {
 	}
 
 	public void process() {
-		if (this.processed || this.frozen) {
+		if (this.processed) {
 			return;
 		}
 		if (this.module == null) {
@@ -101,14 +100,6 @@ public class ModuleSpec {
 					.addMethod(createInitializers()).build();
 			this.processed = true;
 		}
-	}
-
-	public boolean isComplete() {
-		return !this.frozen && this.processed && this.module != null;
-	}
-
-	public void freeze() {
-		this.frozen = true;
 	}
 
 	private void findModuleRoot() {
