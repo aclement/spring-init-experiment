@@ -346,4 +346,8 @@ public class ElementUtils {
 				.toString();
 	}
 
+	public TypeMirror erasure(TypeMirror type) {
+		return erasure(types.asElement(type));
+	}
+
 }

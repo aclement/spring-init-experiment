@@ -15,6 +15,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic.Kind;
@@ -33,8 +34,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private Messager messager;
 
 	private ModuleSpecs specs;
-
-	private boolean processed;
 
 	private ElementUtils utils;
 
@@ -59,10 +58,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		if (roundEnv.processingOver()) {
 			updateFactories();
 		}
-		else if (!processed) {
-			Set<TypeElement> types = collectTypes(roundEnv);
-			process(types);
-			processed = true;
+		else {
+			process(collectTypes(roundEnv));
 		}
 		return true;
 	}
@@ -85,7 +82,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		StringBuilder builder = new StringBuilder(values);
 		for (ModuleSpec module : specs.getModules()) {
-			if (!values.contains(module.getClassName())) {
+			if (module.getModule() != null && !values.contains(module.getClassName())) {
 				if (builder.length() > 0) {
 					builder.append(",");
 				}
@@ -106,17 +103,20 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	}
 
 	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
-		Set<TypeElement> types = new HashSet<>(
-				ElementFilter.typesIn(roundEnv.getRootElements()));
-		for (TypeElement type : new HashSet<>(types)) {
-			collectTypes(type, types);
+		Set<TypeElement> types = new HashSet<>();
+		for (TypeElement type : ElementFilter.typesIn(roundEnv.getRootElements())) {
+			if (type.getKind() == ElementKind.CLASS) {
+				types.add(type);
+				collectTypes(type, types);
+			}
 		}
 		return types;
 	}
 
 	private void collectTypes(TypeElement type, Set<TypeElement> types) {
 		for (Element element : type.getEnclosedElements()) {
-			if (element instanceof TypeElement) {
+			if (element instanceof TypeElement
+					&& element.getKind() == ElementKind.CLASS) {
 				types.add((TypeElement) element);
 				collectTypes((TypeElement) element, types);
 			}
@@ -137,16 +137,20 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		for (ModuleSpec module : specs.getModules()) {
 			module.process();
-			for (InitializerSpec initializer : module.getInitializers()) {
+			if (module.isComplete()) {
+				for (InitializerSpec initializer : module.getInitializers()) {
+					messager.printMessage(Kind.NOTE,
+							"Writing Initializer "
+									+ ClassName.get(initializer.getPackage(),
+											initializer.getInitializer().name),
+							initializer.getConfigurationType());
+					write(initializer.getInitializer(), initializer.getPackage());
+				}
 				messager.printMessage(Kind.NOTE,
-						"Writing Initializer " + ClassName.get(initializer.getPackage(),
-								initializer.getInitializer().name),
-						initializer.getConfigurationType());
-				write(initializer.getInitializer(), initializer.getPackage());
+						"Writing Module " + module.getClassName(), module.getRootType());
+				write(module.getModule(), module.getPackage());
+				module.freeze();
 			}
-			messager.printMessage(Kind.NOTE, "Writing Module " + module.getClassName(),
-					module.getRootType());
-			write(module.getModule(), module.getPackage());
 		}
 	}
 

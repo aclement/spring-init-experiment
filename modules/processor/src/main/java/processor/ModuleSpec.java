@@ -46,11 +46,16 @@ public class ModuleSpec {
 	private TypeElement rootType;
 
 	private ElementUtils utils;
+	private boolean frozen;
+
+	public ModuleSpec(ElementUtils utils) {
+		this(utils, null);
+	}
 
 	public ModuleSpec(ElementUtils utils, TypeElement type) {
-		this.rootType = type;
-		this.module = createModule(type);
-		this.pkg = ClassName.get(type).packageName();
+		if (type != null) {
+			setRootType(type);
+		}
 		this.utils = utils;
 	}
 
@@ -58,8 +63,10 @@ public class ModuleSpec {
 		return rootType;
 	}
 
-	public void setRootType(TypeElement rootType) {
-		this.rootType = rootType;
+	public void setRootType(TypeElement type) {
+		this.rootType = type;
+		this.module = createModule(type);
+		this.pkg = ClassName.get(type).packageName();
 	}
 
 	public TypeSpec getModule() {
@@ -83,12 +90,59 @@ public class ModuleSpec {
 	}
 
 	public void process() {
-		if (this.processed) {
+		if (this.processed || this.frozen) {
 			return;
 		}
-		this.module = importAnnotation(module.toBuilder()).addMethod(createInitializers())
-				.build();
-		this.processed = true;
+		if (this.module == null) {
+			findModuleRoot();
+		}
+		if (this.module != null) {
+			this.module = importAnnotation(module.toBuilder())
+					.addMethod(createInitializers()).build();
+			this.processed = true;
+		}
+	}
+
+	public boolean isComplete() {
+		return !this.frozen && this.processed && this.module != null;
+	}
+
+	public void freeze() {
+		this.frozen = true;
+	}
+
+	private void findModuleRoot() {
+		Set<InitializerSpec> candidates = new HashSet<>();
+		String pkg = null;
+		for (InitializerSpec initializer : initializers) {
+			// Only consider configuration that is not an inner (static) class
+			if (!initializer.getConfigurationType().getModifiers()
+					.contains(Modifier.STATIC)) {
+				if (pkg == null) {
+					pkg = initializer.getPackage();
+				}
+				else if (pkg.length() > initializer.getPackage().length()) {
+					// Choose only candidates from the top level package
+					pkg = initializer.getPackage();
+					candidates.clear();
+				}
+				candidates.add(initializer);
+			}
+		}
+		if (candidates.size() > 1) {
+			for (InitializerSpec initializer : candidates) {
+				// If there are multiple candidates, we prefer one that is
+				// "AutoConfiguration"
+				if (initializer.getConfigurationType().getQualifiedName().toString()
+						.endsWith("AutoConfiguration")) {
+					setRootType(initializer.getConfigurationType());
+					break;
+				}
+			}
+		}
+		else if (candidates.size() == 1) {
+			setRootType(candidates.iterator().next().getConfigurationType());
+		}
 	}
 
 	private TypeSpec createModule(TypeElement type) {

@@ -198,7 +198,7 @@ public class InitializerSpec {
 				DeclaredType declaredType = (DeclaredType) variableElement.asType();
 				List<? extends TypeMirror> types = declaredType.getTypeArguments();
 				if (!types.isEmpty()) {
-					type = types.iterator().next();
+					type = utils.erasure(types.iterator().next());
 				}
 			}
 		}

@@ -51,7 +51,7 @@ public class ModuleSpecs {
 		for (InitializerSpec initializer : new HashSet<>(initializers)) {
 			String pkg = initializer.getPackage();
 			for (String root : modules.keySet()) {
-				if (root.equals(pkg) || pkg.startsWith(root + ".")) {
+				if (root.equals(pkg)) {
 					modules.get(root).addInitializer(initializer);
 					initializers.remove(initializer);
 				}
@@ -60,10 +60,9 @@ public class ModuleSpecs {
 		for (InitializerSpec initializer : new HashSet<>(initializers)) {
 			String pkg = initializer.getPackage();
 			for (String root : findRoots(initializers)) {
-				if (root.equals(pkg) || pkg.startsWith(root + ".")) {
+				if (root.equals(pkg)) {
 					if (!modules.containsKey(root)) {
-						modules.put(root, new ModuleSpec(this.utils,
-								initializer.getConfigurationType()));
+						modules.put(root, new ModuleSpec(this.utils));
 					}
 					modules.get(root).addInitializer(initializer);
 					initializers.remove(initializer);
