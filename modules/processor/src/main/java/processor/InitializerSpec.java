@@ -220,7 +220,8 @@ public class InitializerSpec {
 	private Parameter parameterAccessor(VariableElement param) {
 		Parameter result = new Parameter();
 		TypeMirror paramType = param.asType();
-		if (utils.getParameterType(param).contains("ObjectProvider")) {
+		String paramTypename = utils.getParameterType(param);
+		if (paramTypename.contains("ObjectProvider")) {
 			result.format = "context.getBeanProvider($T.class)";
 			if (paramType instanceof DeclaredType) {
 				DeclaredType declaredType = (DeclaredType) paramType;
@@ -249,6 +250,8 @@ public class InitializerSpec {
 					result.types.add(value);
 				}
 			}
+		} else if (paramTypename.equals(SpringClassNames.APPLICATION_CONTEXT.toString())) {
+			result.format = "context";
 		}
 		else {
 			if (paramType instanceof ArrayType) {
