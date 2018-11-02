@@ -124,6 +124,7 @@ public class InitializerSpec {
 					SpringClassNames.CONDITION_SERVICE);
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
+		addAnyEnableConfigurationPropertiesRegistrations(builder, type);
 		// TODO: pick out the constructor more carefully
 		builder.addStatement("context.registerBean($T.class, () -> new $T())", type,
 				type);
@@ -134,6 +135,19 @@ public class InitializerSpec {
 		}
 		if (conditional) {
 			builder.endControlFlow();
+		}
+	}
+
+	private void addAnyEnableConfigurationPropertiesRegistrations(MethodSpec.Builder builder, TypeElement type) {
+		AnnotationMirror enableConfigurationProperties = ElementUtils.getAnnotation(type,  SpringClassNames.ENABLE_CONFIGURATION_PROPERTIES.toString());
+		if (enableConfigurationProperties != null) {
+			List<TypeElement> configurationPropertyTypes = ElementUtils.getTypesFromAnnotation(types, enableConfigurationProperties, "value");
+			if (configurationPropertyTypes.size() > 0) {
+				// builder.addComment("Register calls for @EnableConfigurationProperties: #$L",configurationPropertyTypes.size());
+				for (TypeElement t: configurationPropertyTypes) {
+					builder.addStatement("context.registerBean($T.class, () -> new $T())", t, t);
+				}
+			}
 		}
 	}
 
