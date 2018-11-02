@@ -46,6 +46,9 @@ public class SpringClassNames {
 
 	public static final ClassName APPLICATION_CONTEXT_INITIALIZER = ClassName
 			.get("org.springframework.context", "ApplicationContextInitializer");
+	
+	public static final ClassName APPLICATION_CONTEXT =
+			ClassName.get("org.springframework.context", "ApplicationContext");
 
 	public static final ClassName GENERIC_APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context.support", "GenericApplicationContext");
