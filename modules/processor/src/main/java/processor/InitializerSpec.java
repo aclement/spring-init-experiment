@@ -118,9 +118,7 @@ public class InitializerSpec {
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
 		addAnyEnableConfigurationPropertiesRegistrations(builder, type);
-		// TODO: pick out the constructor more carefully
-		builder.addStatement("context.registerBean($T.class, () -> new $T())", type,
-				type);
+		addNewBeanForConfig(builder, type);
 		boolean conditionsAvailable = conditional;
 		for (ExecutableElement method : getBeanMethods(type)) {
 			conditionsAvailable |= createBeanMethod(builder, method, type,
@@ -129,6 +127,20 @@ public class InitializerSpec {
 		if (conditional) {
 			builder.endControlFlow();
 		}
+	}
+
+	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
+		ExecutableElement constructor = getConstructor(type);
+		String parameterVariables = getParameters(constructor, this::parameterAccessor)
+				.collect(Collectors.joining(", "));
+		Object[] parameterTypes = getParameters(constructor, this::autowiredMethodParam)
+				.toArray();
+		Object[] args = new Object[parameterTypes.length + 2];
+		args[0] = type;
+		args[1] = type;
+		System.arraycopy(parameterTypes, 0, args, 2, parameterTypes.length);
+		builder.addStatement("context.registerBean($T.class, () -> new $T("
+				+ parameterVariables + "))", args);
 	}
 
 	private void addAnyEnableConfigurationPropertiesRegistrations(
@@ -170,7 +182,7 @@ public class InitializerSpec {
 		String parameterVariables = getParameters(beanMethod, this::parameterAccessor)
 				.collect(Collectors.joining(", "));
 
-		Object[] parameterTypes = getParameters(beanMethod, this::beanMethodParam)
+		Object[] parameterTypes = getParameters(beanMethod, this::autowiredMethodParam)
 				.toArray();
 
 		Object[] args = new Object[parameterTypes.length + 2];
@@ -191,7 +203,7 @@ public class InitializerSpec {
 
 	}
 
-	private TypeName beanMethodParam(VariableElement variableElement) {
+	private TypeName autowiredMethodParam(VariableElement variableElement) {
 		TypeMirror type = utils.erasure(variableElement);
 		if (variableElement.asType().toString().contains("ObjectProvider")) {
 			if (variableElement.asType() instanceof DeclaredType) {
@@ -242,6 +254,19 @@ public class InitializerSpec {
 			type = utils.getSuperType(type);
 		}
 		return beanMethods;
+	}
+
+	private ExecutableElement getConstructor(TypeElement type) {
+		Set<Name> seen = new HashSet<>();
+		List<ExecutableElement> methods = new ArrayList<>();
+		for (ExecutableElement candidate : ElementFilter
+				.constructorsIn(type.getEnclosedElements())) {
+			if (seen.add(candidate.getSimpleName())) {
+				methods.add(candidate);
+			}
+		}
+		// TODO: pick one that is explciitly autowired?
+		return methods.get(0);
 	}
 
 	private boolean isBeanMethod(ExecutableElement element) {
