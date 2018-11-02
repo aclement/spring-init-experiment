@@ -30,6 +30,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -131,16 +132,10 @@ public class InitializerSpec {
 
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
 		ExecutableElement constructor = getConstructor(type);
-		String parameterVariables = getParameters(constructor, this::parameterAccessor)
-				.collect(Collectors.joining(", "));
-		Object[] parameterTypes = getParameters(constructor, this::autowiredMethodParam)
-				.toArray();
-		Object[] args = new Object[parameterTypes.length + 2];
-		args[0] = type;
-		args[1] = type;
-		System.arraycopy(parameterTypes, 0, args, 2, parameterTypes.length);
-		builder.addStatement("context.registerBean($T.class, () -> new $T("
-				+ parameterVariables + "))", args);
+		Parameters params = autowireParamsForMethod(constructor);
+		builder.addStatement(
+				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
+				ArrayUtils.merge(type, type, params.args));
 	}
 
 	private void addAnyEnableConfigurationPropertiesRegistrations(
@@ -154,8 +149,10 @@ public class InitializerSpec {
 				// builder.addComment("Register calls for @EnableConfigurationProperties:
 				// #$L",configurationPropertyTypes.size());
 				for (TypeElement t : configurationPropertyTypes) {
-					builder.addStatement("context.registerBean($T.class, () -> new $T())",
-							t, t);
+					ExecutableElement constructor = getConstructor(t);
+					Parameters params = autowireParamsForMethod(constructor);
+					builder.addStatement("context.registerBean($T.class, () -> new $T("
+							+ params.format + "))", ArrayUtils.merge(t, t, params.args));
 				}
 			}
 		}
@@ -176,24 +173,14 @@ public class InitializerSpec {
 						SpringClassNames.CONDITION_SERVICE);
 			}
 			builder.beginControlFlow("if (conditions.matches($T.class, $T.class))", type,
-					returnType);
+					utils.erasure(returnType));
 		}
 
-		String parameterVariables = getParameters(beanMethod, this::parameterAccessor)
-				.collect(Collectors.joining(", "));
-
-		Object[] parameterTypes = getParameters(beanMethod, this::autowiredMethodParam)
-				.toArray();
-
-		Object[] args = new Object[parameterTypes.length + 2];
-
-		args[0] = returnType;
-		args[1] = type;
-		System.arraycopy(parameterTypes, 0, args, 2, parameterTypes.length);
+		Parameters params = autowireParamsForMethod(beanMethod);
 
 		builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
-				+ "\", $T.class, " + supplier(type, beanMethod, parameterVariables) + ")",
-				args);
+				+ "\", $T.class, " + supplier(type, beanMethod, params.format) + ")",
+				ArrayUtils.merge(utils.erasure(returnType), type, params.args));
 
 		if (conditional) {
 			builder.endControlFlow();
@@ -203,25 +190,26 @@ public class InitializerSpec {
 
 	}
 
-	private TypeName autowiredMethodParam(VariableElement variableElement) {
-		TypeMirror type = utils.erasure(variableElement);
-		if (variableElement.asType().toString().contains("ObjectProvider")) {
-			if (variableElement.asType() instanceof DeclaredType) {
-				DeclaredType declaredType = (DeclaredType) variableElement.asType();
-				List<? extends TypeMirror> types = declaredType.getTypeArguments();
-				if (!types.isEmpty()) {
-					type = utils.erasure(types.iterator().next());
-				}
-			}
-		}
-		return TypeName.get(type);
+	private Parameters autowireParamsForMethod(ExecutableElement method) {
+		List<Parameter> parameterTypes = getParameters(method, this::parameterAccessor)
+				.collect(Collectors.toList());
+
+		String format = parameterTypes.stream().map(param -> param.format)
+				.collect(Collectors.joining(","));
+		Object[] args = parameterTypes.stream().flatMap(param -> param.types.stream())
+				.collect(Collectors.toList()).toArray();
+
+		Parameters params = new Parameters();
+		params.format = format;
+		params.args = args;
+		return params;
 	}
 
 	private String supplier(TypeElement owner, ExecutableElement beanMethod,
 			String parameterVariables) {
 		boolean exception = utils.throwsCheckedException(beanMethod);
 		String code = "context.getBean($T.class)." + beanMethod.getSimpleName() + "("
-				+ (parameterVariables.isEmpty() ? "" : parameterVariables) + ")";
+				+ parameterVariables + ")";
 		if (exception) {
 			return "() -> { try { return " + code
 					+ "; } catch (Exception e) { throw new IllegalStateException(e); } }";
@@ -229,11 +217,57 @@ public class InitializerSpec {
 		return "() -> " + code;
 	}
 
-	private String parameterAccessor(VariableElement param) {
+	private Parameter parameterAccessor(VariableElement param) {
+		Parameter result = new Parameter();
+		TypeMirror paramType = param.asType();
 		if (utils.getParameterType(param).contains("ObjectProvider")) {
-			return "context.getBeanProvider($T.class)";
+			result.format = "context.getBeanProvider($T.class)";
+			if (paramType instanceof DeclaredType) {
+				DeclaredType declaredType = (DeclaredType) paramType;
+				List<? extends TypeMirror> args = declaredType.getTypeArguments();
+				if (!args.isEmpty()) {
+					TypeMirror type = args.iterator().next();
+					TypeName value = TypeName.get(utils.erasure(type));
+					if (type instanceof DeclaredType
+							&& !((DeclaredType) type).getTypeArguments().isEmpty()) {
+						// The target type itself is generic. So far we only support one
+						// level of generic parameters. Further levels could be supported
+						// by adding calls to ResolvableType
+						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
+						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
+						if ("?".equals(value.toString())) {
+							result.types.add(TypeName.OBJECT);
+						}
+						else {
+							result.types.add(value);
+						}
+						type = ((DeclaredType) type).getTypeArguments().iterator().next();
+					}
+					else if (type instanceof ArrayType) {
+						// TODO: something special with an array of generic types?
+					}
+					result.types.add(value);
+				}
+			}
 		}
-		return "context.getBean($T.class)";
+		else {
+			if (paramType instanceof ArrayType) {
+				ArrayType arrayType = (ArrayType) paramType;
+				// Really?
+				result.format = "context.getBeanProvider($T.class).stream().collect($T.toList()).toArray(new $T[0])";
+				result.types
+						.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
+				result.types.add(TypeName.get(Collectors.class));
+				result.types
+						.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
+
+			}
+			else {
+				result.format = "context.getBean($T.class)";
+				result.types.add(TypeName.get(utils.erasure(param)));
+			}
+		}
+		return result;
 	}
 
 	private <T> Stream<T> getParameters(ExecutableElement method,
@@ -283,6 +317,16 @@ public class InitializerSpec {
 			}
 		}
 		return false;
+	}
+
+	static class Parameter {
+		private String format;
+		private List<TypeName> types = new ArrayList<>();
+	}
+
+	static class Parameters {
+		private String format;
+		private Object[] args;
 	}
 
 }

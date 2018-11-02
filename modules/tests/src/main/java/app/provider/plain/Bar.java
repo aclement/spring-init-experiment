@@ -1,4 +1,4 @@
-package app.provider;
+package app.provider.plain;
 
 public class Bar {
 

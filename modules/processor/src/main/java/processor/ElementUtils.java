@@ -30,6 +30,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -95,11 +96,11 @@ public class ElementUtils {
 				// Find an interface, any interface...
 				if (element.getModifiers().contains(Modifier.PUBLIC)
 						&& element.getKind() == ElementKind.INTERFACE) {
-					return types.erasure(subtype);
+					return subtype;
 				}
 			}
 		}
-		return types.erasure(type);
+		return type;
 	}
 
 	public String getQualifiedName(TypeElement type) {
@@ -342,12 +343,19 @@ public class ElementUtils {
 	}
 
 	public String getParameterType(VariableElement param) {
-		return ((TypeElement) types.asElement(param.asType())).getQualifiedName()
-				.toString();
+		return param.asType().toString();
 	}
 
 	public TypeMirror erasure(TypeMirror type) {
-		return erasure(types.asElement(type));
+		if (type.getKind() == TypeKind.ARRAY) {
+			// Erase the component type?
+			return type;
+		}
+		Element element = types.asElement(type);
+		if (element != null) {
+			return erasure(element);
+		}
+		return type;
 	}
 
 }

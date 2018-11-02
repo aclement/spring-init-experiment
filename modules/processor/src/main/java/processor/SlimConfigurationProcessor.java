@@ -16,6 +16,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic.Kind;
@@ -74,7 +75,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			}
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot open spring.factories for reading");
+			messager.printMessage(Kind.OTHER, "Cannot open spring.factories for reading");
 		}
 		String values = properties.getProperty(SpringClassNames.MODULE.toString());
 		if (values == null) {
@@ -105,7 +106,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
 		Set<TypeElement> types = new HashSet<>();
 		for (TypeElement type : ElementFilter.typesIn(roundEnv.getRootElements())) {
-			if (type.getKind() == ElementKind.CLASS) {
+			if (type.getKind() == ElementKind.CLASS
+					&& !type.getModifiers().contains(Modifier.ABSTRACT)) {
 				types.add(type);
 				collectTypes(type, types);
 			}
@@ -115,8 +117,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private void collectTypes(TypeElement type, Set<TypeElement> types) {
 		for (Element element : type.getEnclosedElements()) {
-			if (element instanceof TypeElement
-					&& element.getKind() == ElementKind.CLASS) {
+			if (element instanceof TypeElement && element.getKind() == ElementKind.CLASS
+					&& !type.getModifiers().contains(Modifier.ABSTRACT)) {
 				types.add((TypeElement) element);
 				collectTypes((TypeElement) element, types);
 			}
@@ -126,12 +128,13 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private void process(Set<TypeElement> types) {
 		for (TypeElement type : types) {
 			if (utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
-				messager.printMessage(Kind.NOTE, "Found @Configuration", type);
+				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
 				specs.addInitializer(type);
 			}
 			if (utils.hasAnnotation(type,
 					SpringClassNames.SPRING_BOOT_CONFIGURATION.toString())) {
-				messager.printMessage(Kind.NOTE, "Found @SpringBootConfiguration", type);
+				messager.printMessage(Kind.NOTE,
+						"Found @SpringBootConfiguration in " + type, type);
 				specs.addModule(type);
 			}
 		}

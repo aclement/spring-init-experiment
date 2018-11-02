@@ -1,4 +1,4 @@
-package app.provider;
+package app.provider.array;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

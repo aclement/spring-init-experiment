@@ -1,4 +1,4 @@
-package app.provider;
+package app.provider.plain;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;

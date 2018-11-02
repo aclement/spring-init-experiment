@@ -55,8 +55,12 @@ public class SpringClassNames {
 
 	public static final ClassName CONDITIONAL = ClassName
 			.get("org.springframework.context.annotation", "Conditional");
-	
-	public static final ClassName ENABLE_CONFIGURATION_PROPERTIES = ClassName
-			.get("org.springframework.boot.context.properties", "EnableConfigurationProperties");
+
+	public static final ClassName ENABLE_CONFIGURATION_PROPERTIES = ClassName.get(
+			"org.springframework.boot.context.properties",
+			"EnableConfigurationProperties");
+
+	public static final ClassName RESOLVABLE_TYPE = ClassName
+			.get("org.springframework.core", "ResolvableType");
 
 }
