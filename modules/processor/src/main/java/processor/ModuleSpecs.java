@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * @author Dave Syer
@@ -31,23 +29,21 @@ import javax.lang.model.util.Types;
  */
 public class ModuleSpecs {
 
-	private Types types;
-	private Elements elements;
+	private ElementUtils utils;
 
 	private Set<InitializerSpec> initializers = new HashSet<>();
 	private Map<String, ModuleSpec> modules = new HashMap<>();
 
-	public ModuleSpecs(Types types, Elements elements) {
-		this.types = types;
-		this.elements = elements;
+	public ModuleSpecs(ElementUtils utils) {
+		this.utils = utils;
 	}
 
 	public void addInitializer(TypeElement initializer) {
-		initializers.add(new InitializerSpec(types, elements, initializer));
+		initializers.add(new InitializerSpec(this.utils, initializer));
 	}
 
 	public void addModule(TypeElement module) {
-		ModuleSpec value = new ModuleSpec(this.types, module);
+		ModuleSpec value = new ModuleSpec(this.utils, module);
 		modules.put(value.getPackage(), value);
 	}
 
@@ -66,7 +62,7 @@ public class ModuleSpecs {
 			for (String root : findRoots(initializers)) {
 				if (root.equals(pkg) || pkg.startsWith(root + ".")) {
 					if (!modules.containsKey(root)) {
-						modules.put(root, new ModuleSpec(this.types,
+						modules.put(root, new ModuleSpec(this.utils,
 								initializer.getConfigurationType()));
 					}
 					modules.get(root).addInitializer(initializer);

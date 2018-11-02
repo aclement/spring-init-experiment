@@ -17,8 +17,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
@@ -30,10 +28,6 @@ import com.squareup.javapoet.TypeSpec;
 @SupportedAnnotationTypes({ "*" })
 public class SlimConfigurationProcessor extends AbstractProcessor {
 
-	private Types types;
-
-	private Elements elements;
-
 	private Filer filer;
 
 	private Messager messager;
@@ -42,14 +36,16 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private boolean processed;
 
+	private ElementUtils utils;
+
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
-		this.types = processingEnv.getTypeUtils();
-		this.elements = processingEnv.getElementUtils();
 		this.filer = processingEnv.getFiler();
 		this.messager = processingEnv.getMessager();
-		this.specs = new ModuleSpecs(this.types, this.elements);
+		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
+				processingEnv.getElementUtils());
+		this.specs = new ModuleSpecs(this.utils);
 	}
 
 	@Override
@@ -129,12 +125,11 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private void process(Set<TypeElement> types) {
 		for (TypeElement type : types) {
-			if (ElementUtils.hasAnnotation(type,
-					SpringClassNames.CONFIGURATION.toString())) {
+			if (utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @Configuration", type);
 				specs.addInitializer(type);
 			}
-			if (ElementUtils.hasAnnotation(type,
+			if (utils.hasAnnotation(type,
 					SpringClassNames.SPRING_BOOT_CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @SpringBootConfiguration", type);
 				specs.addModule(type);

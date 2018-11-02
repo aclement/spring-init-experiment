@@ -19,14 +19,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
@@ -35,8 +33,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -51,16 +47,13 @@ import com.squareup.javapoet.TypeSpec.Builder;
  */
 public class InitializerSpec {
 
-	private Types types;
-	private Elements elements;
-
 	private TypeSpec initializer;
 	private String pkg;
 	private TypeElement configurationType;
+	private ElementUtils utils;
 
-	public InitializerSpec(Types types, Elements elements, TypeElement type) {
-		this.types = types;
-		this.elements = elements;
+	public InitializerSpec(ElementUtils utils, TypeElement type) {
+		this.utils = utils;
 		this.configurationType = type;
 		this.initializer = createInitializer(type);
 		this.pkg = ClassName.get(type).packageName();
@@ -115,7 +108,7 @@ public class InitializerSpec {
 	}
 
 	private void addBeanMethods(MethodSpec.Builder builder, TypeElement type) {
-		boolean conditional = ElementUtils.hasAnnotation(type,
+		boolean conditional = utils.hasAnnotation(type,
 				SpringClassNames.CONDITIONAL.toString());
 		if (conditional) {
 			builder.addStatement(
@@ -138,14 +131,19 @@ public class InitializerSpec {
 		}
 	}
 
-	private void addAnyEnableConfigurationPropertiesRegistrations(MethodSpec.Builder builder, TypeElement type) {
-		AnnotationMirror enableConfigurationProperties = ElementUtils.getAnnotation(type,  SpringClassNames.ENABLE_CONFIGURATION_PROPERTIES.toString());
+	private void addAnyEnableConfigurationPropertiesRegistrations(
+			MethodSpec.Builder builder, TypeElement type) {
+		AnnotationMirror enableConfigurationProperties = utils.getAnnotation(type,
+				SpringClassNames.ENABLE_CONFIGURATION_PROPERTIES.toString());
 		if (enableConfigurationProperties != null) {
-			List<TypeElement> configurationPropertyTypes = ElementUtils.getTypesFromAnnotation(types, enableConfigurationProperties, "value");
+			List<TypeElement> configurationPropertyTypes = utils
+					.getTypesFromAnnotation(enableConfigurationProperties, "value");
 			if (configurationPropertyTypes.size() > 0) {
-				// builder.addComment("Register calls for @EnableConfigurationProperties: #$L",configurationPropertyTypes.size());
-				for (TypeElement t: configurationPropertyTypes) {
-					builder.addStatement("context.registerBean($T.class, () -> new $T())", t, t);
+				// builder.addComment("Register calls for @EnableConfigurationProperties:
+				// #$L",configurationPropertyTypes.size());
+				for (TypeElement t : configurationPropertyTypes) {
+					builder.addStatement("context.registerBean($T.class, () -> new $T())",
+							t, t);
 				}
 			}
 		}
@@ -154,9 +152,9 @@ public class InitializerSpec {
 	private boolean createBeanMethod(MethodSpec.Builder builder,
 			ExecutableElement beanMethod, TypeElement type, boolean conditionsAvailable) {
 
-		TypeMirror returnType = returnType(beanMethod, beanMethod.getReturnType());
+		TypeMirror returnType = utils.getReturnType(beanMethod);
 
-		boolean conditional = ElementUtils.hasAnnotation(beanMethod,
+		boolean conditional = utils.hasAnnotation(beanMethod,
 				SpringClassNames.CONDITIONAL.toString());
 		if (conditional) {
 			if (!conditionsAvailable) {
@@ -194,7 +192,7 @@ public class InitializerSpec {
 	}
 
 	private TypeName beanMethodParam(VariableElement variableElement) {
-		TypeMirror type = types.erasure(variableElement.asType());
+		TypeMirror type = utils.erasure(variableElement);
 		if (variableElement.asType().toString().contains("ObjectProvider")) {
 			if (variableElement.asType() instanceof DeclaredType) {
 				DeclaredType declaredType = (DeclaredType) variableElement.asType();
@@ -209,17 +207,7 @@ public class InitializerSpec {
 
 	private String supplier(TypeElement owner, ExecutableElement beanMethod,
 			String parameterVariables) {
-		boolean exception = false;
-		TypeMirror exceptionType = elements.getTypeElement(Exception.class.getName())
-				.asType();
-		TypeMirror runtimeExceptionType = elements
-				.getTypeElement(RuntimeException.class.getName()).asType();
-		for (TypeMirror type : beanMethod.getThrownTypes()) {
-			if (types.isSubtype(type, exceptionType)
-					&& !types.isSubtype(type, runtimeExceptionType)) {
-				exception = true;
-			}
-		}
+		boolean exception = utils.throwsCheckedException(beanMethod);
 		String code = "context.getBean($T.class)." + beanMethod.getSimpleName() + "("
 				+ (parameterVariables.isEmpty() ? "" : parameterVariables) + ")";
 		if (exception) {
@@ -229,24 +217,8 @@ public class InitializerSpec {
 		return "() -> " + code;
 	}
 
-	private TypeMirror returnType(ExecutableElement beanMethod, TypeMirror type) {
-		if (types.asElement(type).getModifiers().contains(Modifier.PRIVATE)) {
-			// Hack, hack, hackety, hack...
-			for (TypeMirror subtype : types.directSupertypes(type)) {
-				Element element = types.asElement(subtype);
-				// Find an interface, any interface...
-				if (element.getModifiers().contains(Modifier.PUBLIC)
-						&& element.getKind() == ElementKind.INTERFACE) {
-					return types.erasure(subtype);
-				}
-			}
-		}
-		return types.erasure(type);
-	}
-
-	private String parameterAccessor(VariableElement p, int i) {
-		if (types.asElement(p.asType()).getSimpleName().toString()
-				.equals("ObjectProvider")) {
+	private String parameterAccessor(VariableElement param) {
+		if (utils.getParameterType(param).contains("ObjectProvider")) {
 			return "context.getBeanProvider($T.class)";
 		}
 		return "context.getBean($T.class)";
@@ -255,16 +227,6 @@ public class InitializerSpec {
 	private <T> Stream<T> getParameters(ExecutableElement method,
 			Function<VariableElement, T> mapper) {
 		return method.getParameters().stream().map(mapper);
-	}
-
-	private <T> Stream<T> getParameters(ExecutableElement method,
-			BiFunction<VariableElement, Integer, T> mapper) {
-		List<? extends VariableElement> params = method.getParameters();
-		List<T> result = new ArrayList<>();
-		for (int i = 0; i < params.size(); i++) {
-			result.add(mapper.apply(params.get(i), i));
-		}
-		return result.stream();
 	}
 
 	private List<ExecutableElement> getBeanMethods(TypeElement type) {
@@ -277,7 +239,7 @@ public class InitializerSpec {
 					beanMethods.add(candidate);
 				}
 			}
-			type = getSuperType(type);
+			type = utils.getSuperType(type);
 		}
 		return beanMethods;
 	}
@@ -287,11 +249,6 @@ public class InitializerSpec {
 		return (isAnnotated(element, SpringClassNames.BEAN)
 				&& !modifiers.contains(Modifier.STATIC)
 				&& !modifiers.contains(Modifier.PRIVATE));
-	}
-
-	private TypeElement getSuperType(TypeElement type) {
-		TypeMirror superType = type.getSuperclass();
-		return (superType == null ? null : (TypeElement) types.asElement(superType));
 	}
 
 	private boolean isAnnotated(Element element, ClassName type) {
