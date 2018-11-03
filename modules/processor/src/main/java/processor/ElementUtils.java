@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -34,6 +35,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic.Kind;
 
 /**
  * @author Dave Syer
@@ -45,10 +47,12 @@ public class ElementUtils {
 	private TypeCollector typeCollector = new TypeCollector();
 	private TypeFinder typeFinder = new TypeFinder();
 	private Elements elements;
+	private Messager messager;
 
-	public ElementUtils(Types types, Elements elements) {
+	public ElementUtils(Types types, Elements elements, Messager messager) {
 		this.types = types;
 		this.elements = elements;
+		this.messager = messager;
 	}
 
 	public boolean hasAnnotation(Element element, String type) {
@@ -63,19 +67,27 @@ public class ElementUtils {
 			Set<AnnotationMirror> seen) {
 		if (element != null) {
 			for (AnnotationMirror annotation : element.getAnnotationMirrors()) {
-				if (annotation.getAnnotationType().toString().startsWith("java.lang")) {
-					continue;
-				}
-				if (type.equals(annotation.getAnnotationType().toString())) {
-					return annotation;
-				}
-				if (!seen.contains(annotation)) {
-					seen.add(annotation);
-					annotation = getAnnotation(annotation.getAnnotationType().asElement(),
-							type, seen);
-					if (annotation != null) {
+				String annotationTypename = annotation.getAnnotationType().toString();
+				try {
+					if (annotationTypename.startsWith("java.lang")) {
+						continue;
+					}
+					if (annotationTypename.equals(SpringClassNames.NULLABLE.toString())) {
+						continue;
+					}
+					if (type.equals(annotationTypename)) {
 						return annotation;
 					}
+					if (!seen.contains(annotation)) {
+						seen.add(annotation);
+						annotation = getAnnotation(annotation.getAnnotationType().asElement(),
+								type, seen);
+						if (annotation != null) {
+							return annotation;
+						}
+					}
+				} catch (Throwable t) {
+					messager.printMessage(Kind.ERROR, "Problems working with annotation "+annotationTypename);
 				}
 			}
 		}

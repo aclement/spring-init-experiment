@@ -160,34 +160,36 @@ public class InitializerSpec {
 
 	private boolean createBeanMethod(MethodSpec.Builder builder,
 			ExecutableElement beanMethod, TypeElement type, boolean conditionsAvailable) {
-
-		TypeMirror returnType = utils.getReturnType(beanMethod);
-
-		boolean conditional = utils.hasAnnotation(beanMethod,
-				SpringClassNames.CONDITIONAL.toString());
-		if (conditional) {
-			if (!conditionsAvailable) {
-				builder.addStatement(
-						"$T conditions = context.getBeanFactory().getBean($T.class)",
-						SpringClassNames.CONDITION_SERVICE,
-						SpringClassNames.CONDITION_SERVICE);
+		try {
+			TypeMirror returnType = utils.getReturnType(beanMethod);
+	
+			boolean conditional = utils.hasAnnotation(beanMethod,
+					SpringClassNames.CONDITIONAL.toString());
+			if (conditional) {
+				if (!conditionsAvailable) {
+					builder.addStatement(
+							"$T conditions = context.getBeanFactory().getBean($T.class)",
+							SpringClassNames.CONDITION_SERVICE,
+							SpringClassNames.CONDITION_SERVICE);
+				}
+				builder.beginControlFlow("if (conditions.matches($T.class, $T.class))", type,
+						utils.erasure(returnType));
 			}
-			builder.beginControlFlow("if (conditions.matches($T.class, $T.class))", type,
-					utils.erasure(returnType));
+	
+			Parameters params = autowireParamsForMethod(beanMethod);
+	
+			builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
+					+ "\", $T.class, " + supplier(type, beanMethod, params.format) + ")",
+					ArrayUtils.merge(utils.erasure(returnType), type, params.args));
+	
+			if (conditional) {
+				builder.endControlFlow();
+			}
+	
+			return conditional;
+		} catch (Throwable t) {
+			throw new RuntimeException("Problem performing createBeanMethod for method "+type.toString()+"."+beanMethod.toString(), t);
 		}
-
-		Parameters params = autowireParamsForMethod(beanMethod);
-
-		builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
-				+ "\", $T.class, " + supplier(type, beanMethod, params.format) + ")",
-				ArrayUtils.merge(utils.erasure(returnType), type, params.args));
-
-		if (conditional) {
-			builder.endControlFlow();
-		}
-
-		return conditional;
-
 	}
 
 	private Parameters autowireParamsForMethod(ExecutableElement method) {
@@ -332,4 +334,7 @@ public class InitializerSpec {
 		private Object[] args;
 	}
 
+	public String toString() {
+		return "InitializerSpec:"+configurationType.toString();
+	}
 }
