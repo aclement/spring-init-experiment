@@ -134,6 +134,10 @@ public class ModuleSpec {
 		else if (candidates.size() == 1) {
 			setRootType(candidates.iterator().next().getConfigurationType());
 		}
+		else {
+			// Fast fail
+			throw new IllegalStateException("No root type could be determined for module "+this.pkg+" from these initializers: "+initializers);
+		}
 	}
 
 	private TypeSpec createModule(TypeElement type) {

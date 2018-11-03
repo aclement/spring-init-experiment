@@ -57,15 +57,30 @@ public class ModuleSpecs {
 				}
 			}
 		}
+		Set<String> roots = findRoots(initializers);
 		for (InitializerSpec initializer : new HashSet<>(initializers)) {
 			String pkg = initializer.getPackage();
-			for (String root : findRoots(initializers)) {
-				if (root.equals(pkg)) {
-					if (!modules.containsKey(root)) {
-						modules.put(root, new ModuleSpec(this.utils));
+			// Find closest root...
+			boolean moduleFound = false;
+			String packageToCheck = pkg;
+			while (!moduleFound) {
+				for (String root : roots) {
+					if (root.equals(packageToCheck)) {
+						if (!modules.containsKey(root)) {
+							modules.put(root, new ModuleSpec(this.utils));
+						}
+						modules.get(root).addInitializer(initializer);
+						initializers.remove(initializer);
+						moduleFound = true;
 					}
-					modules.get(root).addInitializer(initializer);
-					initializers.remove(initializer);
+				}
+				if (!moduleFound) {
+					int idx = packageToCheck.lastIndexOf(".");
+					if (idx == -1) {
+						// crap
+						throw new IllegalStateException("couldn't find module home for "+initializer);
+					}
+					packageToCheck = (idx == -1)?"":packageToCheck.substring(0,idx);
 				}
 			}
 		}
