@@ -35,6 +35,9 @@ public class SpringClassNames {
 
 	public static final ClassName IMPORT = ClassName
 			.get("org.springframework.context.annotation", "Import");
+	
+	public static final ClassName NULLABLE = ClassName
+			.get("org.springframework.lang","Nullable");
 
 	public static final ClassName INITIALIZER_MAPPING = ClassName.get("slim",
 			"InitializerMapping");
