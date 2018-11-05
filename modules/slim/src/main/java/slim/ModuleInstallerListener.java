@@ -27,7 +27,11 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.springframework.asm.AnnotationVisitor;
+import org.springframework.asm.ClassReader;
+import org.springframework.asm.ClassVisitor;
+import org.springframework.asm.Opcodes;
+import org.springframework.asm.Type;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.Aware;
@@ -182,14 +186,45 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				@SuppressWarnings("unchecked")
 				Class<? extends Module> module = (Class<? extends Module>) ClassUtils
 						.resolveClassName(typeName, context.getClassLoader());
-				Import mapping = module.getAnnotation(Import.class);
-				if (mapping != null) {
-					for (Class<?> type : mapping.value()) {
-						this.autoTypes.put(type, module);
+				try {
+					// Use asm rather than this - this makes it difficult to deal with problems
+					// resolving the types referred to in the annotation
+					// Import mapping = module.getAnnotation(Import.class);
+					ImportAnnotationClassReader iacr = new ImportAnnotationClassReader();
+					new ClassReader(context.getClassLoader().getResourceAsStream(module.getName().replace(".", "/")+".class")).accept(iacr,ClassReader.SKIP_CODE);
+					List<String> importReferences = iacr.getImportReferences();
+					
+					if (iacr.importAnnotationExists) {
+						for (String type: iacr.getImportReferences()) {
+							try {
+								Class<?> loadedType = ClassUtils.forName(type, context.getClassLoader());
+								this.autoTypes.put(loadedType, module);
+							} catch (Throwable cnfe) {
+								// skip it... effectively there is no support for that but it doesnt matter because it isnt around?
+								throw new IllegalStateException("Problem processing @Import on "+module.getName()+" unable to resolve @Import reference "+type);
+							}
+						}
+					} else {
+						List<Class> configurations = BeanUtils.instantiateClass(module, Module.class).configurations();
+						for (Class<?> type : configurations) {
+							this.autoTypes.put(type, module);
+						}
 					}
+				} catch (Throwable t) {
+					throw new IllegalStateException("Problem processing @Import/configurations() on "+module.getName(), t);
 				}
 			}
 		}
+	}
+
+	private String toString(Class<?>[] value) {
+		StringBuilder s = new StringBuilder();
+		if (value.length>0) {
+			for (Class c: value) {
+				s.append(c.getName()+" ");
+			}
+		}
+		return s.toString().trim();
 	}
 
 	private void apply(GenericApplicationContext context) {
@@ -342,6 +377,62 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				((ResourceLoaderAware) target).setResourceLoader(resourceLoader);
 			}
 		}
+	}
+
+	static class ImportAnnotationClassReader extends ClassVisitor {
+
+		private boolean importAnnotationExists = false;
+		private List<String> importReferences = new ArrayList<String>();
+		
+		public ImportAnnotationClassReader() {
+			super(Opcodes.ASM7);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (descriptor.equals("Lorg/springframework/context/annotation/Import;")) {
+				importAnnotationExists = true;
+				return new ImportAnnotationVisitor();
+			} else {
+				return super.visitAnnotation(descriptor, visible);
+			}
+		}
+		
+		class ImportAnnotationVisitor extends AnnotationVisitor {
+
+			public ImportAnnotationVisitor() {
+				super(Opcodes.ASM7);
+			}
+			
+			
+			@Override
+			public AnnotationVisitor visitArray(String name) {
+				if (name.equals("value")) {
+					// crude
+					return this;
+				} else {
+					return super.visitArray(name);
+				}
+			}
+			
+			@Override
+			public void visit(String name, Object value) {
+				if (name == null) {
+					importReferences.add(((Type)value).getClassName());
+				}
+				super.visit(name, value);
+			}
+			
+		}
+
+		public List<String> getImportReferences() {
+			return importReferences;
+		}
+		
+		public boolean importAnnotationExists() {
+			return importAnnotationExists;
+		}
+		
 	}
 
 }

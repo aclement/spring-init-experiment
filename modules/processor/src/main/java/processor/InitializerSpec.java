@@ -91,7 +91,10 @@ public class InitializerSpec {
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addMethod(createInitializer());
-		builder.addAnnotation(initializerMappingAnnotation());
+		builder.addMethod(createConfigurations()); // This kind of mirrors what is in InitializerMapping
+		// Skip for now - will cause problems at compile time if referred to types
+		// are private
+		// builder.addAnnotation(initializerMappingAnnotation());
 		return builder.build();
 	}
 
@@ -106,6 +109,36 @@ public class InitializerSpec {
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
 		addBeanMethods(builder, configurationType);
+		return builder.build();
+	}
+
+	/**
+	 * Looks like:
+	 * 
+  	 * <pre><code>
+  	 * public static Class configurations() {
+     *   return SecondConfiguration.class;
+     * }
+     * </code></pre>
+     * 
+     * Or, if the type is private there will be a forName() call. It is called
+     * <tt>configurations()</tt> as might want to return nested configurations as
+     * well as top level?
+	 */
+	private MethodSpec createConfigurations() {
+		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
+		builder.addModifiers(Modifier.PUBLIC).addModifiers(Modifier.STATIC);
+		builder.returns(TypeName.get(Class.class));
+		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
+			builder.beginControlFlow("try");
+			builder.addStatement("return org.springframework.util.ClassUtils.forName(\"$L\",null)",getConfigurationType());
+			builder.endControlFlow();
+			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
+			builder.addStatement("return null");
+			builder.endControlFlow();
+		} else {
+			builder.addStatement("return $T.class", getConfigurationType());
+		}
 		return builder.build();
 	}
 
@@ -132,11 +165,30 @@ public class InitializerSpec {
 	}
 
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
-		ExecutableElement constructor = getConstructor(type);
-		Parameters params = autowireParamsForMethod(constructor);
-		builder.addStatement(
-				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
-				ArrayUtils.merge(type, type, params.args));
+		if (type.getModifiers().contains(Modifier.PRIVATE)) {
+			// We want to do:
+			//   context.registerBean(Foo.class, () -> new Foo())
+			// BUT Foo is private so we can't refer to it directly from some other source file
+			// This tries to do:
+			//   try { context.registerBean(ClassUtils.forName("Foo",null)); } catch (ClassNotFoundException cnfe) {}
+			// TODO - GET DAVE TO CHECK IF THAT IS VAGUELY EQUIVALENT...
+			// because doing this:
+			//  context.registerBean(ClassUtils.forName("Foo",null), () -> ClassUtils.forName("Foo",null).newInstance())
+			// won't compile (due to generics on registerBean)
+			builder.beginControlFlow("try");
+			builder.addStatement(
+					"context.registerBean(org.springframework.util.ClassUtils.forName(\"$L\",null))",
+					type);
+			builder.endControlFlow();
+			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
+			builder.endControlFlow();
+		} else {
+			ExecutableElement constructor = getConstructor(type);
+			Parameters params = autowireParamsForMethod(constructor);
+			builder.addStatement(
+					"context.registerBean($T.class, () -> new $T(" + params.format + "))",
+					ArrayUtils.merge(type, type, params.args));
+		}
 	}
 
 	private void addAnyEnableConfigurationPropertiesRegistrations(
@@ -161,6 +213,7 @@ public class InitializerSpec {
 
 	private boolean createBeanMethod(MethodSpec.Builder builder,
 			ExecutableElement beanMethod, TypeElement type, boolean conditionsAvailable) {
+		// TODO will need to handle bean methods in private configs
 		try {
 			TypeMirror returnType = utils.getReturnType(beanMethod);
 	
