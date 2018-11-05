@@ -227,7 +227,7 @@ public class ModuleSpec {
 		array[0] = first;
 		int i = 1;
 		for (InitializerSpec object : collection) {
-			array[i++] = ClassName.bestGuess(object.getInitializer().name);
+			array[i++] = object.getClassName();
 		}
 		return array;
 	}
