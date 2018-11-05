@@ -78,9 +78,10 @@ public class ModuleSpecs {
 					int idx = packageToCheck.lastIndexOf(".");
 					if (idx == -1) {
 						// crap
-						throw new IllegalStateException("couldn't find module home for "+initializer);
+						throw new IllegalStateException(
+								"couldn't find module home for " + initializer);
 					}
-					packageToCheck = (idx == -1)?"":packageToCheck.substring(0,idx);
+					packageToCheck = (idx == -1) ? "" : packageToCheck.substring(0, idx);
 				}
 			}
 		}
@@ -91,15 +92,6 @@ public class ModuleSpecs {
 		Set<String> roots = new HashSet<>();
 		for (InitializerSpec initializer : initializers) {
 			roots.add(initializer.getPackage());
-		}
-		for (InitializerSpec initializer : initializers) {
-			String pkg = initializer.getPackage();
-			for (String root : new HashSet<>(roots)) {
-				// Remove sub-packages
-				if (pkg.startsWith(root + ".")) {
-					roots.remove(pkg);
-				}
-			}
 		}
 		return roots;
 	}

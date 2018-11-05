@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
@@ -96,47 +98,76 @@ public class ModuleSpec {
 			findModuleRoot();
 		}
 		if (this.module != null) {
+			findNestedInitializers();
 			this.module = importAnnotation(module.toBuilder())
 					.addMethod(createInitializers()).build();
 			this.processed = true;
 		}
 	}
 
+	private void findNestedInitializers() {
+		Set<TypeElement> candidates = new HashSet<>();
+		for (InitializerSpec initializer : initializers) {
+			findNestedInitializers(initializer.getConfigurationType(), candidates);
+		}
+		Set<TypeElement> roots = new HashSet<>();
+		for (InitializerSpec initializer : initializers) {
+			roots.add(initializer.getConfigurationType());
+		}
+		candidates.removeAll(roots);
+		for (TypeElement candidate : candidates) {
+			addInitializer(new InitializerSpec(utils, candidate));
+		}
+
+	}
+
+	private void findNestedInitializers(TypeElement type, Set<TypeElement> types) {
+		if (type.getKind() == ElementKind.CLASS
+				&& !type.getModifiers().contains(Modifier.ABSTRACT)
+				&& utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
+			types.add(type);
+			for (Element element : type.getEnclosedElements()) {
+				if (element instanceof TypeElement
+						&& element.getModifiers().contains(Modifier.STATIC)) {
+					findNestedInitializers((TypeElement) element, types);
+				}
+			}
+		}
+
+	}
+
 	private void findModuleRoot() {
 		Set<InitializerSpec> candidates = new HashSet<>();
-		String pkg = null;
 		for (InitializerSpec initializer : initializers) {
-			// Only consider configuration that is not an inner (static) class
-			if (!initializer.getConfigurationType().getModifiers()
-					.contains(Modifier.STATIC)) {
-				if (pkg == null) {
-					pkg = initializer.getPackage();
-				}
-				else if (pkg.length() > initializer.getPackage().length()) {
-					// Choose only candidates from the top level package
-					pkg = initializer.getPackage();
-					candidates.clear();
-				}
+			if (utils.hasAnnotation(initializer.getConfigurationType(),
+					SpringClassNames.MODULE_ROOT.toString())) {
 				candidates.add(initializer);
 			}
 		}
-		if (candidates.size() > 1) {
-			for (InitializerSpec initializer : candidates) {
+		if (candidates.isEmpty()) {
+			for (InitializerSpec initializer : initializers) {
 				// If there are multiple candidates, we prefer one that is
 				// "AutoConfiguration"
 				if (initializer.getConfigurationType().getQualifiedName().toString()
 						.endsWith("AutoConfiguration")) {
-					setRootType(initializer.getConfigurationType());
+					candidates.add(initializer);
 					break;
 				}
 			}
 		}
-		else if (candidates.size() == 1) {
+		if (candidates.size() >= 1) {
+			// TODO: remove random choice
 			setRootType(candidates.iterator().next().getConfigurationType());
+
+		}
+		else if (initializers.size() >= 1) {
+			// TODO: remove random choice
+			setRootType(initializers.iterator().next().getConfigurationType());
 		}
 		else {
 			// Fast fail
-			throw new IllegalStateException("No root type could be determined for module "+this.pkg+" from these initializers: "+initializers);
+			throw new IllegalStateException("No root type could be determined for module "
+					+ "from these initializers: " + initializers);
 		}
 	}
 

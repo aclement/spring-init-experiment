@@ -35,12 +35,14 @@ public class SpringClassNames {
 
 	public static final ClassName IMPORT = ClassName
 			.get("org.springframework.context.annotation", "Import");
-	
-	public static final ClassName NULLABLE = ClassName
-			.get("org.springframework.lang","Nullable");
+
+	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
+			"Nullable");
 
 	public static final ClassName INITIALIZER_MAPPING = ClassName.get("slim",
 			"InitializerMapping");
+
+	public static final ClassName MODULE_ROOT = ClassName.get("slim", "ModuleRoot");
 
 	public static final ClassName CONDITION_SERVICE = ClassName.get("slim",
 			"ConditionService");
@@ -49,9 +51,9 @@ public class SpringClassNames {
 
 	public static final ClassName APPLICATION_CONTEXT_INITIALIZER = ClassName
 			.get("org.springframework.context", "ApplicationContextInitializer");
-	
-	public static final ClassName APPLICATION_CONTEXT =
-			ClassName.get("org.springframework.context", "ApplicationContext");
+
+	public static final ClassName APPLICATION_CONTEXT = ClassName
+			.get("org.springframework.context", "ApplicationContext");
 
 	public static final ClassName GENERIC_APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context.support", "GenericApplicationContext");

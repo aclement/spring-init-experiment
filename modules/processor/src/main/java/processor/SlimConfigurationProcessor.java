@@ -109,21 +109,20 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
 		Set<TypeElement> types = new HashSet<>();
 		for (TypeElement type : ElementFilter.typesIn(roundEnv.getRootElements())) {
-			if (type.getKind() == ElementKind.CLASS
-					&& !type.getModifiers().contains(Modifier.ABSTRACT)) {
-				types.add(type);
-				collectTypes(type, types);
-			}
+			collectTypes(type, types);
 		}
 		return types;
 	}
 
 	private void collectTypes(TypeElement type, Set<TypeElement> types) {
-		for (Element element : type.getEnclosedElements()) {
-			if (element instanceof TypeElement && element.getKind() == ElementKind.CLASS
-					&& !type.getModifiers().contains(Modifier.ABSTRACT)) {
-				types.add((TypeElement) element);
-				collectTypes((TypeElement) element, types);
+		if (type.getKind() == ElementKind.CLASS
+				&& !type.getModifiers().contains(Modifier.ABSTRACT)
+				&& !type.getModifiers().contains(Modifier.STATIC)) {
+			types.add(type);
+			for (Element element : type.getEnclosedElements()) {
+				if (element instanceof TypeElement) {
+					collectTypes((TypeElement) element, types);
+				}
 			}
 		}
 	}
@@ -138,6 +137,10 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 					SpringClassNames.SPRING_BOOT_CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE,
 						"Found @SpringBootConfiguration in " + type, type);
+				specs.addModule(type);
+			}
+			else if (utils.hasAnnotation(type, SpringClassNames.MODULE_ROOT.toString())) {
+				messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + type, type);
 				specs.addModule(type);
 			}
 		}

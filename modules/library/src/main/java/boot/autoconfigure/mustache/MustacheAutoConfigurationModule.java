@@ -17,6 +17,7 @@
 package boot.autoconfigure.mustache;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.samskivert.mustache.Mustache.Compiler;
@@ -28,6 +29,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.util.ClassUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
@@ -44,6 +46,10 @@ public class MustacheAutoConfigurationModule implements Module {
 
 	@Override
 	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
+		// Why do I need to do this?
+		if (!ClassUtils.isPresent("com.samskivert.mustache.Mustache", null)) {
+			return Collections.emptyList();
+		}
 		return Arrays.asList(new Initializer(),
 				MustacheReactiveWebConfigurationGenerated.initializer());
 	}
