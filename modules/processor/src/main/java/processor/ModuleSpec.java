@@ -32,6 +32,7 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 
@@ -99,10 +100,27 @@ public class ModuleSpec {
 		}
 		if (this.module != null) {
 			findNestedInitializers();
-			this.module = importAnnotation(module.toBuilder())
-					.addMethod(createInitializers()).build();
+			if (hasNonVisibleConfiguration()) {
+				// Use configurations() method
+				this.module = module.toBuilder()
+						.addMethod(createInitializers())
+						.addMethod(createConfigurations()).build();
+			} else {
+				// Use @Import annotationn
+				this.module = importAnnotation(module.toBuilder())
+						.addMethod(createInitializers()).build();
+			}
 			this.processed = true;
 		}
+	}
+
+	private boolean hasNonVisibleConfiguration() {
+		for (InitializerSpec initializer: initializers) {
+			if (initializer.getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void findNestedInitializers() {
@@ -175,7 +193,11 @@ public class ModuleSpec {
 		ClassName className = ClassName.get(type)
 				.peerClass(ClassName.get(type).simpleName() + "Module");
 		Builder builder = TypeSpec.classBuilder(className);
-		builder.addModifiers(type.getModifiers().toArray(new Modifier[0]));
+		Set<Modifier> modifiers = type.getModifiers();
+		if (!modifiers.contains(Modifier.PRIVATE)) {
+			// Can't make it private, will cause issues
+			builder.addModifiers(modifiers.toArray(new Modifier[0]));
+		}
 		builder.addSuperinterface(SpringClassNames.MODULE);
 		return builder.build();
 	}
@@ -192,6 +214,30 @@ public class ModuleSpec {
 		return builder.build();
 	}
 
+	private MethodSpec createConfigurations() {
+		// Want to include the same thing in configurations() method that would be in @Import annotation
+		List<InitializerSpec> subset = new ArrayList<>();
+		for (InitializerSpec object : initializers) {
+			// This prevents an app from @Importing itself (libraries don't usually do
+			// it). We could add another annotation to signal the "module-root" or
+			// something, but this seems OK for now.
+			if (isSelfImport(object)) {
+				continue;
+			}
+			subset.add(object);
+		}
+		
+		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
+		builder.addAnnotation(Override.class);
+		builder.addModifiers(Modifier.PUBLIC);
+		builder.returns(ParameterizedTypeName.get(ClassName.get(List.class),
+				TypeName.get(Class.class)));
+		builder.addStatement(
+				"return $T.asList(" + queryConfigurations(subset.size()) + ")",
+				array(Arrays.class, subset));
+		return builder.build();
+	}
+
 	private TypeSpec.Builder importAnnotation(TypeSpec.Builder type) {
 		Object[] array = types(initializers);
 		if (array.length == 0) {
@@ -202,6 +248,17 @@ public class ModuleSpec {
 				array.length > 1 ? ("{" + typeParams(array.length) + "}") : "$T.class",
 				array);
 		return type.addAnnotation(builder.build());
+	}
+	
+	private String queryConfigurations(int count) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < count; i++) {
+			if (builder.length() > 0) {
+				builder.append(", ");
+			}
+			builder.append("$T.configurations()");
+		}
+		return builder.toString();
 	}
 
 	private String newInstances(int count) {
