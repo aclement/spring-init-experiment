@@ -52,6 +52,7 @@ public class InitializerSpec {
 	private String pkg;
 	private TypeElement configurationType;
 	private ElementUtils utils;
+	private ClassName className;
 
 	public InitializerSpec(ElementUtils utils, TypeElement type) {
 		this.utils = utils;
@@ -85,10 +86,10 @@ public class InitializerSpec {
 	}
 
 	private TypeSpec createInitializer(TypeElement type) {
-		ClassName className = ClassName.get(type)
-				.peerClass(ClassName.get(type).simpleName() + "Initializer");
-		Builder builder = TypeSpec.classBuilder(className);
+		this.className = ClassName.get(ClassName.get(type).packageName(),ClassName.get(type).simpleName() + "Initializer");
+		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
+		builder.addModifiers(Modifier.PUBLIC);
 		builder.addMethod(createInitializer());
 		builder.addAnnotation(initializerMappingAnnotation());
 		return builder.build();
@@ -337,4 +338,9 @@ public class InitializerSpec {
 	public String toString() {
 		return "InitializerSpec:"+configurationType.toString();
 	}
+
+	public ClassName getClassName() {
+		return className;
+	}
+
 }
