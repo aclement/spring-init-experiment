@@ -44,6 +44,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
@@ -62,6 +63,7 @@ import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.ImportSelector;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
@@ -285,6 +287,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	private void processImports(GenericApplicationContext context,
 			ConditionService conditions, Class<?> beanClass, Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
+			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
@@ -337,6 +340,20 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								// TODO: support for deferred import selector
 							}
 							processImports(context, conditions, value, seen);
+						}
+					}
+				}
+				Set<ImportResource> resources = AnnotatedElementUtils
+						.findAllMergedAnnotations(beanClass, ImportResource.class);
+				if (resources != null) {
+					for (ImportResource resource : resources) {
+						for (String value : resource.value()) {
+							logger.debug("ImportResource: " + value);
+							// Assume XML. No support for groovy as yet.
+							if (xml == null) {
+								xml = new XmlBeanDefinitionReader(context);
+							}
+							xml.loadBeanDefinitions(context.getResource(value));
 						}
 					}
 				}

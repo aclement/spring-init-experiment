@@ -16,7 +16,6 @@
 
 package app.resource;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest
 @RunWith(SpringRunner.class)
-@Ignore
 public class FunctionalApplicationTests {
 
 	@Autowired
