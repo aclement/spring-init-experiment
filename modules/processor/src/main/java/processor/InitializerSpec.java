@@ -38,9 +38,11 @@ import javax.lang.model.util.ElementFilter;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
+import com.squareup.javapoet.WildcardTypeName;
 
 /**
  * @author Dave Syer
@@ -132,7 +134,8 @@ public class InitializerSpec {
 	private MethodSpec createConfigurations() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
 		builder.addModifiers(Modifier.PUBLIC).addModifiers(Modifier.STATIC);
-		builder.returns(TypeName.get(Class.class));
+		builder.returns(ParameterizedTypeName.get(ClassName.get(Class.class),
+				WildcardTypeName.subtypeOf(Object.class)));
 		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
 			builder.beginControlFlow("try");
 			builder.addStatement(
