@@ -209,11 +209,6 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							catch (Throwable cnfe) {
 								// skip it... effectively there is no support for that but
 								// it doesnt matter because it isnt around?
-								throw new IllegalStateException(
-										"Problem processing @Import on "
-												+ module.getName()
-												+ " unable to resolve @Import reference "
-												+ type);
 							}
 						}
 					}
