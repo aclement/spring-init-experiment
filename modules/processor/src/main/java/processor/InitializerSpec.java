@@ -86,12 +86,14 @@ public class InitializerSpec {
 	}
 
 	private TypeSpec createInitializer(TypeElement type) {
-		this.className = ClassName.get(ClassName.get(type).packageName(),ClassName.get(type).simpleName() + "Initializer");
+		this.className = ClassName.get(ClassName.get(type).packageName(),
+				ClassName.get(type).simpleName() + "Initializer");
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addMethod(createInitializer());
-		builder.addMethod(createConfigurations()); // This kind of mirrors what is in InitializerMapping
+		builder.addMethod(createConfigurations()); // This kind of mirrors what is in
+													// InitializerMapping
 		// Skip for now - will cause problems at compile time if referred to types
 		// are private
 		// builder.addAnnotation(initializerMappingAnnotation());
@@ -115,15 +117,17 @@ public class InitializerSpec {
 	/**
 	 * Looks like:
 	 * 
-  	 * <pre><code>
-  	 * public static Class configurations() {
-     *   return SecondConfiguration.class;
-     * }
-     * </code></pre>
-     * 
-     * Or, if the type is private there will be a forName() call. It is called
-     * <tt>configurations()</tt> as might want to return nested configurations as
-     * well as top level?
+	 * <pre>
+	 * <code>
+	 * public static Class configurations() {
+	 *   return SecondConfiguration.class;
+	 * }
+	 * </code>
+	 * </pre>
+	 * 
+	 * Or, if the type is private there will be a forName() call. It is called
+	 * <tt>configurations()</tt> as might want to return nested configurations as well as
+	 * top level?
 	 */
 	private MethodSpec createConfigurations() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
@@ -131,12 +135,15 @@ public class InitializerSpec {
 		builder.returns(TypeName.get(Class.class));
 		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
 			builder.beginControlFlow("try");
-			builder.addStatement("return org.springframework.util.ClassUtils.forName(\"$L\",null)",getConfigurationType());
+			builder.addStatement(
+					"return org.springframework.util.ClassUtils.forName(\"$L\",null)",
+					getConfigurationType());
 			builder.endControlFlow();
 			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
 			builder.addStatement("return null");
 			builder.endControlFlow();
-		} else {
+		}
+		else {
 			builder.addStatement("return $T.class", getConfigurationType());
 		}
 		return builder.build();
@@ -167,14 +174,9 @@ public class InitializerSpec {
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
 		if (type.getModifiers().contains(Modifier.PRIVATE)) {
 			// We want to do:
-			//   context.registerBean(Foo.class, () -> new Foo())
-			// BUT Foo is private so we can't refer to it directly from some other source file
-			// This tries to do:
-			//   try { context.registerBean(ClassUtils.forName("Foo",null)); } catch (ClassNotFoundException cnfe) {}
-			// TODO - GET DAVE TO CHECK IF THAT IS VAGUELY EQUIVALENT...
-			// because doing this:
-			//  context.registerBean(ClassUtils.forName("Foo",null), () -> ClassUtils.forName("Foo",null).newInstance())
-			// won't compile (due to generics on registerBean)
+			// context.registerBean(Foo.class, () -> new Foo())
+			// BUT Foo is private so we can't refer to it directly from some other source
+			// file
 			builder.beginControlFlow("try");
 			builder.addStatement(
 					"context.registerBean(org.springframework.util.ClassUtils.forName(\"$L\",null))",
@@ -182,7 +184,8 @@ public class InitializerSpec {
 			builder.endControlFlow();
 			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
 			builder.endControlFlow();
-		} else {
+		}
+		else {
 			ExecutableElement constructor = getConstructor(type);
 			Parameters params = autowireParamsForMethod(constructor);
 			builder.addStatement(
@@ -216,7 +219,7 @@ public class InitializerSpec {
 		// TODO will need to handle bean methods in private configs
 		try {
 			TypeMirror returnType = utils.getReturnType(beanMethod);
-	
+
 			boolean conditional = utils.hasAnnotation(beanMethod,
 					SpringClassNames.CONDITIONAL.toString());
 			if (conditional) {
@@ -226,23 +229,27 @@ public class InitializerSpec {
 							SpringClassNames.CONDITION_SERVICE,
 							SpringClassNames.CONDITION_SERVICE);
 				}
-				builder.beginControlFlow("if (conditions.matches($T.class, $T.class))", type,
-						utils.erasure(returnType));
+				builder.beginControlFlow("if (conditions.matches($T.class, $T.class))",
+						type, utils.erasure(returnType));
 			}
-	
+
 			Parameters params = autowireParamsForMethod(beanMethod);
-	
-			builder.addStatement("context.registerBean(" + "\"" + beanMethod.getSimpleName()
-					+ "\", $T.class, " + supplier(type, beanMethod, params.format) + ")",
+
+			builder.addStatement(
+					"context.registerBean(" + "\"" + beanMethod.getSimpleName()
+							+ "\", $T.class, " + supplier(type, beanMethod, params.format)
+							+ ")",
 					ArrayUtils.merge(utils.erasure(returnType), type, params.args));
-	
+
 			if (conditional) {
 				builder.endControlFlow();
 			}
-	
+
 			return conditional;
-		} catch (Throwable t) {
-			throw new RuntimeException("Problem performing createBeanMethod for method "+type.toString()+"."+beanMethod.toString(), t);
+		}
+		catch (Throwable t) {
+			throw new RuntimeException("Problem performing createBeanMethod for method "
+					+ type.toString() + "." + beanMethod.toString(), t);
 		}
 	}
 
@@ -306,8 +313,17 @@ public class InitializerSpec {
 					result.types.add(value);
 				}
 			}
-		} else if (paramTypename.equals(SpringClassNames.APPLICATION_CONTEXT.toString())) {
+		}
+		else if (paramTypename.equals(SpringClassNames.APPLICATION_CONTEXT.toString())
+				|| paramTypename.equals(
+						SpringClassNames.CONFIGURABLE_APPLICATION_CONTEXT.toString())) {
 			result.format = "context";
+		}
+		else if (paramTypename.equals(SpringClassNames.BEAN_FACTORY.toString())
+				|| paramTypename.equals(SpringClassNames.LISTABLE_BEAN_FACTORY.toString())
+				|| paramTypename.equals(
+						SpringClassNames.CONFIGURABLE_LISTABLE_BEAN_FACTORY.toString())) {
+			result.format = "context.getBeanFactory()";
 		}
 		else {
 			if (paramType instanceof ArrayType) {
@@ -388,8 +404,9 @@ public class InitializerSpec {
 		private Object[] args;
 	}
 
+	@Override
 	public String toString() {
-		return "InitializerSpec:"+configurationType.toString();
+		return "InitializerSpec:" + configurationType.toString();
 	}
 
 	public ClassName getClassName() {

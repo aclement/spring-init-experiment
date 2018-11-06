@@ -27,7 +27,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ConfigurationCondition;
 import org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
@@ -37,7 +36,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -87,10 +85,6 @@ class ConditionEvaluator {
 		}
 
 		if (phase == null) {
-			if (metadata instanceof AnnotationMetadata && ConditionEvaluator
-					.isConfigurationCandidate((AnnotationMetadata) metadata)) {
-				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
-			}
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
 
@@ -111,17 +105,13 @@ class ConditionEvaluator {
 				requiredPhase = ((ConfigurationCondition) condition)
 						.getConfigurationPhase();
 			}
-			if ((requiredPhase == null || requiredPhase == phase)
+			if ((requiredPhase == null || requiredPhase.compareTo(phase) <= 0)
 					&& !condition.matches(this.context, metadata)) {
 				return true;
 			}
 		}
 
 		return false;
-	}
-
-	public static boolean isConfigurationCandidate(AnnotationMetadata metadata) {
-		return metadata.isAnnotated(Configuration.class.getName());
 	}
 
 	@SuppressWarnings("unchecked")

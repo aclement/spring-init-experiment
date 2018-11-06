@@ -55,6 +55,19 @@ public class SpringClassNames {
 	public static final ClassName APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context", "ApplicationContext");
 
+	public static final ClassName CONFIGURABLE_APPLICATION_CONTEXT = ClassName
+			.get("org.springframework.context", "ConfigurableApplicationContext");
+
+	public static final ClassName BEAN_FACTORY = ClassName
+			.get("org.springframework.beans.factory", "BeanFactory");
+
+	public static final ClassName LISTABLE_BEAN_FACTORY = ClassName
+			.get("org.springframework.beans.factory", "ListableBeanFactory");
+
+	public static final ClassName CONFIGURABLE_LISTABLE_BEAN_FACTORY = ClassName.get(
+			"org.springframework.beans.factory.config",
+			"ConfigurableListableBeanFactory");
+
 	public static final ClassName GENERIC_APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context.support", "GenericApplicationContext");
 
