@@ -14,24 +14,33 @@
  * limitations under the License.
  */
 
-package slim;
+package app.resource;
 
-import java.util.Collections;
-import java.util.List;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
  *
  */
-public interface Module {
+@SpringBootTest
+@RunWith(SpringRunner.class)
+@Ignore
+public class FunctionalApplicationTests {
 
-	List<ApplicationContextInitializer<GenericApplicationContext>> initializers();
+	@Autowired
+	private Bar bar;
 
-	default List<Class<?>> configurations() {
-		return Collections.emptyList();
+	@Test
+	public void test() {
+		assertThat(bar).isNotNull();
 	}
 
 }
