@@ -358,6 +358,14 @@ public class ElementUtils {
 		return param.asType().toString();
 	}
 
+	public Element asElement(TypeMirror type) {
+		return types.asElement(type);
+	}
+	
+	public void printMessage(Kind kind, CharSequence message) {
+		messager.printMessage(kind,message);
+	}
+	
 	public TypeMirror erasure(TypeMirror type) {
 		if (type.getKind() == TypeKind.ARRAY) {
 			// Erase the component type?
