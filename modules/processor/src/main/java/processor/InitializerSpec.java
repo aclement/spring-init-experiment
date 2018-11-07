@@ -34,6 +34,7 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.tools.Diagnostic.Kind;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -94,8 +95,7 @@ public class InitializerSpec {
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addMethod(createInitializer());
-		builder.addMethod(createConfigurations()); // This kind of mirrors what is in
-													// InitializerMapping
+		builder.addMethod(createConfigurations());
 		// Skip for now - will cause problems at compile time if referred to types
 		// are private
 		// builder.addAnnotation(initializerMappingAnnotation());
@@ -130,6 +130,7 @@ public class InitializerSpec {
 	 * Or, if the type is private there will be a forName() call. It is called
 	 * <tt>configurations()</tt> as might want to return nested configurations as well as
 	 * top level?
+	 * The returned data here mirrors what is in InitializerMapping annotation.
 	 */
 	private MethodSpec createConfigurations() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
@@ -223,6 +224,11 @@ public class InitializerSpec {
 		try {
 			TypeMirror returnType = utils.getReturnType(beanMethod);
 
+			Element returnTypeElement = utils.asElement(returnType);
+			if (returnTypeElement.getModifiers().contains(Modifier.PRIVATE)) {
+				utils.printMessage(Kind.WARNING,"TODO: Unable to generate source for bean method, type involved is private: "+beanMethod.getEnclosingElement()+"."+beanMethod);
+				return false;
+			}
 			boolean conditional = utils.hasAnnotation(beanMethod,
 					SpringClassNames.CONDITIONAL.toString());
 			if (conditional) {
@@ -377,15 +383,19 @@ public class InitializerSpec {
 				methods.add(candidate);
 			}
 		}
-		// TODO: pick one that is explciitly autowired?
+		// TODO: pick one that is explicitly autowired?
 		return methods.get(0);
 	}
 
 	private boolean isBeanMethod(ExecutableElement element) {
 		Set<Modifier> modifiers = element.getModifiers();
-		return (isAnnotated(element, SpringClassNames.BEAN)
-				&& !modifiers.contains(Modifier.STATIC)
-				&& !modifiers.contains(Modifier.PRIVATE));
+		if (!isAnnotated(element, SpringClassNames.BEAN)) {
+			return false;
+		}
+		if (modifiers.contains(Modifier.PRIVATE)) {
+			return false;
+		}
+		return true;
 	}
 
 	private boolean isAnnotated(Element element, ClassName type) {
