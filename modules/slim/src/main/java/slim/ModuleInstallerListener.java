@@ -298,7 +298,6 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								@SuppressWarnings("unchecked")
 								Class<? extends Module> module = (Class<? extends Module>) value;
 								addModule(module);
-								seen.add(value);
 							}
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(value)) {
@@ -335,6 +334,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								// TODO: support for deferred import selector
 							}
 							processImports(context, conditions, value, seen);
+							seen.add(value);
 						}
 					}
 				}

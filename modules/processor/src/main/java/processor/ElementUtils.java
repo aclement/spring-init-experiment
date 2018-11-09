@@ -80,14 +80,16 @@ public class ElementUtils {
 					}
 					if (!seen.contains(annotation)) {
 						seen.add(annotation);
-						annotation = getAnnotation(annotation.getAnnotationType().asElement(),
-								type, seen);
+						annotation = getAnnotation(
+								annotation.getAnnotationType().asElement(), type, seen);
 						if (annotation != null) {
 							return annotation;
 						}
 					}
-				} catch (Throwable t) {
-					messager.printMessage(Kind.ERROR, "Problems working with annotation "+annotationTypename);
+				}
+				catch (Throwable t) {
+					messager.printMessage(Kind.ERROR,
+							"Problems working with annotation " + annotationTypename);
 				}
 			}
 		}
@@ -367,9 +369,9 @@ public class ElementUtils {
 	}
 
 	public void printMessage(Kind kind, CharSequence message) {
-		messager.printMessage(kind,message);
+		messager.printMessage(kind, message);
 	}
-	
+
 	public TypeMirror erasure(TypeMirror type) {
 		if (type.getKind() == TypeKind.ARRAY) {
 			// Erase the component type?
@@ -380,6 +382,27 @@ public class ElementUtils {
 			return erasure(element);
 		}
 		return type;
+	}
+
+	public List<TypeElement> getTypesFromAnnotation(TypeElement type, String annotation,
+			String attribute) {
+		Set<TypeElement> list = new HashSet<>();
+		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
+			if (((TypeElement) mirror.getAnnotationType().asElement()).getQualifiedName()
+					.toString().equals(annotation)) {
+				System.err.println("************ " + type + ": "
+						+ getTypesFromAnnotation(mirror, attribute));
+				list.addAll(getTypesFromAnnotation(mirror, attribute));
+			}
+			AnnotationMirror meta = getAnnotation(mirror.getAnnotationType().asElement(),
+					annotation);
+			if (meta != null) {
+				// list.addAll(getTypesFromAnnotation(meta, attribute));
+				System.err.println("&&&&&&&&&& " + type + ": "
+						+ getTypesFromAnnotation(meta, attribute));
+			}
+		}
+		return new ArrayList<>(list);
 	}
 
 }
