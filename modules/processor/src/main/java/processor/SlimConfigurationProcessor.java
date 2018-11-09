@@ -47,7 +47,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.messager = processingEnv.getMessager();
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
-		this.specs = new ModuleSpecs(this.utils);
+		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer);
 	}
 
 	@Override
@@ -58,8 +58,10 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
+		// messager.printMessage(Kind.NOTE, "processor instance running #"+Integer.toHexString(System.identityHashCode(this)));
 		if (roundEnv.processingOver()) {
 			updateFactories();
+			specs.saveModuleSpecs();
 		}
 		else if (!processed) {
 			process(collectTypes(roundEnv));
@@ -145,7 +147,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			}
 		}
 		for (ModuleSpec module : specs.getModules()) {
-			module.process();
+			module.process(specs);
 			for (InitializerSpec initializer : module.getInitializers()) {
 				messager.printMessage(Kind.NOTE,
 						"Writing Initializer " + ClassName.get(initializer.getPackage(),
