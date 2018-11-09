@@ -15,18 +15,21 @@
  */
 package processor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic.Kind;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -44,15 +47,12 @@ public class ModuleSpec {
 
 	private TypeSpec module;
 	private String pkg;
-	private Set<InitializerSpec> initializers = new HashSet<>();
+	private Set<InitializerSpec> initializers = new TreeSet<>();
+	private Set<ClassName> previouslyAssociatedConfigurations = new TreeSet<>();
 	private boolean processed = false;
 	private TypeElement rootType;
 
 	private ElementUtils utils;
-
-	public ModuleSpec(ElementUtils utils) {
-		this(utils, null);
-	}
 
 	public ModuleSpec(ElementUtils utils, TypeElement type) {
 		if (type != null) {
@@ -82,6 +82,10 @@ public class ModuleSpec {
 	public Set<InitializerSpec> getInitializers() {
 		return initializers;
 	}
+	
+	public Set<ClassName> getPreviouslyAssociatedConfigurations() {
+		return previouslyAssociatedConfigurations;
+	}
 
 	public void addInitializer(InitializerSpec initializer) {
 		this.initializers.add(initializer);
@@ -91,7 +95,7 @@ public class ModuleSpec {
 		return ClassName.get(pkg, module.name).toString();
 	}
 
-	public void process() {
+	public void process(ModuleSpecs specs) {
 		if (this.processed) {
 			return;
 		}
@@ -100,6 +104,7 @@ public class ModuleSpec {
 		}
 		if (this.module != null) {
 			findNestedInitializers();
+			specs.addConfigurationsReferencedByModuleInPreviousBuild(this);
 			if (hasNonVisibleConfiguration()) {
 				// Use configurations() method
 				this.module = module.toBuilder().addMethod(createInitializers())
@@ -177,7 +182,6 @@ public class ModuleSpec {
 		if (candidates.size() >= 1) {
 			// TODO: remove random choice
 			setRootType(candidates.iterator().next().getConfigurationType());
-
 		}
 		else if (initializers.size() >= 1) {
 			// TODO: remove random choice
@@ -209,26 +213,36 @@ public class ModuleSpec {
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.returns(ParameterizedTypeName.get(ClassName.get(List.class),
 				SpringClassNames.INITIALIZER_TYPE));
+		
+		// If this is an incremental build we may just be building 1 initializer (when the module in fact includes multiple)
+		Set<ClassName> initializerClassNames = initializers.stream().map(ispec -> ispec.getClassName()).collect(Collectors.toSet());
+		utils.printMessage(Kind.NOTE, "Creating initializer for "+getClassName()+": current initializers: "+initializerClassNames+" previous initializers: "+previouslyAssociatedConfigurations);
+		initializerClassNames.addAll(previouslyAssociatedInitializers());
+		
 		builder.addStatement(
-				"return $T.asList(" + newInstances(initializers.size()) + ")",
-				array(Arrays.class, initializers));
+				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
+				array(Arrays.class, initializerClassNames));
 		return builder.build();
+	}
+	
+	private List<ClassName> previouslyAssociatedInitializers() {
+		return previouslyAssociatedConfigurations.stream().map(InitializerSpec::toInitializerNameFromConfigurationName).collect(Collectors.toList());
 	}
 
 	private MethodSpec createConfigurations() {
 		// Want to include the same thing in configurations() method that would be in
 		// @Import annotation
-		List<InitializerSpec> subset = new ArrayList<>();
+		Set<ClassName> subset = new HashSet<>();
 		for (InitializerSpec object : initializers) {
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (isSelfImport(object)) {
+			if (isSelfImport(object.getConfigurationType().getQualifiedName())) {
 				continue;
 			}
-			subset.add(object);
+			subset.add(object.getClassName());
 		}
-
+		subset.addAll(nonSelfImportedPreviouslyAssociatedConfigurations());
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
@@ -285,42 +299,56 @@ public class ModuleSpec {
 		}
 		return builder.toString();
 	}
+	
+	private List<ClassName> nonSelfImportedPreviouslyAssociatedConfigurations() {
+		return previouslyAssociatedConfigurations.stream().filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString()).getQualifiedName())).collect(Collectors.toList());
+	}
 
 	private Object[] types(Collection<InitializerSpec> collection) {
-		List<Object> list = new ArrayList<>();
+		Set<Object> list = new TreeSet<>();
 		for (InitializerSpec object : collection) {
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (isSelfImport(object)) {
+			if (isSelfImport(object.getConfigurationType().getQualifiedName())) {
 				continue;
 			}
 			list.add(ClassName.get(object.getConfigurationType()));
 		}
+		list.addAll(nonSelfImportedPreviouslyAssociatedConfigurations());
 		return list.toArray(new Object[0]);
 	}
 
-	private boolean isSelfImport(InitializerSpec initializer) {
-		AnnotationMirror imported = utils.getAnnotation(rootType,
-				SpringClassNames.IMPORT.toString());
+	private boolean isSelfImport(Name s) {
+		AnnotationMirror imported = utils.getAnnotation(rootType, SpringClassNames.IMPORT.toString());
 		if (imported == null) {
 			return false;
 		}
 		if (utils.findTypeInAnnotation(imported, "value", getClassName())) {
 			return true;
 		}
-		return rootType.getQualifiedName()
-				.equals(initializer.getConfigurationType().getQualifiedName());
+		return rootType.getQualifiedName().equals(s);
 	}
 
-	private Object[] array(Object first, Collection<InitializerSpec> collection) {
+	private Object[] array(Object first, Collection<ClassName> collection) {
 		Object[] array = new Object[collection.size() + 1];
 		array[0] = first;
 		int i = 1;
-		for (InitializerSpec object : collection) {
-			array[i++] = object.getClassName();
+		for (ClassName object : collection) {
+			array[i++] = object;
 		}
 		return array;
+	}
+
+	/**
+	 * Add an configuration type known from a previous APT run that still exists and should be included when this module is output.
+	 */
+	public boolean addConfigurationFromPreviousBuild(ClassName previousExistingConfigurationClassName) {
+		boolean exists = initializers.stream().anyMatch(ispec -> ispec.getConfigurationType().toString().equals(previousExistingConfigurationClassName.toString()));
+		if (!exists) {
+			return previouslyAssociatedConfigurations.add(previousExistingConfigurationClassName);
+		}
+		return false;
 	}
 
 }

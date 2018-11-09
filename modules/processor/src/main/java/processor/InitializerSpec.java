@@ -49,7 +49,7 @@ import com.squareup.javapoet.WildcardTypeName;
  * @author Dave Syer
  *
  */
-public class InitializerSpec {
+public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	private TypeSpec initializer;
 	private String pkg;
@@ -89,8 +89,7 @@ public class InitializerSpec {
 	}
 
 	private TypeSpec createInitializer(TypeElement type) {
-		this.className = ClassName.get(ClassName.get(type).packageName(),
-				ClassName.get(type).simpleName() + "Initializer");
+		this.className = toInitializerNameFromConfigurationName(type);
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
@@ -100,6 +99,14 @@ public class InitializerSpec {
 		// are private
 		// builder.addAnnotation(initializerMappingAnnotation());
 		return builder.build();
+	}
+	
+	public static ClassName toInitializerNameFromConfigurationName(TypeElement type) {
+		return toInitializerNameFromConfigurationName(ClassName.get(type));
+	}
+
+	public static ClassName toInitializerNameFromConfigurationName(ClassName type) {
+		return ClassName.get(type.packageName(), type.simpleName() + "Initializer");
 	}
 
 	private AnnotationSpec initializerMappingAnnotation() {
@@ -424,6 +431,11 @@ public class InitializerSpec {
 
 	public ClassName getClassName() {
 		return className;
+	}
+
+	@Override
+	public int compareTo(InitializerSpec o) {
+		return this.className.compareTo(o.getClassName());
 	}
 
 }

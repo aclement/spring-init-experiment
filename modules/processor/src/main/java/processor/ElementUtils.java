@@ -361,7 +361,11 @@ public class ElementUtils {
 	public Element asElement(TypeMirror type) {
 		return types.asElement(type);
 	}
-	
+
+	public TypeElement asTypeElement(CharSequence typename) {
+		return elements.getTypeElement(typename);
+	}
+
 	public void printMessage(Kind kind, CharSequence message) {
 		messager.printMessage(kind,message);
 	}
