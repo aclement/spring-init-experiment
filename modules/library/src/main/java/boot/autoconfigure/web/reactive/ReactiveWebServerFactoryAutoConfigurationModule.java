@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
+import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
@@ -45,7 +46,7 @@ import slim.Module;
 @Import({ ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class,
 		HttpMessageConvertersAutoConfigurationModule.class,
-		ReactorCoreAutoConfigurationModule.class })
+		ReactorCoreAutoConfigurationModule.class, ContextAutoConfigurationModule.class })
 public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 
 	@Override

@@ -48,6 +48,7 @@ class SampleConfiguration {
 		};
 	}
 	
+	@SuppressWarnings("unused")
 	private class SecretClass {
 		
 	}

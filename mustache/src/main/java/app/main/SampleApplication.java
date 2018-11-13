@@ -5,12 +5,14 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
+import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.mustache.MustacheAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 
 @SpringBootConfiguration
 @Import({ SampleApplicationModule.class, MustacheAutoConfigurationModule.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
+		ReactiveWebServerFactoryAutoConfigurationModule.class,
+		ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Bean
