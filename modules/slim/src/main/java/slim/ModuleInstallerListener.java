@@ -281,6 +281,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void processImports(GenericApplicationContext context,
 			ConditionService conditions, Class<?> beanClass, Set<Class<?>> seen) {
+		System.out.println("> processImports: "+beanClass.getName());
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
@@ -298,7 +299,10 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								@SuppressWarnings("unchecked")
 								Class<? extends Module> module = (Class<? extends Module>) value;
 								addModule(module);
-								seen.add(value);
+								// Don't add to seen here or processImports() will terminate too soon when it recurses below and 
+								// we won't walk into the PropertyPlaceholderAutoConfigurationModule annotated with the Import that leads us to the
+								// ConfigurationPropertiesAutoConfiguration (that then defines the selector taking us to the registrar)
+//								seen.add(value);
 							}
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(value)) {
@@ -313,6 +317,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							else if (ImportSelector.class.isAssignableFrom(value)) {
 								ImportSelector registrar = BeanUtils
 										.instantiateClass(value, ImportSelector.class);
+								System.out.println("> processing importselector "+registrar);
 								invokeAwareMethods(registrar, context.getEnvironment(),
 										context, context);
 								String[] selected = registrar.selectImports(
@@ -328,7 +333,21 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 													seen);
 										}
 										else {
-											context.registerBean(clazz);
+											// Should loop back into a bit of code that has this in one place
+											// rather than duplicating the bit above, but cant call back into
+											// processImports (due to signature)
+											if (ImportBeanDefinitionRegistrar.class
+													.isAssignableFrom(clazz)) {
+												ImportBeanDefinitionRegistrar registrar2 = BeanUtils
+														.instantiateClass(clazz,
+																ImportBeanDefinitionRegistrar.class);
+												invokeAwareMethods(registrar2, context.getEnvironment(),
+														context, context);
+												registrar2.registerBeanDefinitions(
+														new StandardAnnotationMetadata(clazz), context);
+											} else {
+												context.registerBean(clazz);
+											}
 										}
 									}
 								}
