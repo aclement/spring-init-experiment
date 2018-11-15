@@ -146,8 +146,13 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				specs.addModule(type);
 			}
 		}
+		// Work out what these modules include
+		for (ModuleSpec module: specs.getModules()) {
+			module.prepare(specs);
+		}
+		// Now generate them
 		for (ModuleSpec module : specs.getModules()) {
-			module.process(specs);
+			module.produce(specs); 
 			for (InitializerSpec initializer : module.getInitializers()) {
 				messager.printMessage(Kind.NOTE,
 						"Writing Initializer " + ClassName.get(initializer.getPackage(),

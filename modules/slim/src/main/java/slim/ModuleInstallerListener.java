@@ -205,6 +205,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								Class<?> loadedType = ClassUtils.forName(type,
 										context.getClassLoader());
 								this.autoTypes.put(loadedType, module);
+								System.out.println("Recording from "+loadedType +" to "+module);
 							}
 							catch (Throwable cnfe) {
 								// skip it... effectively there is no support for that but
@@ -281,6 +282,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void processImports(GenericApplicationContext context,
 			ConditionService conditions, Class<?> beanClass, Set<Class<?>> seen) {
+		System.out.println("> processImports "+beanClass);
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
@@ -290,14 +292,16 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 					for (Import imported : imports) {
 						for (Class<?> value : imported.value()) {
 							logger.debug("Import: " + value);
+							 
 							Class<? extends Module> type = this.autoTypes.get(value);
-							if (type != null) {
-								addModule(type);
-							}
-							else if (Module.class.isAssignableFrom(value)) {
+							if (Module.class.isAssignableFrom(value)) {
 								@SuppressWarnings("unchecked")
 								Class<? extends Module> module = (Class<? extends Module>) value;
 								addModule(module);
+//								return;
+							} else if (type != null) {
+								addModule(type);
+//								return;
 							}
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(value)) {
@@ -326,12 +330,30 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 											processImports(context, conditions, clazz,
 													seen);
 										}
+										else if (ImportBeanDefinitionRegistrar.class
+												.isAssignableFrom(clazz)) {
+											ImportBeanDefinitionRegistrar registrar2 = BeanUtils
+													.instantiateClass(clazz,
+															ImportBeanDefinitionRegistrar.class);
+											invokeAwareMethods(registrar2, context.getEnvironment(),
+													context, context);
+											registrar2.registerBeanDefinitions(
+													new StandardAnnotationMetadata(clazz), context);
+										}
 										else {
 											context.registerBean(clazz);
 										}
 									}
 								}
 								// TODO: support for deferred import selector
+//							} else {
+//								String possibleModuleName = value.getName()+"Module";
+//								try {
+//									Class<?> existingModule = ClassUtils.forName(possibleModuleName, null);
+//									
+//								} catch (Exception e) {
+//								}
+								
 							}
 							processImports(context, conditions, value, seen);
 							seen.add(value);
@@ -364,10 +386,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		logger.debug("Module: " + type);
 		this.types.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {
+			System.out.println("Adding to autos: "+type);
 			this.autos.addAll(
 					BeanUtils.instantiateClass(type, Module.class).initializers());
 		}
 		else {
+			System.out.println("Adding to Initializers: "+type);
 			initializers.addAll(
 					BeanUtils.instantiateClass(type, Module.class).initializers());
 		}

@@ -72,7 +72,7 @@ public class ModuleSpecs {
 	}
 
 	public void addModule(TypeElement module) {
-		ModuleSpec value = new ModuleSpec(this.utils, module);
+		ModuleSpec value = new ModuleSpec(this.filer, this.utils, module);
 		modules.put(value.getPackage(), value);
 	}
 
@@ -96,7 +96,7 @@ public class ModuleSpecs {
 				for (String root : roots) {
 					if (root.equals(packageToCheck)) {
 						if (!modules.containsKey(root)) {
-							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root)));
+							modules.put(root, new ModuleSpec(this.filer, this.utils, findKnownRoot(root)));
 						}
 						modules.get(root).addInitializer(initializer);
 						initializers.remove(initializer);
@@ -202,6 +202,19 @@ public class ModuleSpecs {
 		catch (IOException e) {
 			messager.printMessage(Kind.NOTE, "Cannot write "+MODULE_MAPPINGS_PATH);
 		}
+	}
+
+	/**
+	 * @return the module (if any) handling a particular configuration
+	 */
+	public ModuleSpec findModuleHandling(ClassName config) {
+		for (Map.Entry<String,ModuleSpec> entry: modules.entrySet()) {
+			System.out.println("Searching for "+config+" in module "+entry);
+			if (entry.getValue().includesConfiguration(config)) {
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 
 }

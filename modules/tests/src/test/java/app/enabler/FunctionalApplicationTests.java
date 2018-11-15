@@ -25,7 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import lib.enable.Bar;
+import lib.registrar.Bar; // should this be enable.Bar or registrar.Bar?
 
 /**
  * @author Dave Syer

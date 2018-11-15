@@ -15,22 +15,31 @@
  */
 package processor;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import javax.annotation.processing.Filer;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
+
+//import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -39,6 +48,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 import com.squareup.javapoet.WildcardTypeName;
+
+import slim.Module;
 
 /**
  * @author Dave Syer
@@ -54,8 +65,10 @@ public class ModuleSpec {
 	private TypeElement rootType;
 
 	private ElementUtils utils;
+	private Filer filer;
 
-	public ModuleSpec(ElementUtils utils, TypeElement type) {
+	public ModuleSpec(Filer filer, ElementUtils utils, TypeElement type) {
+		this.filer = filer;
 		if (type != null) {
 			setRootType(type);
 		}
@@ -96,7 +109,8 @@ public class ModuleSpec {
 		return ClassName.get(pkg, module.name).toString();
 	}
 
-	public void process(ModuleSpecs specs) {
+
+	public void prepare(ModuleSpecs specs) {
 		if (this.processed) {
 			return;
 		}
@@ -106,18 +120,20 @@ public class ModuleSpec {
 		if (this.module != null) {
 			findNestedInitializers();
 			specs.addConfigurationsReferencedByModuleInPreviousBuild(this);
+			this.processed = true;
+		}
+	}
+	public void produce(ModuleSpecs specs) {
 			if (hasNonVisibleConfiguration()) {
 				// Use configurations() method
 				this.module = module.toBuilder().addMethod(createInitializers())
 						.addMethod(createConfigurations()).build();
 			}
 			else {
-				// Use @Import annotationn
-				this.module = importAnnotation(module.toBuilder())
+				// Use @Import annotation
+				this.module = importAnnotation(specs, module.toBuilder())
 						.addMethod(createInitializers()).build();
 			}
-			this.processed = true;
-		}
 	}
 
 	private boolean hasNonVisibleConfiguration() {
@@ -263,8 +279,9 @@ public class ModuleSpec {
 		return builder.build();
 	}
 
-	private TypeSpec.Builder importAnnotation(TypeSpec.Builder type) {
-		Object[] array = findImports(initializers);
+	private TypeSpec.Builder importAnnotation(ModuleSpecs specs, TypeSpec.Builder type) {
+		ClassName[] array = findImports(initializers);
+		array = convertImportsToModules(specs, array);
 		if (array.length == 0) {
 			return type;
 		}
@@ -273,6 +290,38 @@ public class ModuleSpec {
 				array.length > 1 ? ("{" + typeParams(array.length) + "}") : "$T.class",
 				array);
 		return type.addAnnotation(builder.build());
+	}
+	
+	private ClassName[] convertImportsToModules(ModuleSpecs specs, ClassName[] array) {
+		System.out.println("Producing module "+this.getClassName());
+		Set<ClassName> newImports = new LinkedHashSet<>();
+		for (ClassName o: array) {
+			// This covers references to modules in dependencies - this is what we'd pull out
+			// of spring.factories *except* we can't reliably access all the spring.factories on the
+			// cp (we can get 'one' using the 'filer'). What we would have to do, maybe, is if the
+			// rule is 'an autoconfiguration is handled by a module in the same package or higher package'
+			// then we can ask the elementutils/typeutils thing for a package and then 'enclosing elements'
+			// and dig into any modules included that that cover our autoconfig, if not, go up to a higher package.
+			// That is the principal at least, haven't tried it in practice
+			if (o.equals(ClassName.get("org.springframework.boot.autoconfigure.context","ConfigurationPropertiesAutoConfiguration"))) {
+				newImports.add(ClassName.get("org.springframework.boot.autoconfigure.context","PropertyPlaceholderAutoConfigurationModule"));
+			} else if (o.equals(ClassName.get("org.springframework.boot.autoconfigure.context","PropertyPlaceholderAutoConfiguration"))) {
+				newImports.add(ClassName.get("org.springframework.boot.autoconfigure.context","PropertyPlaceholderAutoConfigurationModule"));
+			} else {
+				// If another module in this build is handling the configuration, switch to refer to it
+				ModuleSpec spec = specs.findModuleHandling(o);
+				if (spec != null && spec!=this) {
+					System.out.println("Modifying autoconfig reference for module "+this.getClassName()+
+							": changing from "+o+" to "+spec.getClassName());
+					newImports.add(ClassName.bestGuess(spec.getClassName()));
+				} else {
+					newImports.add(o);
+				}
+			}
+		}
+		ClassName[] result = newImports.toArray(new ClassName[0]);
+		System.out.println("Arrays from "+Arrays.toString(array)+" to "+Arrays.toString(result));
+		return result;
 	}
 
 	private String queryConfigurations(int count) {
@@ -384,6 +433,21 @@ public class ModuleSpec {
 		if (!exists) {
 			return previouslyAssociatedConfigurations
 					.add(previousExistingConfigurationClassName);
+		}
+		return false;
+	}
+
+	public boolean includesConfiguration(ClassName config) {
+		for (InitializerSpec spec: initializers) {
+			if (ClassName.get(spec.getConfigurationType()).equals(config)) {
+				return true;
+			}
+		}
+		for (ClassName cn: previouslyAssociatedConfigurations) {
+			// TODO yuck
+			if (config.toString().equals(cn.toString()+"Initializer")) {
+				return true;
+			}
 		}
 		return false;
 	}
