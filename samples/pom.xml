@@ -9,29 +9,21 @@
 	</parent>
 
 	<groupId>com.example</groupId>
-	<artifactId>demo</artifactId>
+	<artifactId>samples</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>Parent Demo</name>
+	<name>Demo Samples</name>
 
 	<modules>
-		<module>modules</module>
-		<module>samples</module>
+                <module>application</module>
+                <module>server</module>
+                <module>jackson</module>
+                <module>mustache</module>
 	</modules>
 
 	<properties>
         <java.version>1.8</java.version>
-		<thin.version>1.0.16.RELEASE</thin.version>
 	</properties>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot.experimental</groupId>
-			<artifactId>spring-boot-thin-launcher</artifactId>
-			<version>${thin.version}</version>
-			<classifier>exec</classifier>
-		</dependency>
-	</dependencies>
 
 	<repositories>
 		<repository>
@@ -44,32 +36,12 @@
                 <enabled>true</enabled>
             </releases>
 		</repository>
-		<repository>
-			<id>spring-libs-milestone</id>
-			<url>http://repo.spring.io/libs-milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-		</repository>
 	</repositories>
 	
 	<pluginRepositories>
 		<pluginRepository>
 			<id>spring-libs-snapshot</id>
 			<url>http://repo.spring.io/libs-snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-		</pluginRepository>
-		<pluginRepository>
-			<id>spring-libs-milestone</id>
-			<url>http://repo.spring.io/libs-milestone</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
