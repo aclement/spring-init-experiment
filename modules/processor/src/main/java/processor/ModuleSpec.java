@@ -15,6 +15,7 @@
  */
 package processor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -86,7 +87,7 @@ public class ModuleSpec {
 	public Set<InitializerSpec> getInitializers() {
 		return initializers;
 	}
-	
+
 	public Set<ClassName> getPreviouslyAssociatedConfigurations() {
 		return previouslyAssociatedConfigurations;
 	}
@@ -120,7 +121,7 @@ public class ModuleSpec {
 					.addMethod(createConfigurations()).build();
 		}
 		else {
-			// Use @Import annotationn
+			// Use @Import annotation
 			this.module = importAnnotation(module.toBuilder())
 					.addMethod(createInitializers()).build();
 		}
@@ -230,6 +231,31 @@ public class ModuleSpec {
 				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
 				array(Arrays.class, initializerClassNames));
 		return builder.build();
+	}
+
+	private MethodSpec createGetRoot() {
+		MethodSpec.Builder builder = MethodSpec.methodBuilder("getRoot");
+		builder.addAnnotation(Override.class);
+		builder.addModifiers(Modifier.PUBLIC);
+		builder.returns(ClassName.get(Class.class));
+		builder.addStatement("return $T.class", rootType);
+		return builder.build();
+	}
+	
+	private List<ClassName> addRegistrarInvokers() {
+		List<ClassName> registrarInitializerClassNames = new ArrayList<>();
+		System.out.println("Checking if need registrar invokers whilst building module for "+rootType.toString());
+		List<? extends AnnotationMirror> annotationMirrors = rootType.getAnnotationMirrors();
+		for (AnnotationMirror am: annotationMirrors) {
+			// Looking up something like @EnableBar
+			TypeElement element = (TypeElement)am.getAnnotationType().asElement();
+			TypeElement registrarInitializer = registrars.get(element);
+			if (registrarInitializer != null) {
+				System.out.println("Including registrar for "+element);
+				registrarInitializerClassNames.add(InitializerSpec.toInitializerNameFromConfigurationName(element));			
+			}
+		}
+		return registrarInitializerClassNames;
 	}
 	
 	private List<ClassName> previouslyAssociatedInitializers() {

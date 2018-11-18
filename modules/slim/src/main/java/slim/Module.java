@@ -33,5 +33,9 @@ public interface Module {
 	default List<Class<?>> configurations() {
 		return Collections.emptyList();
 	}
+	
+	default Class<?> getRoot() { // TODO perhaps not default
+		return null;
+	}
 
 }
