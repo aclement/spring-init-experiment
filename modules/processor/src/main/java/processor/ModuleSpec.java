@@ -91,11 +91,11 @@ public class ModuleSpec {
 		this.initializers.add(initializer);
 	}
 
-	public String getClassName() {
-		return ClassName.get(pkg, module.name).toString();
+	public ClassName getClassName() {
+		return ClassName.get(pkg, module.name);
 	}
 
-	public void process(ModuleSpecs specs) {
+	public void prepare(ModuleSpecs specs) {
 		if (this.processed) {
 			return;
 		}
@@ -105,17 +105,20 @@ public class ModuleSpec {
 		if (this.module != null) {
 			findNestedInitializers();
 			specs.addConfigurationsReferencedByModuleInPreviousBuild(this);
-			if (hasNonVisibleConfiguration()) {
-				// Use configurations() method
-				this.module = module.toBuilder().addMethod(createInitializers())
-						.addMethod(createConfigurations()).build();
-			}
-			else {
-				// Use @Import annotationn
-				this.module = importAnnotation(module.toBuilder())
-						.addMethod(createInitializers()).build();
-			}
 			this.processed = true;
+		}
+	}
+	
+	public void produce(ModuleSpecs specs) {
+		if (hasNonVisibleConfiguration()) {
+			// Use configurations() method
+			this.module = module.toBuilder().addMethod(createInitializers())
+					.addMethod(createConfigurations()).build();
+		}
+		else {
+			// Use @Import annotationn
+			this.module = importAnnotation(module.toBuilder())
+					.addMethod(createInitializers()).build();
 		}
 	}
 
@@ -324,7 +327,7 @@ public class ModuleSpec {
 		if (imported == null) {
 			return false;
 		}
-		if (utils.findTypeInAnnotation(imported, "value", getClassName())) {
+		if (utils.findTypeInAnnotation(imported, "value", getClassName().toString())) {
 			return true;
 		}
 		return rootType.getQualifiedName().equals(s);
