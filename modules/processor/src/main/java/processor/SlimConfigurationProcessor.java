@@ -3,6 +3,7 @@ package processor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -10,7 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -38,6 +41,9 @@ import com.squareup.javapoet.TypeSpec.Builder;
 @SupportedAnnotationTypes({ "*" })
 public class SlimConfigurationProcessor extends AbstractProcessor {
 
+	private final static String SLIM_STATE_PATH = "META-INF/"
+			+ "slim-configuration-processor.properties";
+
 	private Filer filer;
 
 	private Messager messager;
@@ -58,6 +64,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
 		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer);
+		loadState();
 	}
 
 	@Override
@@ -72,6 +79,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		if (roundEnv.processingOver()) {
 			updateFactories();
 			specs.saveModuleSpecs();
+			saveState();
 		}
 		else if (!processed) {
 			process(roundEnv);
@@ -227,6 +235,45 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		catch (IOException ex) {
 			throw new IllegalStateException(ex);
+		}
+	}
+	
+	public void loadState() {
+		Properties properties = new Properties();
+		try {
+			FileObject resource = filer.getResource(StandardLocation.CLASS_OUTPUT, "",
+					SLIM_STATE_PATH);
+			try (InputStream stream = resource.openInputStream();) {
+				properties.load(stream);
+			}
+			for (Map.Entry<Object, Object> property: properties.entrySet()) {
+				String annotationType = (String)property.getKey(); // registrarinitializer.XXXX.YYY.ZZZ
+				// TODO need to cope with types being removed across incremental builds
+				registrarInitializers.put(utils.asTypeElement(annotationType.substring("registrarinitializer.".length()+1)), utils.asTypeElement(((String)property.getValue())));
+			}
+			messager.printMessage(Kind.NOTE, "Loaded "+properties.size()+" registrar definitions");
+		}
+		catch (IOException e) {
+			messager.printMessage(Kind.NOTE, "Cannot load "+SLIM_STATE_PATH+" (normal on first full build)");
+		}
+	}
+	
+	// TODO merge moduleSpecs state into just one overall annotation processor state, rather than multiple files
+	public void saveState() {
+		Properties properties = new Properties();
+		for (Map.Entry<TypeElement, TypeElement> registrarInitializer: registrarInitializers.entrySet()) {
+			// e.g. @EnableBar > SampleRegistrar
+			properties.setProperty("registrarinitializer."+registrarInitializer.getKey().getQualifiedName().toString(), 
+					registrarInitializer.getValue().getQualifiedName().toString());
+		}
+		try {
+			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", SLIM_STATE_PATH);
+			try (OutputStream stream = resource.openOutputStream();) {
+				properties.store(stream, "Created by " + getClass().getName());
+			}
+		}
+		catch (IOException e) {
+			messager.printMessage(Kind.NOTE, "Cannot write "+SLIM_STATE_PATH);
 		}
 	}
 
