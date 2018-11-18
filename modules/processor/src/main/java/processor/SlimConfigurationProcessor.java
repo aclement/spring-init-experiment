@@ -3,9 +3,14 @@ package processor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -14,6 +19,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
@@ -25,7 +31,9 @@ import javax.tools.StandardLocation;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.TypeSpec.Builder;
 
 @SupportedAnnotationTypes({ "*" })
 public class SlimConfigurationProcessor extends AbstractProcessor {
@@ -39,6 +47,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	private ElementUtils utils;
 
 	private boolean processed;
+
+	private Map<TypeElement, TypeElement> registrarInitializers = new HashMap<>();
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -108,29 +118,30 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 	}
 
-	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv) {
+	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv, Predicate<TypeElement> typeSelectionCondition) {
 		Set<TypeElement> types = new HashSet<>();
 		for (TypeElement type : ElementFilter.typesIn(roundEnv.getRootElements())) {
-			collectTypes(type, types);
+			collectTypes(type, types, typeSelectionCondition);
 		}
 		return types;
 	}
 
-	private void collectTypes(TypeElement type, Set<TypeElement> types) {
-		if (type.getKind() == ElementKind.CLASS
-				&& !type.getModifiers().contains(Modifier.ABSTRACT)
-				&& !type.getModifiers().contains(Modifier.STATIC)) {
+	private void collectTypes(TypeElement type, Set<TypeElement> types, Predicate<TypeElement> typeSelectionCondition) {
+		if (typeSelectionCondition.test(type)) {
 			types.add(type);
 			for (Element element : type.getEnclosedElements()) {
 				if (element instanceof TypeElement) {
-					collectTypes((TypeElement) element, types);
+					collectTypes((TypeElement) element, types, typeSelectionCondition);
 				}
 			}
 		}
 	}
-
+	
 	private void process(RoundEnvironment roundEnv) {
-		Set<TypeElement> types = collectTypes(roundEnv);
+		Set<TypeElement> types = collectTypes(roundEnv,
+				te -> te.getKind() == ElementKind.CLASS
+				&& !te.getModifiers().contains(Modifier.ABSTRACT)
+				&& !te.getModifiers().contains(Modifier.STATIC));
 		for (TypeElement type : types) {
 			if (utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
@@ -147,6 +158,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				specs.addModule(type);
 			}
 		}
+		discoverAndProcessAtEnabledRegistrarsAndSelectors(roundEnv);
 		// Work out what these modules include
 		for (ModuleSpec module: specs.getModules()) {
 			module.prepare(specs);
@@ -164,6 +176,47 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			messager.printMessage(Kind.NOTE, "Writing Module " + module.getClassName(),
 					module.getRootType());
 			write(module.getModule(), module.getPackage());
+		}
+	}
+
+	private void discoverAndProcessAtEnabledRegistrarsAndSelectors(RoundEnvironment roundEnv) {
+		Set<TypeElement> annotationTypes = collectTypes(roundEnv, te -> te.getKind() == ElementKind.ANNOTATION_TYPE /* TODO visibility check? */);
+		for (TypeElement type: annotationTypes) {
+			AnnotationMirror annotationMirror = utils.getAnnotation(type, SpringClassNames.IMPORT.toString());
+			List<TypeElement> typesFromAnnotation = utils.getTypesFromAnnotation(annotationMirror, "value");
+			for (TypeElement te: typesFromAnnotation) {
+				if (utils.implementsInterface(te,SpringClassNames.IMPORT_BEAN_DEFINITION_REGISTRAR)) {
+					registrarInitializers.put(type, te); // @EnableBar > SampleRegistrar
+					System.out.println("Recording registrar @"+type+" > "+te);
+				} else {
+					// TODO support import selectors
+//					// TODO For @EnableXX with import({Foo.class, Bar.class}) remember these mappings?
+//					List<TypeElement> referencedConfiguration = atEnablers.get(type);
+//					atEnablers.put(type, te);
+				}
+			}
+		}
+		// Create registrar initializers - same naming scheme as for configuration initializers
+		// - could push this code into InitializerSpec (and have two - or more - kinds in there)
+		for (Map.Entry<TypeElement, TypeElement> registrar: registrarInitializers.entrySet()) {
+			ClassName initializerName = InitializerSpec.toInitializerNameFromConfigurationName(registrar.getKey());
+			messager.printMessage(Kind.NOTE, "Creating registrar initializer class: "+initializerName);
+			Builder builder = TypeSpec.classBuilder(initializerName);
+			builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
+			builder.addModifiers(Modifier.PUBLIC);
+			MethodSpec.Builder mb = MethodSpec.methodBuilder("initialize");
+			mb.addAnnotation(Override.class);
+			mb.addModifiers(Modifier.PUBLIC);
+			mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
+			// TODO use a service to register the registrar rather than calling registerBeanDefinitions right now (like conditionservice)
+			mb.addStatement("$T registrar = new $T()", registrar.getValue(), registrar.getValue());
+			// TODO invoke relevant Aware related methods
+			mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
+					SpringClassNames.STANDARD_ANNOTATION_METADATA,registrar.getValue());
+			MethodSpec ms = mb.build();
+			builder.addMethod(ms);
+			TypeSpec ts = builder.build();
+			write(ts, ClassName.get(registrar.getKey()).packageName());
 		}
 	}
 
