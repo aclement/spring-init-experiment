@@ -37,6 +37,8 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
+import com.squareup.javapoet.ClassName;
+
 /**
  * @author Dave Syer
  *
@@ -382,4 +384,24 @@ public class ElementUtils {
 		return type;
 	}
 
+
+	public boolean implementsInterface(TypeElement te, ClassName intface) {
+		if (te==null) {
+			return false;
+		}
+		if (ClassName.get(te).equals(intface)) {
+			return true;
+		}
+		for (TypeMirror t: te.getInterfaces()) {
+			boolean b = implementsInterface((TypeElement)asElement(t), intface);
+			if (b) {
+				return true;
+			}
+		}
+		TypeMirror superclass = te.getSuperclass();
+		if (superclass == null) {
+			return false;
+		}
+		return implementsInterface((TypeElement)asElement(superclass), intface);
+	}
 }

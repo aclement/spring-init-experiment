@@ -24,6 +24,16 @@ import com.squareup.javapoet.ParameterizedTypeName;
  */
 public class SpringClassNames {
 
+	
+	public static final ClassName IMPORT_SELECTOR = ClassName
+			.get("org.springframework.context.annotation","ImportSelector");
+
+	public static final ClassName IMPORT_BEAN_DEFINITION_REGISTRAR = ClassName
+			.get("org.springframework.context.annotation","ImportBeanDefinitionRegistrar");
+
+	public static final ClassName STANDARD_ANNOTATION_METADATA = ClassName
+			.get("org.springframework.core.type","StandardAnnotationMetadata");
+	
 	public static final ClassName CONFIGURATION = ClassName
 			.get("org.springframework.context.annotation", "Configuration");
 
@@ -41,6 +51,9 @@ public class SpringClassNames {
 
 	public static final ClassName INITIALIZER_MAPPING = ClassName.get("slim",
 			"InitializerMapping");
+
+	public static final ClassName MODULE_MAPPING = ClassName.get("slim",
+			"ModuleMapping");
 
 	public static final ClassName MODULE_ROOT = ClassName.get("slim", "ModuleRoot");
 

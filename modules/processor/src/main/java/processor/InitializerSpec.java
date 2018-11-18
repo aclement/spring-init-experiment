@@ -56,6 +56,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private TypeElement configurationType;
 	private ElementUtils utils;
 	private ClassName className;
+	private ClassName moduleName;
 
 	public InitializerSpec(ElementUtils utils, TypeElement type) {
 		this.utils = utils;
@@ -66,6 +67,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	public TypeElement getConfigurationType() {
 		return configurationType;
+	}
+	
+	public void setModuleName(ClassName moduleName) {
+		this.moduleName = moduleName;
 	}
 
 	public void setConfigurationType(TypeElement configurationType) {
@@ -112,6 +117,11 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private AnnotationSpec initializerMappingAnnotation() {
 		return AnnotationSpec.builder(SpringClassNames.INITIALIZER_MAPPING)
 				.addMember("value", "$T.class", configurationType).build();
+	}
+
+	private AnnotationSpec moduleMappingAnnotation() {
+		return AnnotationSpec.builder(SpringClassNames.MODULE_MAPPING)
+				.addMember("module", "$T.class", moduleName).build();
 	}
 
 	private MethodSpec createInitializer() {
