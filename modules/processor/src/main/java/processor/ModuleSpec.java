@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,12 +119,12 @@ public class ModuleSpec {
 		if (hasNonVisibleConfiguration()) {
 			// Use configurations() method
 			this.module = module.toBuilder().addMethod(createInitializers())
-					.addMethod(createConfigurations()).build();
+					.addMethod(createConfigurations()).addMethod(createGetRoot()).build();
 		}
 		else {
 			// Use @Import annotation
-			this.module = importAnnotation(module.toBuilder())
-					.addMethod(createInitializers()).build();
+			this.module = importAnnotation(specs,module.toBuilder())
+					.addMethod(createInitializers()).addMethod(createGetRoot()).build();
 		}
 	}
 
@@ -226,7 +227,7 @@ public class ModuleSpec {
 		Set<ClassName> initializerClassNames = initializers.stream().map(ispec -> ispec.getClassName()).collect(Collectors.toSet());
 		utils.printMessage(Kind.NOTE, "Creating initializer for "+getClassName()+": current initializers: "+initializerClassNames+" previous initializers: "+previouslyAssociatedConfigurations);
 		initializerClassNames.addAll(previouslyAssociatedInitializers());
-		
+		initializerClassNames.addAll(addRegistrarInvokers());
 		builder.addStatement(
 				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
 				array(Arrays.class, initializerClassNames));
@@ -288,8 +289,9 @@ public class ModuleSpec {
 		return builder.build();
 	}
 
-	private TypeSpec.Builder importAnnotation(TypeSpec.Builder type) {
-		Object[] array = types(initializers);
+	private TypeSpec.Builder importAnnotation(ModuleSpecs specs, TypeSpec.Builder type) {
+		ClassName[] array = findImports(initializers);
+		array = convertImportsToModules(specs, array);
 		if (array.length == 0) {
 			return type;
 		}
@@ -298,6 +300,48 @@ public class ModuleSpec {
 				array.length > 1 ? ("{" + typeParams(array.length) + "}") : "$T.class",
 				array);
 		return type.addAnnotation(builder.build());
+	}
+	
+	private ClassName[] convertImportsToModules(ModuleSpecs specs, ClassName[] array) {
+		System.out.println("Producing module "+this.getClassName());
+		Set<ClassName> newImports = new LinkedHashSet<>();
+		for (ClassName o: array) {
+			// If another module in this build is handling the configuration, switch to refer to it
+			ModuleSpec spec = specs.findModuleHandling(o);
+			if (spec !=null) {
+				if (spec != null && spec!=this) {
+					System.out.println("Modifying autoconfig reference for module "+this.getClassName()+
+							": changing from "+o+" to "+spec.getClassName());
+					newImports.add(ClassName.bestGuess(spec.getClassName().toString()));
+				} else {
+					newImports.add(o);
+				}
+			} else {
+				System.out.println("Considering "+o.toString());
+				TypeElement initializerTypeElement = utils.asTypeElement(o.toString()+"Initializer");
+				boolean rewritten = false;
+				if (initializerTypeElement != null) {
+					List<? extends AnnotationMirror> annotationMirrors = initializerTypeElement.getAnnotationMirrors();
+					for (AnnotationMirror am: annotationMirrors) {
+						if (am.getAnnotationType().asElement().getSimpleName().toString().contains("ModuleMapping")) {
+							TypeElement responsibleModule = utils.getTypesFromAnnotation(am, "module").get(0);
+							System.out.println("Modifying autoconfig reference for module "+this.getClassName()+
+									": changing from "+o+" to "+responsibleModule);
+							newImports.add(ClassName.get(responsibleModule));//ClassName.get(responsibleModule));
+							rewritten = true;
+						}
+					}
+				}
+				if (!rewritten) {
+					System.out.println("Problem? Unable to find module responsible for configuration "+
+							o.toString()+" whilst building module "+this.getClassName());
+					newImports.add(o);
+				}
+			}
+		}
+		ClassName[] result = newImports.toArray(new ClassName[0]);
+		System.out.println("Arrays from "+Arrays.toString(array)+" to "+Arrays.toString(result));
+		return result;
 	}
 
 	private String queryConfigurations(int count) {
@@ -337,19 +381,68 @@ public class ModuleSpec {
 		return previouslyAssociatedConfigurations.stream().filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString()))).collect(Collectors.toList());
 	}
 
-	private Object[] types(Collection<InitializerSpec> collection) {
-		Set<Object> list = new TreeSet<>();
+	private ClassName[] findImports(Collection<InitializerSpec> collection) {
+		List<TypeElement> types = new ArrayList<>();
 		for (InitializerSpec object : collection) {
+			types.add(object.getConfigurationType());
+		}
+		Set<TypeElement> seen = new HashSet<>();
+		Set<ClassName> list = new LinkedHashSet<>();
+		collectImports(types, list, seen);
+		list = removeImportSelectorsAndRegistrars(list);
+		System.out.println("Collecting imports for attachment to "+this.getClassName()+" : "+list);
+		// Is this module referenced in the list?
+//		System.out.println("Building "+this.getClassNameString());
+//		System.out.println("Is this module referenced in the list? root="+getRootType()+" "+list+"  "+this.getClassNameString()+": "+
+//		(list.contains(this.getClassName()) || 
+//		 list.contains(ClassName.get(getRootType()))));
+		return list.toArray(new ClassName[0]);
+	}
+
+	private Set<ClassName> removeImportSelectorsAndRegistrars(Set<ClassName> list) {
+		Set<ClassName> result = new HashSet<>();
+		for (ClassName cn: list) {
+			TypeElement te = utils.asTypeElement(cn.toString());
+			if (utils.implementsInterface(te, SpringClassNames.IMPORT_BEAN_DEFINITION_REGISTRAR)) {
+				System.out.println("Skipping inclusion of registrar "+te+" when building "+this.getClassName());
+			} else if (utils.implementsInterface(te, SpringClassNames.IMPORT_SELECTOR)) {
+				System.out.println("Skipping inclusion of import selector "+te+" when building "+this.getClassName());
+			} else {
+				result.add(cn);
+			}
+		}
+		return result;
+	}
+
+	private void collectImports(List<TypeElement> types, Collection<ClassName> list,
+			Set<TypeElement> seen) {
+		for (TypeElement type : types) {
+			if (seen.contains(type)) {
+				continue;
+			}
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (isSelfImport(object.getConfigurationType())) {
-				continue;
+			if (utils.hasAnnotation(type, SpringClassNames.IMPORT.toString())) {
+				List<TypeElement> annos = utils.getTypesFromAnnotation(type,
+						SpringClassNames.IMPORT.toString(), "value");
+				for (TypeElement anno : annos) {
+					if (!isSelfImport(anno)) {
+						list.add(ClassName.get(anno));
+					}
+//					list.add(ClassName.get(anno));
+				}
 			}
-			list.add(ClassName.get(object.getConfigurationType()));
+			seen.add(type);
+			collectImports(
+					type.getAnnotationMirrors()
+					.stream().map(am -> (TypeElement)am.getAnnotationType().asElement()).collect(Collectors.toList()),list,seen);
+//			for (AnnotationMirror am: type.getAnnotationMirrors()) {
+//				TypeElement element = (TypeElement)am.getAnnotationType().asElement();
+//				collectImports(annos, list, seen);
+//			}
 		}
 		list.addAll(nonSelfImportedPreviouslyAssociatedConfigurations());
-		return list.toArray(new Object[0]);
 	}
 
 	private boolean isSelfImport(TypeElement s) {

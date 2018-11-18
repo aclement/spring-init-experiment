@@ -5,11 +5,12 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Import;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import lib.sub.BarConfigurationModule;
-import lib.sub.runner.RunnerConfigurationModule;
+import lib.sub.BarConfiguration;
+import lib.sub.runner.RunnerConfiguration;
 
 @SpringBootConfiguration
-@Import({ BarConfigurationModule.class, RunnerConfigurationModule.class,
+@Import({
+	BarConfiguration.class, RunnerConfiguration.class,
 		ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
