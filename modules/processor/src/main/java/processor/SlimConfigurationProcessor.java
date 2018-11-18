@@ -64,7 +64,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			specs.saveModuleSpecs();
 		}
 		else if (!processed) {
-			process(collectTypes(roundEnv));
+			process(roundEnv);
 			processed = true;
 		}
 		return true;
@@ -88,11 +88,11 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		StringBuilder builder = new StringBuilder(values);
 		for (ModuleSpec module : specs.getModules()) {
-			if (module.getModule() != null && !values.contains(module.getClassName())) {
+			if (module.getModule() != null && !values.contains(module.getClassName().toString())) {
 				if (builder.length() > 0) {
 					builder.append(",");
 				}
-				builder.append(module.getClassName());
+				builder.append(module.getClassName().toString());
 			}
 		}
 		properties.setProperty(SpringClassNames.MODULE.toString(), builder.toString());
@@ -129,7 +129,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 	}
 
-	private void process(Set<TypeElement> types) {
+	private void process(RoundEnvironment roundEnv) {
+		Set<TypeElement> types = collectTypes(roundEnv);
 		for (TypeElement type : types) {
 			if (utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
@@ -146,9 +147,14 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				specs.addModule(type);
 			}
 		}
+		// Work out what these modules include
+		for (ModuleSpec module: specs.getModules()) {
+			module.prepare(specs);
+		}
 		for (ModuleSpec module : specs.getModules()) {
-			module.process(specs);
+			module.produce(specs);
 			for (InitializerSpec initializer : module.getInitializers()) {
+				initializer.setModuleName(module.getClassName());
 				messager.printMessage(Kind.NOTE,
 						"Writing Initializer " + ClassName.get(initializer.getPackage(),
 								initializer.getInitializer().name),
