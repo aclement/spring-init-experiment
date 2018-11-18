@@ -351,4 +351,19 @@ public class ModuleSpec {
 		return false;
 	}
 
+	public boolean includesConfiguration(ClassName config) {
+		for (InitializerSpec spec: initializers) {
+			if (ClassName.get(spec.getConfigurationType()).equals(config)) {
+				return true;
+			}
+		}
+		for (ClassName cn: previouslyAssociatedConfigurations) {
+			// TODO yuck
+			if (config.toString().equals(cn.toString()+"Initializer")) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

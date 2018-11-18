@@ -204,4 +204,16 @@ public class ModuleSpecs {
 		}
 	}
 
+	/**
+	 * @return the module (if any) handling a particular configuration
+	 */
+	public ModuleSpec findModuleHandling(ClassName config) {
+		for (Map.Entry<String,ModuleSpec> entry: modules.entrySet()) {
+			if (entry.getValue().includesConfiguration(config)) {
+				return entry.getValue();
+			}
+		}
+		return null;
+	}
+
 }
