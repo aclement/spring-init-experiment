@@ -63,7 +63,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	public InitializerSpec(ElementUtils utils, TypeElement type, Map<TypeElement,TypeElement> registrars) {
 		this.utils = utils;
 		this.configurationType = type;
-		this.initializer = createInitializer(type);
+		this.className = toInitializerNameFromConfigurationName(type);
 		this.pkg = ClassName.get(type).packageName();
 		this.registrars = registrars;
 	}
@@ -81,6 +81,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	}
 
 	public TypeSpec getInitializer() {
+		if (initializer == null) {
+			this.initializer = createInitializer(configurationType);
+		}
 		return initializer;
 	}
 
@@ -97,7 +100,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	}
 
 	private TypeSpec createInitializer(TypeElement type) {
-		this.className = toInitializerNameFromConfigurationName(type);
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
@@ -106,6 +108,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		// Skip for now - will cause problems at compile time if referred to types
 		// are private
 		// builder.addAnnotation(initializerMappingAnnotation());
+		builder.addAnnotation(moduleMappingAnnotation());
 		return builder.build();
 	}
 	
@@ -122,6 +125,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				.addMember("value", "$T.class", configurationType).build();
 	}
 
+	// TODO better as a method that returns the class?? means less reflection
 	private AnnotationSpec moduleMappingAnnotation() {
 		return AnnotationSpec.builder(SpringClassNames.MODULE_MAPPING)
 				.addMember("module", "$T.class", moduleName).build();
