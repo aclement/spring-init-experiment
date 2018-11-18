@@ -270,7 +270,7 @@ public class ModuleSpec {
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (isSelfImport(object.getConfigurationType().getQualifiedName())) {
+			if (isSelfImport(object.getConfigurationType())) {
 				continue;
 			}
 			subset.add(object.getClassName());
@@ -334,7 +334,7 @@ public class ModuleSpec {
 	}
 	
 	private List<ClassName> nonSelfImportedPreviouslyAssociatedConfigurations() {
-		return previouslyAssociatedConfigurations.stream().filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString()).getQualifiedName())).collect(Collectors.toList());
+		return previouslyAssociatedConfigurations.stream().filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString()))).collect(Collectors.toList());
 	}
 
 	private Object[] types(Collection<InitializerSpec> collection) {
@@ -343,7 +343,7 @@ public class ModuleSpec {
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (isSelfImport(object.getConfigurationType().getQualifiedName())) {
+			if (isSelfImport(object.getConfigurationType())) {
 				continue;
 			}
 			list.add(ClassName.get(object.getConfigurationType()));
@@ -352,7 +352,7 @@ public class ModuleSpec {
 		return list.toArray(new Object[0]);
 	}
 
-	private boolean isSelfImport(Name s) {
+	private boolean isSelfImport(TypeElement s) {
 		AnnotationMirror imported = utils.getAnnotation(rootType, SpringClassNames.IMPORT.toString());
 		if (imported == null) {
 			return false;
@@ -360,7 +360,7 @@ public class ModuleSpec {
 		if (utils.findTypeInAnnotation(imported, "value", getClassName().toString())) {
 			return true;
 		}
-		return rootType.getQualifiedName().equals(s);
+		return rootType.getQualifiedName().equals(s.getQualifiedName());
 	}
 
 	private Object[] array(Object first, Collection<ClassName> collection) {
