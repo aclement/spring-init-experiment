@@ -140,6 +140,20 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		return builder.build();
 	}
 
+	private void addRegistrarInvokers(MethodSpec.Builder builder) {
+		// System.out.println("Checking if need registrar invokers whilst building initializer for "+configurationType.toString());
+		List<? extends AnnotationMirror> annotationMirrors = configurationType.getAnnotationMirrors();
+		for (AnnotationMirror am: annotationMirrors) {
+			// Looking up something like @EnableBar
+			TypeElement element = (TypeElement)am.getAnnotationType().asElement();
+			TypeElement registrarInitializer = registrars.get(element);
+			if (registrarInitializer != null) {
+				// System.out.println("Calling initializer for "+element);
+				builder.addStatement("new $T().initialize(context)",InitializerSpec.toInitializerNameFromConfigurationName(element));			
+			}
+		}
+	}
+
 	/**
 	 * Looks like:
 	 * 
