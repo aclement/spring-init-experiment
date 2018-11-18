@@ -60,19 +60,22 @@ public class ModuleSpecs {
 
 	private Messager messager;
 
-	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer) {
+	private Map<TypeElement, TypeElement> registrars;
+
+	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer, Map<TypeElement, TypeElement> registrars) {
 		this.utils = utils;
 		this.messager = messager;
 		this.filer = filer;
+		this.registrars = registrars;
 		loadModuleSpecs();
 	}
 
 	public void addInitializer(TypeElement initializer) {
-		initializers.add(new InitializerSpec(this.utils, initializer));
+		initializers.add(new InitializerSpec(this.utils, initializer, registrars));
 	}
 
 	public void addModule(TypeElement module) {
-		ModuleSpec value = new ModuleSpec(this.utils, module);
+		ModuleSpec value = new ModuleSpec(this.utils, module, registrars);
 		modules.put(value.getPackage(), value);
 	}
 
@@ -96,7 +99,7 @@ public class ModuleSpecs {
 				for (String root : roots) {
 					if (root.equals(packageToCheck)) {
 						if (!modules.containsKey(root)) {
-							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root)));
+							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root), registrars));
 						}
 						modules.get(root).addInitializer(initializer);
 						initializers.remove(initializer);

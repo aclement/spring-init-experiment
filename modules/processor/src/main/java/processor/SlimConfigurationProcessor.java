@@ -63,8 +63,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.messager = processingEnv.getMessager();
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
-		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer);
 		loadState();
+		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer, this.registrarInitializers);
 	}
 
 	@Override

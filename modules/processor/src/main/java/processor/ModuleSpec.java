@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -53,12 +54,15 @@ public class ModuleSpec {
 	private TypeElement rootType;
 
 	private ElementUtils utils;
+	private Map<TypeElement, TypeElement> registrars;
 
-	public ModuleSpec(ElementUtils utils, TypeElement type) {
-		if (type != null) {
-			setRootType(type);
+
+	public ModuleSpec(ElementUtils utils, TypeElement rootType, Map<TypeElement, TypeElement> registrars) {
+		if (rootType != null) {
+			setRootType(rootType);
 		}
 		this.utils = utils;
+		this.registrars = registrars;
 	}
 
 	public TypeElement getRootType() {
@@ -143,7 +147,7 @@ public class ModuleSpec {
 		}
 		candidates.removeAll(roots);
 		for (TypeElement candidate : candidates) {
-			addInitializer(new InitializerSpec(utils, candidate));
+			addInitializer(new InitializerSpec(utils, candidate, registrars));
 		}
 
 	}

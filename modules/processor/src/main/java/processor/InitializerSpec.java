@@ -18,6 +18,7 @@ package processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,12 +58,14 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private ElementUtils utils;
 	private ClassName className;
 	private ClassName moduleName;
+	private Map<TypeElement, TypeElement> registrars;
 
-	public InitializerSpec(ElementUtils utils, TypeElement type) {
+	public InitializerSpec(ElementUtils utils, TypeElement type, Map<TypeElement,TypeElement> registrars) {
 		this.utils = utils;
 		this.configurationType = type;
 		this.initializer = createInitializer(type);
 		this.pkg = ClassName.get(type).packageName();
+		this.registrars = registrars;
 	}
 
 	public TypeElement getConfigurationType() {
