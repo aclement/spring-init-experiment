@@ -384,7 +384,27 @@ public class ElementUtils {
 		return type;
 	}
 
-
+	public List<TypeElement> getTypesFromAnnotation(TypeElement type, String annotation,
+			String attribute) {
+		Set<TypeElement> list = new HashSet<>();
+		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
+			if (((TypeElement) mirror.getAnnotationType().asElement()).getQualifiedName()
+					.toString().equals(annotation)) {
+				System.err.println("************ " + type + ": "
+						+ getTypesFromAnnotation(mirror, attribute));
+				list.addAll(getTypesFromAnnotation(mirror, attribute));
+			}
+			AnnotationMirror meta = getAnnotation(mirror.getAnnotationType().asElement(),
+					annotation);
+			if (meta != null) {
+				list.addAll(getTypesFromAnnotation(meta, attribute));
+				System.err.println("&&&&&&&&&& " + type + ": "
+						+ getTypesFromAnnotation(meta, attribute));
+			}
+		}
+		return new ArrayList<>(list);
+	}
+	
 	public boolean implementsInterface(TypeElement te, ClassName intface) {
 		if (te==null) {
 			return false;

@@ -186,6 +186,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				Class<? extends Module> module = (Class<? extends Module>) ClassUtils
 						.resolveClassName(typeName, context.getClassLoader());
 				try {
+					Module m = BeanUtils.instantiateClass(module, Module.class);
+					this.autoTypes.put(m.getRoot(), module);
+					
 					MultiValueMap<String, Object> merged = AnnotatedElementUtils
 							.getAllAnnotationAttributes(module, Import.class.getName(),
 									true, true);
@@ -207,8 +210,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 						}
 					}
 					else {
-						List<Class<?>> configurations = BeanUtils
-								.instantiateClass(module, Module.class).configurations();
+						List<Class<?>> configurations = m.configurations();
 						for (Class<?> type : configurations) {
 							this.autoTypes.put(type, module);
 						}
@@ -278,6 +280,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
+				// Causes inclusion of SampleApplicationModule if beanClass is SampleApplication (without this 
+				// we'll only include SampleApplicationModule if it depends on other autoconfig that pulls in SampleApplicationModule!)
+				Class<? extends Module> moduleForBeanClass = this.autoTypes.get(beanClass);
+				if (moduleForBeanClass != null) {
+					addModule(moduleForBeanClass);
+				}
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
 				if (imports != null) {
@@ -285,25 +293,25 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 						for (Class<?> value : imported.value()) {
 							logger.debug("Import: " + value);
 							Class<? extends Module> type = this.autoTypes.get(value);
-							if (type != null) {
-								addModule(type);
-							}
-							else if (Module.class.isAssignableFrom(value)) {
+							if (Module.class.isAssignableFrom(value)) {
 								@SuppressWarnings("unchecked")
 								Class<? extends Module> module = (Class<? extends Module>) value;
 								addModule(module);
-								seen.add(value);
+//								seen.add(value);
 							}
-							else if (ImportBeanDefinitionRegistrar.class
-									.isAssignableFrom(value)) {
-								ImportBeanDefinitionRegistrar registrar = BeanUtils
-										.instantiateClass(value,
-												ImportBeanDefinitionRegistrar.class);
-								invokeAwareMethods(registrar, context.getEnvironment(),
-										context, context);
-								registrar.registerBeanDefinitions(
-										new StandardAnnotationMetadata(value), context);
+							else if (type != null) {
+								addModule(type);
 							}
+//							else if (ImportBeanDefinitionRegistrar.class
+//									.isAssignableFrom(value)) {
+//								ImportBeanDefinitionRegistrar registrar = BeanUtils
+//										.instantiateClass(value,
+//												ImportBeanDefinitionRegistrar.class);
+//								invokeAwareMethods(registrar, context.getEnvironment(),
+//										context, context);
+//								registrar.registerBeanDefinitions(
+//										new StandardAnnotationMetadata(value), context);
+//							}
 							else if (ImportSelector.class.isAssignableFrom(value)) {
 								ImportSelector registrar = BeanUtils
 										.instantiateClass(value, ImportSelector.class);
@@ -321,6 +329,17 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 											processImports(context, conditions, clazz,
 													seen);
 										}
+										// TODO this branch still necessary?
+										else if (ImportBeanDefinitionRegistrar.class
+												.isAssignableFrom(clazz)) {
+											ImportBeanDefinitionRegistrar registrar2 = BeanUtils
+													.instantiateClass(clazz,
+															ImportBeanDefinitionRegistrar.class);
+											invokeAwareMethods(registrar2, context.getEnvironment(),
+													context, context);
+											registrar2.registerBeanDefinitions(
+													new StandardAnnotationMetadata(clazz), context);
+										}
 										else {
 											context.registerBean(clazz);
 										}
@@ -329,6 +348,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								// TODO: support for deferred import selector
 							}
 							processImports(context, conditions, value, seen);
+							seen.add(value);
 						}
 					}
 				}

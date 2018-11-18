@@ -136,6 +136,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
+		addRegistrarInvokers(builder);
 		addBeanMethods(builder, configurationType);
 		return builder.build();
 	}

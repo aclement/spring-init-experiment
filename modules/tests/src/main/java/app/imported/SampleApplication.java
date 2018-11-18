@@ -5,10 +5,10 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Import;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
-import lib.imported.BarConfigurationModule;
+import lib.imported.BarConfiguration;
 
 @SpringBootConfiguration
-@Import({ BarConfigurationModule.class, ContextAutoConfigurationModule.class })
+@Import({ BarConfiguration.class, ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {
