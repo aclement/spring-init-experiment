@@ -147,8 +147,8 @@ public class ModuleSpecs {
 	
 	public void addConfigurationsReferencedByModuleInPreviousBuild(ModuleSpec module) {
 		List<String> previousConfigurationsForModule = moduleMappingInfoFromPreviousBuild.get(module.getRootType().toString());
-		messager.printMessage(Kind.NOTE, "existing config found for "+module.getRootType().toString()+" - number of configurations #"+(previousConfigurationsForModule==null?0:previousConfigurationsForModule.size()));
 		if (previousConfigurationsForModule != null) {
+			messager.printMessage(Kind.NOTE, "existing config found for "+module.getRootType().toString()+" - number of configurations #"+(previousConfigurationsForModule==null?0:previousConfigurationsForModule.size()));
 			for (String previousConfiguration: previousConfigurationsForModule) {
 				if (utils.asTypeElement(previousConfiguration) == null) {
 					// messager.printMessage(Kind.NOTE, "unable to find "+previousConfiguration+" assuming deleted...");

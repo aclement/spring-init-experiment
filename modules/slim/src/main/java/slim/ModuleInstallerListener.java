@@ -227,20 +227,20 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	}
 
 	private void apply(GenericApplicationContext context) {
-		logger.info("Applying initializers");
 		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
 			initializers.add(result);
 		}
 		OrderComparator.sort(initializers);
+		logger.info("Applying initializers: "+initializers);
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
 			initializer.initialize(context);
 		}
-		logger.info("Applying autoconfig");
 		initializers = new ArrayList<>();
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.autos) {
 			initializers.add(result);
 		}
+		logger.info("Applying autoconfig "+initializers);		
 		// TODO: sort into autoconfiguration order as well
 		OrderComparator.sort(initializers);
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
@@ -271,6 +271,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	private void extract(GenericApplicationContext context, ConditionService conditions,
 			Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
+			// Causes inclusion of SampleApplicationModule if beanClass is SampleApplication (without this 
+			// we'll only include SampleApplicationModule if it depends on other autoconfig that pulls in SampleApplicationModule!)
+			Class<? extends Module> moduleForBeanClass = this.autoTypes.get(beanClass);
+			if (moduleForBeanClass != null) {
+				addModule(moduleForBeanClass);
+			}
 			processImports(context, conditions, beanClass, seen);
 		}
 	}
@@ -280,12 +286,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
-				// Causes inclusion of SampleApplicationModule if beanClass is SampleApplication (without this 
-				// we'll only include SampleApplicationModule if it depends on other autoconfig that pulls in SampleApplicationModule!)
-				Class<? extends Module> moduleForBeanClass = this.autoTypes.get(beanClass);
-				if (moduleForBeanClass != null) {
-					addModule(moduleForBeanClass);
-				}
+//				logger.info("processing beanclass: "+beanClass);
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
 				if (imports != null) {
@@ -375,7 +376,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (type == null || this.types.contains(type)) {
 			return;
 		}
-		logger.debug("Module: " + type);
+		logger.info("adding module: " + type);
 		this.types.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {
 			this.autos.addAll(

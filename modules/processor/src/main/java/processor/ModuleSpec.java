@@ -30,7 +30,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
@@ -227,7 +226,11 @@ public class ModuleSpec {
 		Set<ClassName> initializerClassNames = initializers.stream().map(ispec -> ispec.getClassName()).collect(Collectors.toSet());
 		utils.printMessage(Kind.NOTE, "Creating initializer for "+getClassName()+": current initializers: "+initializerClassNames+" previous initializers: "+previouslyAssociatedConfigurations);
 		initializerClassNames.addAll(previouslyAssociatedInitializers());
-		initializerClassNames.addAll(addRegistrarInvokers());
+		// TODO believe this is necessary when the module root has @Enable on it - but needs some
+		// finessing. Including it now causes some tests to fail because the initializer for the
+		// registrar is run twice (and there is no lazy registrar registering process) so you 
+		// get errors about double bean registers.
+//		initializerClassNames.addAll(addRegistrarInvokers());
 		builder.addStatement(
 				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
 				array(Arrays.class, initializerClassNames));
