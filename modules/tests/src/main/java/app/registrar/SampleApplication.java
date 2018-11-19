@@ -13,7 +13,7 @@ import lib.registrar.EnableBar;
 
 @SpringBootConfiguration
 @EnableBar
-@Import({PropertyPlaceholderAutoConfiguration.class, ConfigurationPropertiesAutoConfiguration.class})
+@Import({SampleApplicationModule.class, PropertyPlaceholderAutoConfiguration.class, ConfigurationPropertiesAutoConfiguration.class})
 public class SampleApplication {
 	
 	public static void main(String[] args) {

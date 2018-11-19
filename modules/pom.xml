@@ -19,6 +19,7 @@
 		<module>library</module>
 		<module>processor</module>
 		<module>aspects</module>
+		<module>tests-lib</module>
 		<module>tests</module>
 	</modules>
 

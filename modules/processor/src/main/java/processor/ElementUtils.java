@@ -390,16 +390,12 @@ public class ElementUtils {
 		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
 			if (((TypeElement) mirror.getAnnotationType().asElement()).getQualifiedName()
 					.toString().equals(annotation)) {
-				System.err.println("************ " + type + ": "
-						+ getTypesFromAnnotation(mirror, attribute));
 				list.addAll(getTypesFromAnnotation(mirror, attribute));
 			}
 			AnnotationMirror meta = getAnnotation(mirror.getAnnotationType().asElement(),
 					annotation);
 			if (meta != null) {
 				list.addAll(getTypesFromAnnotation(meta, attribute));
-				System.err.println("&&&&&&&&&& " + type + ": "
-						+ getTypesFromAnnotation(meta, attribute));
 			}
 		}
 		return new ArrayList<>(list);

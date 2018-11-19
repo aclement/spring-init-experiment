@@ -230,7 +230,7 @@ public class ModuleSpec {
 		// finessing. Including it now causes some tests to fail because the initializer for the
 		// registrar is run twice (and there is no lazy registrar registering process) so you 
 		// get errors about double bean registers.
-//		initializerClassNames.addAll(addRegistrarInvokers());
+		// initializerClassNames.addAll(addRegistrarInvokers());
 		builder.addStatement(
 				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
 				array(Arrays.class, initializerClassNames));
@@ -301,7 +301,7 @@ public class ModuleSpec {
 		AnnotationSpec.Builder builder = AnnotationSpec.builder(SpringClassNames.IMPORT);
 		builder.addMember("value",
 				array.length > 1 ? ("{" + typeParams(array.length) + "}") : "$T.class",
-				array);
+				(Object[])array);
 		return type.addAnnotation(builder.build());
 	}
 	
