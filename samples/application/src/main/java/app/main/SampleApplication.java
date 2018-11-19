@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Import;
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, SampleConfiguration.class,
+@Import({ SampleConfiguration.class,
 		ContextAutoConfigurationModule.class })
 public class SampleApplication {
 

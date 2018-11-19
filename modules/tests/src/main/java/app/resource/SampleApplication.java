@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ImportResource;
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, ContextAutoConfigurationModule.class })
+@Import({ ContextAutoConfigurationModule.class })
 @ImportResource("bar-config.xml")
 public class SampleApplication {
 

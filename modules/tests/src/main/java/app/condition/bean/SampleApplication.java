@@ -5,16 +5,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
-import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import boot.autoconfigure.context.ContextAutoConfigurationModule;
+
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, SampleConfiguration.class,
-		PropertyPlaceholderAutoConfiguration.class,
-		ConfigurationPropertiesAutoConfiguration.class })
+@Import({ SampleConfiguration.class, ContextAutoConfigurationModule.class})
 public class SampleApplication {
 
 	public static void main(String[] args) {

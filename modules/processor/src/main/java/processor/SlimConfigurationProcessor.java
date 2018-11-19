@@ -242,10 +242,19 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			try (InputStream stream = resource.openInputStream();) {
 				properties.load(stream);
 			}
+			messager.printMessage(Kind.NOTE, "Loading registrar properties:"+ properties);
 			for (Map.Entry<Object, Object> property: properties.entrySet()) {
 				String annotationType = (String)property.getKey(); // registrarinitializer.XXXX.YYY.ZZZ
-				// TODO need to cope with types being removed across incremental builds
-				registrarInitializers.put(utils.asTypeElement(annotationType.substring("registrarinitializer.".length()+1)), utils.asTypeElement(((String)property.getValue())));
+				String k = annotationType.substring("registrarinitializer.".length());
+				String v = ((String)property.getValue());
+				TypeElement kte = utils.asTypeElement(k);
+				TypeElement vte = utils.asTypeElement(v);
+				if (kte == null || vte == null) {
+					// TODO need to cope with types being removed across incremental builds - is this ok?
+					messager.printMessage(Kind.NOTE,  "Looks like a type has been removed, ignoring registrar entry "+k+"="+v+" resolved to "+kte+"="+vte);
+				} else {
+					registrarInitializers.put(kte,vte);
+				}
 			}
 			messager.printMessage(Kind.NOTE, "Loaded "+properties.size()+" registrar definitions");
 		}
