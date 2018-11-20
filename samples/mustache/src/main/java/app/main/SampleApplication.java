@@ -10,7 +10,7 @@ import boot.autoconfigure.mustache.MustacheAutoConfigurationModule;
 import boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, MustacheAutoConfigurationModule.class,
+@Import({ MustacheAutoConfigurationModule.class,
 		ReactiveWebServerFactoryAutoConfigurationModule.class,
 		ContextAutoConfigurationModule.class })
 public class SampleApplication {

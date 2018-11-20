@@ -171,7 +171,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		context.registerBean(
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class,
-				() -> new SlimConfigurationClassPostProcessor());
+				() -> new SlimConfigurationClassPostProcessor(autoTypes));
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
 	}
 
@@ -418,6 +418,12 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 		BeanClassLoaderAware, PriorityOrdered {
 
 	private ClassLoader classLoader;
+	private Map<Class<?>, Class<? extends Module>> autoTypes;
+
+	public SlimConfigurationClassPostProcessor(
+			Map<Class<?>, Class<? extends Module>> autoTypes) {
+				this.autoTypes = autoTypes;
+	}
 
 	@Override
 	public int getOrder() {
@@ -476,6 +482,9 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 	}
 
 	private boolean slimConfiguration(Class<?> beanClass) {
+		if (autoTypes.containsKey(beanClass)) {
+			return true;
+		}
 		Import slim = beanClass.getAnnotation(Import.class);
 		if (slim != null) {
 			for (Class<?> module : slim.value()) {
