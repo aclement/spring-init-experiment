@@ -195,7 +195,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
 			builder.beginControlFlow("try");
 			builder.addStatement(
-					"return org.springframework.util.ClassUtils.forName(\"$L\",null)",
+					"return $T.forName(\"$L\",null)", SpringClassNames.CLASS_UTILS,
 					getConfigurationType());
 			builder.endControlFlow();
 			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");

@@ -210,10 +210,14 @@ public class ModuleSpec {
 		if (modifiers.contains(Modifier.ABSTRACT)) {
 			modifiers.remove(Modifier.ABSTRACT);
 		}
-		if (!modifiers.contains(Modifier.PRIVATE)) {
+		if (modifiers.contains(Modifier.PRIVATE)) {
 			// Can't make it private, will cause issues
-			builder.addModifiers(modifiers.toArray(new Modifier[0]));
+			modifiers.remove(Modifier.PRIVATE);
 		}
+		if (!modifiers.contains(Modifier.PUBLIC)) {
+			modifiers.add(Modifier.PUBLIC);
+		}
+		builder.addModifiers(modifiers.toArray(new Modifier[0]));
 		builder.addSuperinterface(SpringClassNames.MODULE);
 		return builder.build();
 	}

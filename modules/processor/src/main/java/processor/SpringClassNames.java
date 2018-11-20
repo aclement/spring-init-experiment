@@ -24,16 +24,15 @@ import com.squareup.javapoet.ParameterizedTypeName;
  */
 public class SpringClassNames {
 
-	
 	public static final ClassName IMPORT_SELECTOR = ClassName
-			.get("org.springframework.context.annotation","ImportSelector");
+			.get("org.springframework.context.annotation", "ImportSelector");
 
-	public static final ClassName IMPORT_BEAN_DEFINITION_REGISTRAR = ClassName
-			.get("org.springframework.context.annotation","ImportBeanDefinitionRegistrar");
+	public static final ClassName IMPORT_BEAN_DEFINITION_REGISTRAR = ClassName.get(
+			"org.springframework.context.annotation", "ImportBeanDefinitionRegistrar");
 
 	public static final ClassName STANDARD_ANNOTATION_METADATA = ClassName
-			.get("org.springframework.core.type","StandardAnnotationMetadata");
-	
+			.get("org.springframework.core.type", "StandardAnnotationMetadata");
+
 	public static final ClassName CONFIGURATION = ClassName
 			.get("org.springframework.context.annotation", "Configuration");
 
@@ -49,8 +48,7 @@ public class SpringClassNames {
 	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
 			"Nullable");
 
-	public static final ClassName MODULE_MAPPING = ClassName.get("slim",
-			"ModuleMapping");
+	public static final ClassName MODULE_MAPPING = ClassName.get("slim", "ModuleMapping");
 
 	public static final ClassName MODULE_ROOT = ClassName.get("slim", "ModuleRoot");
 
@@ -93,5 +91,8 @@ public class SpringClassNames {
 
 	public static final ClassName RESOLVABLE_TYPE = ClassName
 			.get("org.springframework.core", "ResolvableType");
+
+	public static final ClassName CLASS_UTILS = ClassName.get("org.springframework.util",
+			"ClassUtils");
 
 }
