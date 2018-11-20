@@ -112,9 +112,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.addMethod(createInitializer());
 		}
 		builder.addMethod(createConfigurations());
-		// Skip for now - will cause problems at compile time if referred to types
-		// are private
-		// builder.addAnnotation(initializerMappingAnnotation());
 		builder.addAnnotation(moduleMappingAnnotation());
 		return builder.build();
 	}
@@ -125,11 +122,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	public static ClassName toInitializerNameFromConfigurationName(ClassName type) {
 		return ClassName.get(type.packageName(), type.simpleName() + "Initializer");
-	}
-
-	private AnnotationSpec initializerMappingAnnotation() {
-		return AnnotationSpec.builder(SpringClassNames.INITIALIZER_MAPPING)
-				.addMember("value", "$T.class", configurationType).build();
 	}
 
 	// TODO better as a method that returns the class?? means less reflection

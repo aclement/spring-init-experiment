@@ -49,9 +49,6 @@ public class SpringClassNames {
 	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
 			"Nullable");
 
-	public static final ClassName INITIALIZER_MAPPING = ClassName.get("slim",
-			"InitializerMapping");
-
 	public static final ClassName MODULE_MAPPING = ClassName.get("slim",
 			"ModuleMapping");
 

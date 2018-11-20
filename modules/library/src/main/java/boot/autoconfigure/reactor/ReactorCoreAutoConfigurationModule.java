@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
-import slim.InitializerMapping;
 import slim.Module;
 
 /**
@@ -43,7 +42,6 @@ public class ReactorCoreAutoConfigurationModule implements Module {
 		return Arrays.asList(new Initializer());
 	}
 
-	@InitializerMapping(ReactorCoreAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

@@ -60,7 +60,6 @@ import org.springframework.util.ReflectionUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.InitializerMapping;
 import slim.Module;
 
 /**
@@ -80,7 +79,6 @@ public class JacksonAutoConfigurationModule implements Module {
 		return new Initializer();
 	}
 
-	@InitializerMapping(JacksonAutoConfiguration.class)
 	private static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

@@ -21,7 +21,6 @@ import com.samskivert.mustache.Mustache.Compiler;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
-import org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.mustache.MustacheProperties;
 import org.springframework.boot.web.reactive.result.view.MustacheViewResolver;
 import org.springframework.context.ApplicationContextInitializer;
@@ -31,7 +30,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.Ordered;
 
 import slim.ConditionService;
-import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -44,7 +42,6 @@ public class MustacheReactiveWebConfigurationGenerated {
 		return new Initializer();
 	}
 
-	@InitializerMapping(MustacheAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

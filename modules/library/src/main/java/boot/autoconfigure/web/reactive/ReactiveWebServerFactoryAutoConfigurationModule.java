@@ -35,7 +35,6 @@ import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule;
 import boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule;
 import slim.ConditionService;
-import slim.InitializerMapping;
 import slim.Module;
 
 /**
@@ -57,7 +56,6 @@ public class ReactiveWebServerFactoryAutoConfigurationModule implements Module {
 				ErrorWebFluxAutoConfigurationGenerated.initializer());
 	}
 
-	@InitializerMapping(ReactiveWebServerFactoryAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 		@Override

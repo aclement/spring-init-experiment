@@ -22,7 +22,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +33,6 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2HttpMessageConverterConfiguration;
 import boot.autoconfigure.http.JacksonHttpMessageConvertersConfigurationGenerated.JacksonHttpMessageConvertersConfiguration.MappingJackson2XmlHttpMessageConverterConfiguration;
 import slim.ConditionService;
-import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -46,7 +44,6 @@ public class JacksonHttpMessageConvertersConfigurationGenerated {
 		return new Initializer();
 	}
 
-	@InitializerMapping(HttpMessageConvertersAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

@@ -31,7 +31,6 @@ import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.web.reactive.result.view.ViewResolver;
 
 import slim.ConditionService;
-import slim.InitializerMapping;
 
 /**
  * @author Dave Syer
@@ -43,7 +42,6 @@ class ErrorWebFluxAutoConfigurationGenerated {
 		return new Initializer();
 	}
 
-	@InitializerMapping(ErrorWebFluxAutoConfiguration.class)
 	private static final class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

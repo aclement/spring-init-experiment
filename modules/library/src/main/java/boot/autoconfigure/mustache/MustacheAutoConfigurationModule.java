@@ -33,7 +33,6 @@ import org.springframework.util.ClassUtils;
 
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import slim.ConditionService;
-import slim.InitializerMapping;
 import slim.Module;
 
 /**
@@ -54,7 +53,6 @@ public class MustacheAutoConfigurationModule implements Module {
 				MustacheReactiveWebConfigurationGenerated.initializer());
 	}
 
-	@InitializerMapping(MustacheAutoConfiguration.class)
 	static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 

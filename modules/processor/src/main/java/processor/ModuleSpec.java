@@ -234,11 +234,6 @@ public class ModuleSpec {
 						+ initializerClassNames + " previous initializers: "
 						+ previouslyAssociatedConfigurations);
 		initializerClassNames.addAll(previouslyAssociatedInitializers());
-		// TODO believe this is necessary when the module root has @Enable on it - but
-		// needs some finessing. Including it now causes some tests to fail because the initializer
-		// for the registrar is run twice (and there is no lazy registrar registering process) so
-		// you get errors about double bean registers.
-		// initializerClassNames.addAll(addRegistrarInvokers());
 		builder.addStatement(
 				"return $T.asList(" + newInstances(initializerClassNames.size()) + ")",
 				array(Arrays.class, initializerClassNames));
@@ -252,26 +247,6 @@ public class ModuleSpec {
 		builder.returns(ClassName.get(Class.class));
 		builder.addStatement("return $T.class", rootType );
 		return builder.build();
-	}
-
-	private List<ClassName> addRegistrarInvokers() {
-		List<ClassName> registrarInitializerClassNames = new ArrayList<>();
-		System.out
-				.println("Checking if need registrar invokers whilst building module for "
-						+ rootType.toString());
-		List<? extends AnnotationMirror> annotationMirrors = rootType
-				.getAnnotationMirrors();
-		for (AnnotationMirror am : annotationMirrors) {
-			// Looking up something like @EnableBar
-			TypeElement element = (TypeElement) am.getAnnotationType().asElement();
-			TypeElement registrarInitializer = registrars.get(element);
-			if (registrarInitializer != null) {
-				System.out.println("Including registrar for " + element);
-				registrarInitializerClassNames.add(
-						InitializerSpec.toInitializerNameFromConfigurationName(element));
-			}
-		}
-		return registrarInitializerClassNames;
 	}
 
 	private List<ClassName> previouslyAssociatedInitializers() {

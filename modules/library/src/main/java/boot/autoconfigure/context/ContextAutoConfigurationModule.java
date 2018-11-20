@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
-import slim.InitializerMapping;
 import slim.Module;
 
 /**
@@ -49,8 +48,6 @@ public class ContextAutoConfigurationModule implements Module {
 		return new Initializer();
 	}
 
-	@InitializerMapping({ PropertyPlaceholderAutoConfiguration.class,
-			ConfigurationPropertiesAutoConfiguration.class })
 	private static class Initializer
 			implements ApplicationContextInitializer<GenericApplicationContext> {
 
