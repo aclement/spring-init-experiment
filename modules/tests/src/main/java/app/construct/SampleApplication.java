@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Import;
 import boot.autoconfigure.context.ContextAutoConfigurationModule;
 
 @SpringBootConfiguration
-@Import({ SampleApplicationModule.class, ContextAutoConfigurationModule.class })
+@Import({ ContextAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Bean

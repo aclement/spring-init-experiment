@@ -298,7 +298,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								@SuppressWarnings("unchecked")
 								Class<? extends Module> module = (Class<? extends Module>) value;
 								addModule(module);
-//								seen.add(value);
+								seen.add(value);
 							}
 							else if (type != null) {
 								addModule(type);
