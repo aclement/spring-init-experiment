@@ -30,9 +30,7 @@ import javax.tools.StandardLocation;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeSpec.Builder;
 
 @SupportedAnnotationTypes({ "*" })
 public class SlimConfigurationProcessor extends AbstractProcessor {
@@ -191,7 +189,12 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			for (TypeElement te: typesFromAnnotation) {
 				if (utils.implementsInterface(te,SpringClassNames.IMPORT_BEAN_DEFINITION_REGISTRAR)) {
 					registrarInitializers.put(type, te); // @EnableBar > SampleRegistrar
-					System.out.println("Recording registrar @"+type+" > "+te);
+					messager.printMessage(Kind.NOTE, "Recording registrar @"+type+" > "+te);
+					if (utils.hasAnnotation(te, SpringClassNames.MODULE_ROOT.toString())) {
+						messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + te, te);
+						specs.addModule(te);
+					}
+					specs.addInitializer(type);
 				} else {
 					// TODO support import selectors
 //					// TODO For @EnableXX with import({Foo.class, Bar.class}) remember these mappings?
@@ -199,28 +202,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 //					atEnablers.put(type, te);
 				}
 			}
-		}
-		// Create registrar initializers - same naming scheme as for configuration initializers
-		// - could push this code into InitializerSpec (and have two - or more - kinds in there)
-		for (Map.Entry<TypeElement, TypeElement> registrar: registrarInitializers.entrySet()) {
-			ClassName initializerName = InitializerSpec.toInitializerNameFromConfigurationName(registrar.getKey());
-			messager.printMessage(Kind.NOTE, "Creating registrar initializer class: "+initializerName);
-			Builder builder = TypeSpec.classBuilder(initializerName);
-			builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
-			builder.addModifiers(Modifier.PUBLIC);
-			MethodSpec.Builder mb = MethodSpec.methodBuilder("initialize");
-			mb.addAnnotation(Override.class);
-			mb.addModifiers(Modifier.PUBLIC);
-			mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
-			// TODO use a service to register the registrar rather than calling registerBeanDefinitions right now (like conditionservice)
-			mb.addStatement("$T registrar = new $T()", registrar.getValue(), registrar.getValue());
-			// TODO invoke relevant Aware related methods
-			mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
-					SpringClassNames.STANDARD_ANNOTATION_METADATA,registrar.getValue());
-			MethodSpec ms = mb.build();
-			builder.addMethod(ms);
-			TypeSpec ts = builder.build();
-			write(ts, ClassName.get(registrar.getKey()).packageName());
 		}
 	}
 

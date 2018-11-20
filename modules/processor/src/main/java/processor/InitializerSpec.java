@@ -60,18 +60,20 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private ClassName moduleName;
 	private Map<TypeElement, TypeElement> registrars;
 
-	public InitializerSpec(ElementUtils utils, TypeElement type, Map<TypeElement,TypeElement> registrars) {
+	public InitializerSpec(ElementUtils utils, TypeElement type,
+			Map<TypeElement, TypeElement> registrars) {
 		this.utils = utils;
-		this.configurationType = type;
 		this.className = toInitializerNameFromConfigurationName(type);
 		this.pkg = ClassName.get(type).packageName();
+		type = registrars.containsKey(type) ? registrars.get(type) : type;
+		this.configurationType = type;
 		this.registrars = registrars;
 	}
 
 	public TypeElement getConfigurationType() {
 		return configurationType;
 	}
-	
+
 	public void setModuleName(ClassName moduleName) {
 		this.moduleName = moduleName;
 	}
@@ -103,7 +105,12 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
-		builder.addMethod(createInitializer());
+		if (registrars.containsValue(type)) {
+			builder.addMethod(createSelectorInitializer(type));
+		}
+		else {
+			builder.addMethod(createInitializer());
+		}
 		builder.addMethod(createConfigurations());
 		// Skip for now - will cause problems at compile time if referred to types
 		// are private
@@ -111,7 +118,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		builder.addAnnotation(moduleMappingAnnotation());
 		return builder.build();
 	}
-	
+
 	public static ClassName toInitializerNameFromConfigurationName(TypeElement type) {
 		return toInitializerNameFromConfigurationName(ClassName.get(type));
 	}
@@ -141,16 +148,34 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		return builder.build();
 	}
 
+	private MethodSpec createSelectorInitializer(TypeElement registrar) {
+		MethodSpec.Builder mb = MethodSpec.methodBuilder("initialize");
+		mb.addAnnotation(Override.class);
+		mb.addModifiers(Modifier.PUBLIC);
+		mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
+		// TODO use a service to register the registrar rather than calling
+		// registerBeanDefinitions right now (like conditionservice)
+		mb.addStatement("$T registrar = new $T()", registrar, registrar);
+		// TODO invoke relevant Aware related methods
+		mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
+				SpringClassNames.STANDARD_ANNOTATION_METADATA, registrar);
+		MethodSpec ms = mb.build();
+		return ms;
+	}
+
 	private void addRegistrarInvokers(MethodSpec.Builder builder) {
-		// System.out.println("Checking if need registrar invokers whilst building initializer for "+configurationType.toString());
-		List<? extends AnnotationMirror> annotationMirrors = configurationType.getAnnotationMirrors();
-		for (AnnotationMirror am: annotationMirrors) {
+		// System.out.println("Checking if need registrar invokers whilst building
+		// initializer for "+configurationType.toString());
+		List<? extends AnnotationMirror> annotationMirrors = configurationType
+				.getAnnotationMirrors();
+		for (AnnotationMirror am : annotationMirrors) {
 			// Looking up something like @EnableBar
-			TypeElement element = (TypeElement)am.getAnnotationType().asElement();
+			TypeElement element = (TypeElement) am.getAnnotationType().asElement();
 			TypeElement registrarInitializer = registrars.get(element);
 			if (registrarInitializer != null) {
 				// System.out.println("Calling initializer for "+element);
-				builder.addStatement("new $T().initialize(context)",InitializerSpec.toInitializerNameFromConfigurationName(element));			
+				builder.addStatement("new $T().initialize(context)",
+						InitializerSpec.toInitializerNameFromConfigurationName(element));
 			}
 		}
 	}
@@ -168,8 +193,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	 * 
 	 * Or, if the type is private there will be a forName() call. It is called
 	 * <tt>configurations()</tt> as might want to return nested configurations as well as
-	 * top level?
-	 * The returned data here mirrors what is in InitializerMapping annotation.
+	 * top level? The returned data here mirrors what is in InitializerMapping annotation.
 	 */
 	private MethodSpec createConfigurations() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
@@ -265,7 +289,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 			Element returnTypeElement = utils.asElement(returnType);
 			if (returnTypeElement.getModifiers().contains(Modifier.PRIVATE)) {
-				utils.printMessage(Kind.WARNING,"TODO: Unable to generate source for bean method, type involved is private: "+beanMethod.getEnclosingElement()+"."+beanMethod);
+				utils.printMessage(Kind.WARNING,
+						"TODO: Unable to generate source for bean method, type involved is private: "
+								+ beanMethod.getEnclosingElement() + "." + beanMethod);
 				return false;
 			}
 			boolean conditional = utils.hasAnnotation(beanMethod,
