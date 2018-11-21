@@ -147,10 +147,16 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
 		// TODO use a service to register the registrar rather than calling
 		// registerBeanDefinitions right now (like conditionservice)
+		mb.addStatement("$T collectorService = context.getBeanFactory().getBean($T.class)",
+				SpringClassNames.COLLECTOR_SERVICE, SpringClassNames.COLLECTOR_SERVICE);
+		mb.beginControlFlow("collectorService.registerRegistrar($T.class, () -> ",registrar);
 		mb.addStatement("$T registrar = new $T()", registrar, registrar);
 		insertAnyNecessaryAwareInvocationCode(mb, registrar);
-		mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
-				SpringClassNames.STANDARD_ANNOTATION_METADATA, registrar);
+		mb.addStatement("return registrar");
+		// TODO do this here or in the CollectorService?
+//		mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
+//				SpringClassNames.STANDARD_ANNOTATION_METADATA, registrar);
+		mb.endControlFlow(")");
 		MethodSpec ms = mb.build();
 		return ms;
 	}

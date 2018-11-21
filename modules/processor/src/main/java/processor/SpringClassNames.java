@@ -73,6 +73,9 @@ public class SpringClassNames {
 	public static final ClassName CONDITION_SERVICE = ClassName.get("slim",
 			"ConditionService");
 
+	public static final ClassName COLLECTOR_SERVICE = ClassName.get("slim",
+			"CollectorService");
+
 	public static final ClassName MODULE = ClassName.get("slim", "Module");
 
 	public static final ClassName APPLICATION_CONTEXT_INITIALIZER = ClassName

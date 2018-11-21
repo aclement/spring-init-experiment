@@ -113,12 +113,13 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			GenericApplicationContext generic = (GenericApplicationContext) context;
 			ConditionService conditions = new ModuleInstallerConditionService(generic,
 					context.getEnvironment(), context);
-			initialize(generic, conditions);
+			CollectorService collector = new CollectorService(generic);
+			initialize(generic, conditions, collector);
 			if (!isEnabled(context.getEnvironment())) {
 				return;
 			}
 			functional(generic, conditions);
-			apply(generic, initialized.getSpringApplication(), conditions);
+			apply(generic, initialized.getSpringApplication(), conditions, collector);
 		}
 		else if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			ApplicationEnvironmentPreparedEvent prepared = (ApplicationEnvironmentPreparedEvent) event;
@@ -176,8 +177,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	}
 
 	private void initialize(GenericApplicationContext context,
-			ConditionService conditions) {
+			ConditionService conditions, CollectorService collector) {
 		context.registerBean(ConditionService.class, () -> conditions);
+		context.registerBean(CollectorService.class, () -> collector);
 		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
 				.loadFactoryNames(Module.class, context.getClassLoader()));
 		for (String typeName : autoTypeNames) {
@@ -226,7 +228,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		}
 	}
 
-	private void apply(GenericApplicationContext context) {
+	private void apply(GenericApplicationContext context, CollectorService collector) {
 		List<ApplicationContextInitializer<GenericApplicationContext>> initializers = new ArrayList<>();
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.initializers) {
 			initializers.add(result);
@@ -246,10 +248,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
 			initializer.initialize(context);
 		}
+		// TODO when precisely should this run...
+		collector.invokeRegistrars();
 	}
 
 	private void apply(GenericApplicationContext context, SpringApplication application,
-			ConditionService conditions) {
+			ConditionService conditions, CollectorService collector) {
 		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
@@ -265,7 +269,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				extract(context, conditions, type, seen);
 			}
 		}
-		apply(context);
+		apply(context, collector);
 	}
 
 	private void extract(GenericApplicationContext context, ConditionService conditions,
