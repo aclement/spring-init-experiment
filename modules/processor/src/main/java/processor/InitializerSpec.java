@@ -148,11 +148,37 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		// TODO use a service to register the registrar rather than calling
 		// registerBeanDefinitions right now (like conditionservice)
 		mb.addStatement("$T registrar = new $T()", registrar, registrar);
-		// TODO invoke relevant Aware related methods
+		insertAnyNecessaryAwareInvocationCode(mb, registrar);
 		mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
 				SpringClassNames.STANDARD_ANNOTATION_METADATA, registrar);
 		MethodSpec ms = mb.build();
 		return ms;
+	}
+
+	private void insertAnyNecessaryAwareInvocationCode(com.squareup.javapoet.MethodSpec.Builder mb,
+			TypeElement typeElement) {
+		if (utils.implementsInterface(typeElement, SpringClassNames.AWARE)) {
+			if (utils.implementsInterface(typeElement, SpringClassNames.BEAN_CLASSLOADER_AWARE)) {
+				// TODO can we be more assertive here and *know* context is a ConfigurableBeanFactory?
+				mb.addStatement("$T classLoader = (context instanceof $T "+
+								"? (($T) context).getBeanClassLoader()" +
+								": context.getClassLoader())", ClassLoader.class, SpringClassNames.CONFIGURABLE_BEAN_FACTORY, SpringClassNames.CONFIGURABLE_BEAN_FACTORY);
+				mb.beginControlFlow("if (classLoader != null)");
+				mb.addStatement("(($T)registrar).setBeanClassLoader(classLoader)", SpringClassNames.BEAN_CLASSLOADER_AWARE);
+				mb.endControlFlow();
+			}
+			if (utils.implementsInterface(typeElement, SpringClassNames.BEAN_FACTORY_AWARE)) {
+				// TODO do we need check that context instance of BeanFactory?
+				mb.addStatement("(($T)registrar).setBeanFactory(($T)context)",
+						SpringClassNames.BEAN_FACTORY_AWARE,SpringClassNames.BEAN_FACTORY);
+			}
+			if (utils.implementsInterface(typeElement, SpringClassNames.ENVIRONMENT_AWARE)) {
+				mb.addStatement("(($T)registrar).setEnvironment(context.getEnvironment())",SpringClassNames.ENVIRONMENT_AWARE);
+			}
+			if (utils.implementsInterface(typeElement, SpringClassNames.RESOURCE_LOADER_AWARE)) {
+				mb.addStatement("(($T)registrar).setResourceLoader(context)",SpringClassNames.RESOURCE_LOADER_AWARE);
+			}
+		}
 	}
 
 	private void addRegistrarInvokers(MethodSpec.Builder builder) {

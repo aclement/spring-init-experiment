@@ -24,6 +24,24 @@ import com.squareup.javapoet.ParameterizedTypeName;
  */
 public class SpringClassNames {
 
+	public static final ClassName CONFIGURABLE_BEAN_FACTORY = ClassName
+			.get("org.springframework.beans.factory.config", "ConfigurableBeanFactory");
+
+	public static final ClassName BEAN_FACTORY_AWARE = ClassName
+			.get("org.springframework.beans.factory", "BeanFactoryAware");
+
+	public static final ClassName ENVIRONMENT_AWARE = ClassName
+			.get("org.springframework.context", "EnvironmentAware");
+
+	public static final ClassName RESOURCE_LOADER_AWARE = ClassName
+			.get("org.springframework.context", "ResourceLoaderAware");
+
+	public static final ClassName BEAN_CLASSLOADER_AWARE = ClassName
+			.get("org.springframework.beans.factory", "BeanClassLoaderAware");
+
+	public static final ClassName AWARE = ClassName
+			.get("org.springframework.beans.factory", "Aware");
+	
 	public static final ClassName IMPORT_SELECTOR = ClassName
 			.get("org.springframework.context.annotation", "ImportSelector");
 
