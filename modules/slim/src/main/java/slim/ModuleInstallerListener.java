@@ -188,7 +188,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				try {
 					Module m = BeanUtils.instantiateClass(module, Module.class);
 					this.autoTypes.put(m.getRoot(), module);
-					
+
 					MultiValueMap<String, Object> merged = AnnotatedElementUtils
 							.getAllAnnotationAttributes(module, Import.class.getName(),
 									true, true);
@@ -203,7 +203,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 									}
 									catch (Throwable cnfe) {
 										// skip it... effectively there is no support for
-										// that but it doesnt matter because it isnt around?
+										// that but it doesnt matter because it isnt
+										// around?
 									}
 								}
 							}
@@ -232,7 +233,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			initializers.add(result);
 		}
 		OrderComparator.sort(initializers);
-		logger.info("Applying initializers: "+initializers);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Applying initializers: " + initializers);
+		}
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
 			initializer.initialize(context);
 		}
@@ -240,7 +243,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		for (ApplicationContextInitializer<GenericApplicationContext> result : this.autos) {
 			initializers.add(result);
 		}
-		logger.info("Applying autoconfig "+initializers);		
+		if (logger.isDebugEnabled()) {
+			logger.debug("Applying autoconfig " + initializers);
+		}
 		// TODO: sort into autoconfiguration order as well
 		OrderComparator.sort(initializers);
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
@@ -271,8 +276,10 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	private void extract(GenericApplicationContext context, ConditionService conditions,
 			Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
-			// Causes inclusion of SampleApplicationModule if beanClass is SampleApplication (without this 
-			// we'll only include SampleApplicationModule if it depends on other autoconfig that pulls in SampleApplicationModule!)
+			// Causes inclusion of SampleApplicationModule if beanClass is
+			// SampleApplication (without this
+			// we'll only include SampleApplicationModule if it depends on other
+			// autoconfig that pulls in SampleApplicationModule!)
 			Class<? extends Module> moduleForBeanClass = this.autoTypes.get(beanClass);
 			if (moduleForBeanClass != null) {
 				addModule(moduleForBeanClass);
@@ -286,13 +293,15 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
-//				logger.info("processing beanclass: "+beanClass);
+				// logger.info("processing beanclass: "+beanClass);
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
 				if (imports != null) {
 					for (Import imported : imports) {
 						for (Class<?> value : imported.value()) {
-							logger.debug("Import: " + value);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Import: " + value);
+							}
 							Class<? extends Module> type = this.autoTypes.get(value);
 							if (Module.class.isAssignableFrom(value)) {
 								@SuppressWarnings("unchecked")
@@ -311,7 +320,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								invokeAwareMethods(registrar, context.getEnvironment(),
 										context, context);
 								registrar.registerBeanDefinitions(
-										new StandardAnnotationMetadata(beanClass), context);
+										new StandardAnnotationMetadata(beanClass),
+										context);
 							}
 							else if (ImportSelector.class.isAssignableFrom(value)) {
 								ImportSelector registrar = BeanUtils
@@ -336,10 +346,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 											ImportBeanDefinitionRegistrar registrar2 = BeanUtils
 													.instantiateClass(clazz,
 															ImportBeanDefinitionRegistrar.class);
-											invokeAwareMethods(registrar2, context.getEnvironment(),
-													context, context);
+											invokeAwareMethods(registrar2,
+													context.getEnvironment(), context,
+													context);
 											registrar2.registerBeanDefinitions(
-													new StandardAnnotationMetadata(clazz), context);
+													new StandardAnnotationMetadata(clazz),
+													context);
 										}
 										else {
 											context.registerBean(clazz);
@@ -358,7 +370,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				if (resources != null) {
 					for (ImportResource resource : resources) {
 						for (String value : resource.value()) {
-							logger.debug("ImportResource: " + value);
+							if (logger.isDebugEnabled()) {
+								logger.debug("ImportResource: " + value);
+							}
 							// Assume XML. No support for groovy as yet.
 							if (xml == null) {
 								xml = new XmlBeanDefinitionReader(context);
@@ -376,7 +390,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (type == null || this.types.contains(type)) {
 			return;
 		}
-		logger.info("adding module: " + type);
+		if (logger.isDebugEnabled()) {
+			logger.debug("adding module: " + type);
+		}
 		this.types.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {
 			this.autos.addAll(
@@ -422,7 +438,7 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 
 	public SlimConfigurationClassPostProcessor(
 			Map<Class<?>, Class<? extends Module>> autoTypes) {
-				this.autoTypes = autoTypes;
+		this.autoTypes = autoTypes;
 	}
 
 	@Override
