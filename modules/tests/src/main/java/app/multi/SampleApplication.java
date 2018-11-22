@@ -2,9 +2,9 @@ package app.multi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
 import org.springframework.context.annotation.Import;
 
-import boot.autoconfigure.context.ContextAutoConfigurationModule;
 import lib.multi.BarConfiguration;
 import lib.multi.RunnerConfiguration;
 

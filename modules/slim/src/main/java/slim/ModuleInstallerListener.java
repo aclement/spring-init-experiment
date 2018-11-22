@@ -303,16 +303,16 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							else if (type != null) {
 								addModule(type);
 							}
-//							else if (ImportBeanDefinitionRegistrar.class
-//									.isAssignableFrom(value)) {
-//								ImportBeanDefinitionRegistrar registrar = BeanUtils
-//										.instantiateClass(value,
-//												ImportBeanDefinitionRegistrar.class);
-//								invokeAwareMethods(registrar, context.getEnvironment(),
-//										context, context);
-//								registrar.registerBeanDefinitions(
-//										new StandardAnnotationMetadata(value), context);
-//							}
+							else if (ImportBeanDefinitionRegistrar.class
+									.isAssignableFrom(value)) {
+								ImportBeanDefinitionRegistrar registrar = BeanUtils
+										.instantiateClass(value,
+												ImportBeanDefinitionRegistrar.class);
+								invokeAwareMethods(registrar, context.getEnvironment(),
+										context, context);
+								registrar.registerBeanDefinitions(
+										new StandardAnnotationMetadata(beanClass), context);
+							}
 							else if (ImportSelector.class.isAssignableFrom(value)) {
 								ImportSelector registrar = BeanUtils
 										.instantiateClass(value, ImportSelector.class);

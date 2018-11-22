@@ -21,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.MethodMetadata;
@@ -62,6 +64,10 @@ public class ModuleInstallerConditionService implements ConditionService {
 			if (type.isAssignableFrom(candidate)) {
 				return !this.evaluator.shouldSkip(method);
 			}
+		}
+		Class<?> base = factory.getSuperclass();
+		if (AnnotationUtils.isAnnotationDeclaredLocally(Configuration.class, base)) {
+			return matches(base, type);
 		}
 		return false;
 	}

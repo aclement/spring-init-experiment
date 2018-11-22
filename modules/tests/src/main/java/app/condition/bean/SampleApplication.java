@@ -5,11 +5,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import boot.autoconfigure.context.ContextAutoConfigurationModule;
 
 @SpringBootConfiguration
 @Import({ SampleConfiguration.class, ContextAutoConfigurationModule.class})
