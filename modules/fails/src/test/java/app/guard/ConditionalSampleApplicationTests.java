@@ -16,28 +16,29 @@
 
 package app.guard;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
  *
  */
-@Configuration
-public class SampleConfiguration {
+@SpringBootTest(properties = {"spring.functional.enabled=false", "app.bar=false"})
+@RunWith(SpringRunner.class)
+public class ConditionalSampleApplicationTests {
 
-	@Configuration
-	@Import(FooConfiguration.class)
-	public static class FooConfig {
+	@Autowired(required=false)
+	private Bar bar;
 
-	}
-
-	@ConditionalOnProperty(prefix="app", name="bar", havingValue="true", matchIfMissing=true)
-	@Configuration
-	@Import(BarConfiguration.class)
-	public static class BarConfig {
-
+	@Test
+	public void test() {
+		assertThat(bar).isNull();
 	}
 
 }
