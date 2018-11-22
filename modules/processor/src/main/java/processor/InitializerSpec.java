@@ -121,7 +121,11 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	}
 
 	public static ClassName toInitializerNameFromConfigurationName(ClassName type) {
-		return ClassName.get(type.packageName(), type.simpleName() + "Initializer");
+		String name = type.simpleName();
+		if (type.enclosingClassName()!=null) {
+			name = type.enclosingClassName().simpleName() + "_" + name;
+		}
+		return ClassName.get(type.packageName(), name + "Initializer");
 	}
 
 	// TODO better as a method that returns the class?? means less reflection
