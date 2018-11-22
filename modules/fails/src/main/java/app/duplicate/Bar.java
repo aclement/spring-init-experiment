@@ -1,4 +1,4 @@
-package lib.imported;
+package app.duplicate;
 
 public class Bar {
 

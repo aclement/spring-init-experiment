@@ -1,4 +1,4 @@
-package app.scan;
+package app.scanned;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

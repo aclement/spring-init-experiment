@@ -1,4 +1,4 @@
-package lib.imported;
+package app.guard;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class BarConfiguration {
+public class FooConfiguration {
 
 	@Value("${app.value}")
 	private String message;
@@ -14,11 +14,6 @@ public class BarConfiguration {
 	@Bean
 	public Foo foo() {
 		return new Foo();
-	}
-
-	@Bean
-	public Bar bar(Foo foo) {
-		return new Bar(foo);
 	}
 
 	@Bean

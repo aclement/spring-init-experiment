@@ -1,4 +1,4 @@
-package app.scan;
+package app.guard;
 
 public class Bar {
 

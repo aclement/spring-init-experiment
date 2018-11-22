@@ -1,4 +1,4 @@
-package lib.imported;
+package app.guard;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
