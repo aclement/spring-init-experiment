@@ -209,15 +209,23 @@ public class ModuleSpec {
 		// If this is an incremental build we may just be building 1 initializer (when the
 		// module in fact includes multiple)
 		utils.printMessage(Kind.NOTE,
-				"Creating initializer for " + getClassName() + ": current initializers: "
+				"Creating module initializers() method for " + getClassName() + ": current initializers: "
 						+ subset + " previous initializers: "
 						+ previouslyAssociatedConfigurations);
-		subset.addAll(previouslyAssociatedInitializers());
 		builder.addStatement("return $T.asList(" + newInstances(subset.size()) + ")",
 				array(Arrays.class, subset));
 		return builder.build();
 	}
 
+	// This code is used both in computing the annotation (@Imports) and computing the initializers - are the
+	// filter expressions the same in both cases? (tests so far do pass...)
+	private List<ClassName> nonSelfImportedPreviouslyAssociatedConfigurations() {
+		return previouslyAssociatedConfigurations.stream()
+				.filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString())))
+				.filter(cn -> !isMyPackageSpace(cn)) // should this check 'imports' instead?
+				.collect(Collectors.toList());
+	}
+	
 	private MethodSpec createGetRoot() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("getRoot");
 		builder.addAnnotation(Override.class);
@@ -369,10 +377,8 @@ public class ModuleSpec {
 		return builder.toString();
 	}
 
-	private List<ClassName> nonSelfImportedPreviouslyAssociatedConfigurations() {
-		return previouslyAssociatedConfigurations.stream()
-				.filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString())))
-				.collect(Collectors.toList());
+	private boolean isMyPackageSpace(ClassName cn) {
+		return cn.toString().startsWith(pkg);
 	}
 
 	private ClassName[] findImports(Collection<InitializerSpec> collection) {
