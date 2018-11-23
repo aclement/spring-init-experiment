@@ -18,7 +18,6 @@ package processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,6 +25,7 @@ import java.util.stream.Stream;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
@@ -58,16 +58,20 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private ElementUtils utils;
 	private ClassName className;
 	private ClassName moduleName;
-	private Map<TypeElement, TypeElement> registrars;
+	private ImportsSpec imports;
 
-	public InitializerSpec(ElementUtils utils, TypeElement type,
-			Map<TypeElement, TypeElement> registrars) {
+	public InitializerSpec(ElementUtils utils, TypeElement type, ImportsSpec imports) {
 		this.utils = utils;
 		this.className = toInitializerNameFromConfigurationName(type);
 		this.pkg = ClassName.get(type).packageName();
-		type = registrars.containsKey(type) ? registrars.get(type) : type;
+		type = imports.getImports().containsKey(type) && type.getKind()==ElementKind.ANNOTATION_TYPE
+				? imports.getImports().get(type).iterator().next()
+				: type;
 		this.configurationType = type;
-		this.registrars = registrars;
+		this.imports = imports;
+		for (TypeElement imported : utils.getTypesFromAnnotation(type, SpringClassNames.IMPORT.toString(), "value")) {
+			imports.addImport(type, imported);
+		}
 	}
 
 	public TypeElement getConfigurationType() {
@@ -105,7 +109,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
-		if (registrars.containsValue(type)) {
+		if (imports.getRegistrars().contains(type)) {
 			builder.addMethod(createSelectorInitializer(type));
 		}
 		else {
@@ -122,7 +126,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	public static ClassName toInitializerNameFromConfigurationName(ClassName type) {
 		String name = type.simpleName();
-		if (type.enclosingClassName()!=null) {
+		if (type.enclosingClassName() != null) {
 			name = type.enclosingClassName().simpleName() + "_" + name;
 		}
 		return ClassName.get(type.packageName(), name + "Initializer");
@@ -139,7 +143,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
 		builder.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
-		addRegistrarInvokers(builder);
 		addBeanMethods(builder, configurationType);
 		return builder.build();
 	}
@@ -160,18 +163,26 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	}
 
 	private void addRegistrarInvokers(MethodSpec.Builder builder) {
-		// System.out.println("Checking if need registrar invokers whilst building
-		// initializer for "+configurationType.toString());
+		addImportInvokers(builder, configurationType);
 		List<? extends AnnotationMirror> annotationMirrors = configurationType
 				.getAnnotationMirrors();
 		for (AnnotationMirror am : annotationMirrors) {
 			// Looking up something like @EnableBar
 			TypeElement element = (TypeElement) am.getAnnotationType().asElement();
-			TypeElement registrarInitializer = registrars.get(element);
-			if (registrarInitializer != null) {
-				// System.out.println("Calling initializer for "+element);
-				builder.addStatement("new $T().initialize(context)",
-						InitializerSpec.toInitializerNameFromConfigurationName(element));
+			addImportInvokers(builder, element);
+		}
+	}
+
+	private void addImportInvokers(MethodSpec.Builder builder, TypeElement element) {
+		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
+		if (registrarInitializers != null) {
+			for (TypeElement imported : imports.getImports().get(element)) {
+				if (imported.getQualifiedName().toString().startsWith(pkg)) {
+					builder.addStatement("new $T().initialize(context)", InitializerSpec
+							.toInitializerNameFromConfigurationName(imported));
+				} else {
+					// TODO: import external module somehow (using a utility?)
+				}
 			}
 		}
 	}
@@ -198,9 +209,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				WildcardTypeName.subtypeOf(Object.class)));
 		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
 			builder.beginControlFlow("try");
-			builder.addStatement(
-					"return $T.forName(\"$L\",null)", SpringClassNames.CLASS_UTILS,
-					getConfigurationType());
+			builder.addStatement("return $T.forName(\"$L\",null)",
+					SpringClassNames.CLASS_UTILS, getConfigurationType());
 			builder.endControlFlow();
 			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
 			builder.addStatement("return null");
@@ -222,6 +232,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					SpringClassNames.CONDITION_SERVICE);
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
+		addRegistrarInvokers(builder);
 		addAnyEnableConfigurationPropertiesRegistrations(builder, type);
 		addNewBeanForConfig(builder, type);
 		boolean conditionsAvailable = conditional;

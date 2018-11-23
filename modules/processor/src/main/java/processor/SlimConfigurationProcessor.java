@@ -3,13 +3,13 @@ package processor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -48,7 +48,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private boolean processed;
 
-	private Map<TypeElement, TypeElement> registrarInitializers = new HashMap<>();
+	private ImportsSpec imports;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -58,7 +58,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
 		loadState();
-		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer, this.registrarInitializers);
+		this.imports = new ImportsSpec(this.utils);
+		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer, this.imports);
 	}
 
 	@Override
@@ -69,7 +70,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
-		// messager.printMessage(Kind.NOTE, "processor instance running #"+Integer.toHexString(System.identityHashCode(this)));
+		// messager.printMessage(Kind.NOTE, "processor instance running
+		// #"+Integer.toHexString(System.identityHashCode(this)));
 		if (roundEnv.processingOver()) {
 			updateFactories();
 			specs.saveModuleSpecs();
@@ -100,7 +102,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		StringBuilder builder = new StringBuilder(values);
 		for (ModuleSpec module : specs.getModules()) {
-			if (module.getModule() != null && !values.contains(module.getClassName().toString())) {
+			if (module.getModule() != null
+					&& !values.contains(module.getClassName().toString())) {
 				if (builder.length() > 0) {
 					builder.append(",");
 				}
@@ -120,7 +123,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 	}
 
-	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv, Predicate<TypeElement> typeSelectionCondition) {
+	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv,
+			Predicate<TypeElement> typeSelectionCondition) {
 		Set<TypeElement> types = new HashSet<>();
 		for (TypeElement type : ElementFilter.typesIn(roundEnv.getRootElements())) {
 			collectTypes(type, types, typeSelectionCondition);
@@ -128,22 +132,27 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		return types;
 	}
 
-	private void collectTypes(TypeElement type, Set<TypeElement> types, Predicate<TypeElement> typeSelectionCondition) {
+	private void collectTypes(TypeElement type, Set<TypeElement> types,
+			Predicate<TypeElement> typeSelectionCondition) {
 		if (typeSelectionCondition.test(type)) {
 			types.add(type);
 			for (Element element : type.getEnclosedElements()) {
 				if (element instanceof TypeElement) {
+					if (utils.hasAnnotation(element, SpringClassNames.CONFIGURATION.toString())) {
+						messager.printMessage(Kind.NOTE, "Found nested @Configuration in " + element, element);
+						imports.addNested(type, (TypeElement) element);
+					}
 					collectTypes((TypeElement) element, types, typeSelectionCondition);
 				}
 			}
 		}
 	}
-	
+
 	private void process(RoundEnvironment roundEnv) {
 		Set<TypeElement> types = collectTypes(roundEnv,
 				te -> te.getKind() == ElementKind.CLASS
-				&& !te.getModifiers().contains(Modifier.ABSTRACT)
-				&& !te.getModifiers().contains(Modifier.STATIC));
+						&& !te.getModifiers().contains(Modifier.ABSTRACT)
+						&& !te.getModifiers().contains(Modifier.STATIC));
 		for (TypeElement type : types) {
 			if (utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
 				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
@@ -162,7 +171,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 		discoverAndProcessAtEnabledRegistrarsAndSelectors(roundEnv);
 		// Work out what these modules include
-		for (ModuleSpec module: specs.getModules()) {
+		for (ModuleSpec module : specs.getModules()) {
 			module.prepare(specs);
 		}
 		for (ModuleSpec module : specs.getModules()) {
@@ -181,26 +190,24 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		}
 	}
 
-	private void discoverAndProcessAtEnabledRegistrarsAndSelectors(RoundEnvironment roundEnv) {
-		Set<TypeElement> annotationTypes = collectTypes(roundEnv, te -> te.getKind() == ElementKind.ANNOTATION_TYPE /* TODO visibility check? */);
-		for (TypeElement type: annotationTypes) {
-			AnnotationMirror annotationMirror = utils.getAnnotation(type, SpringClassNames.IMPORT.toString());
-			List<TypeElement> typesFromAnnotation = utils.getTypesFromAnnotation(annotationMirror, "value");
-			for (TypeElement te: typesFromAnnotation) {
-				if (utils.implementsInterface(te,SpringClassNames.IMPORT_BEAN_DEFINITION_REGISTRAR)) {
-					registrarInitializers.put(type, te); // @EnableBar > SampleRegistrar
-					messager.printMessage(Kind.NOTE, "Recording registrar @"+type+" > "+te);
-					if (utils.hasAnnotation(te, SpringClassNames.MODULE_ROOT.toString())) {
-						messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + te, te);
-						specs.addModule(te);
-					}
-					specs.addInitializer(type);
-				} else {
-					// TODO support import selectors
-//					// TODO For @EnableXX with import({Foo.class, Bar.class}) remember these mappings?
-//					List<TypeElement> referencedConfiguration = atEnablers.get(type);
-//					atEnablers.put(type, te);
+	private void discoverAndProcessAtEnabledRegistrarsAndSelectors(
+			RoundEnvironment roundEnv) {
+		Set<TypeElement> annotationTypes = collectTypes(roundEnv, te -> te
+				.getKind() == ElementKind.ANNOTATION_TYPE /* TODO visibility check? */);
+		for (TypeElement type : annotationTypes) {
+			AnnotationMirror annotationMirror = utils.getAnnotation(type,
+					SpringClassNames.IMPORT.toString());
+			List<TypeElement> typesFromAnnotation = utils
+					.getTypesFromAnnotation(annotationMirror, "value");
+			for (TypeElement te : typesFromAnnotation) {
+				imports.addImport(type, te); // @EnableBar > SampleRegistrar
+				messager.printMessage(Kind.NOTE,
+						"Recording import @" + type + " > " + te);
+				if (utils.hasAnnotation(te, SpringClassNames.MODULE_ROOT.toString())) {
+					messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + te, te);
+					specs.addModule(te);
 				}
+				specs.addInitializer(type);
 			}
 		}
 	}
@@ -214,7 +221,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			throw new IllegalStateException(ex);
 		}
 	}
-	
+
 	public void loadState() {
 		Properties properties = new Properties();
 		try {
@@ -223,43 +230,57 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			try (InputStream stream = resource.openInputStream();) {
 				properties.load(stream);
 			}
-			messager.printMessage(Kind.NOTE, "Loading registrar properties:"+ properties);
-			for (Map.Entry<Object, Object> property: properties.entrySet()) {
-				String annotationType = (String)property.getKey(); // registrarinitializer.XXXX.YYY.ZZZ
-				String k = annotationType.substring("registrarinitializer.".length());
-				String v = ((String)property.getValue());
-				TypeElement kte = utils.asTypeElement(k);
-				TypeElement vte = utils.asTypeElement(v);
-				if (kte == null || vte == null) {
-					// TODO need to cope with types being removed across incremental builds - is this ok?
-					messager.printMessage(Kind.NOTE,  "Looks like a type has been removed, ignoring registrar entry "+k+"="+v+" resolved to "+kte+"="+vte);
-				} else {
-					registrarInitializers.put(kte,vte);
+			messager.printMessage(Kind.NOTE,
+					"Loading registrar properties:" + properties);
+			for (Map.Entry<Object, Object> property : properties.entrySet()) {
+				String annotationType = (String) property.getKey(); // registrarinitializer.XXXX.YYY.ZZZ
+				String k = annotationType.substring("import.".length());
+				for (String v : ((String) property.getValue()).split(",")) {
+					TypeElement kte = utils.asTypeElement(k);
+					TypeElement vte = utils.asTypeElement(v);
+					if (kte == null || vte == null) {
+						// TODO need to cope with types being removed across incremental
+						// builds - is this ok?
+						messager.printMessage(Kind.NOTE,
+								"Looks like a type has been removed, ignoring registrar entry "
+										+ k + "=" + v + " resolved to " + kte + "="
+										+ vte);
+					}
+					else {
+						imports.addImport(kte, vte);
+					}
 				}
 			}
-			messager.printMessage(Kind.NOTE, "Loaded "+properties.size()+" registrar definitions");
+			messager.printMessage(Kind.NOTE,
+					"Loaded " + properties.size() + " registrar definitions");
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot load "+SLIM_STATE_PATH+" (normal on first full build)");
+			messager.printMessage(Kind.NOTE,
+					"Cannot load " + SLIM_STATE_PATH + " (normal on first full build)");
 		}
 	}
-	
-	// TODO merge moduleSpecs state into just one overall annotation processor state, rather than multiple files
+
+	// TODO merge moduleSpecs state into just one overall annotation processor state,
+	// rather than multiple files
 	public void saveState() {
 		Properties properties = new Properties();
-		for (Map.Entry<TypeElement, TypeElement> registrarInitializer: registrarInitializers.entrySet()) {
-			// e.g. @EnableBar > SampleRegistrar
-			properties.setProperty("registrarinitializer."+registrarInitializer.getKey().getQualifiedName().toString(), 
-					registrarInitializer.getValue().getQualifiedName().toString());
+		for (Map.Entry<TypeElement, Set<TypeElement>> entry : imports.getImports()
+				.entrySet()) {
+			properties.setProperty(
+					"import." + entry.getKey().getQualifiedName().toString(),
+					entry.getValue().stream()
+							.map(value -> value.getQualifiedName().toString())
+							.collect(Collectors.joining(",")));
 		}
 		try {
-			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "", SLIM_STATE_PATH);
+			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
+					SLIM_STATE_PATH);
 			try (OutputStream stream = resource.openOutputStream();) {
 				properties.store(stream, "Created by " + getClass().getName());
 			}
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot write "+SLIM_STATE_PATH);
+			messager.printMessage(Kind.NOTE, "Cannot write " + SLIM_STATE_PATH);
 		}
 	}
 

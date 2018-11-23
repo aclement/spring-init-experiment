@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.FileObject;
@@ -60,22 +63,44 @@ public class ModuleSpecs {
 
 	private Messager messager;
 
-	private Map<TypeElement, TypeElement> registrars;
+	private ImportsSpec imports;
 
-	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer, Map<TypeElement, TypeElement> registrars) {
+	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer, ImportsSpec imports) {
 		this.utils = utils;
 		this.messager = messager;
 		this.filer = filer;
-		this.registrars = registrars;
+		this.imports = imports;
 		loadModuleSpecs();
 	}
 
 	public void addInitializer(TypeElement initializer) {
-		initializers.add(new InitializerSpec(this.utils, initializer, registrars));
+		initializers.add(new InitializerSpec(this.utils, initializer, imports));
+		Set<TypeElement> types = new HashSet<>();
+		findNestedInitializers(initializer, types);
+		types.remove(initializer);
+		for (TypeElement nested : types) {
+			addInitializer(nested);
+			imports.addNested(initializer, nested);
+		}
+	}
+
+	private void findNestedInitializers(TypeElement type, Set<TypeElement> types) {
+		if (type.getKind() == ElementKind.CLASS
+				&& !type.getModifiers().contains(Modifier.ABSTRACT)
+				&& utils.hasAnnotation(type, SpringClassNames.CONFIGURATION.toString())) {
+			types.add(type);
+			for (Element element : type.getEnclosedElements()) {
+				if (element instanceof TypeElement
+						&& element.getModifiers().contains(Modifier.STATIC)) {
+					findNestedInitializers((TypeElement) element, types);
+				}
+			}
+		}
+
 	}
 
 	public void addModule(TypeElement module) {
-		ModuleSpec value = new ModuleSpec(this.utils, module, registrars);
+		ModuleSpec value = new ModuleSpec(this.utils, module, imports);
 		modules.put(value.getPackage(), value);
 	}
 
@@ -99,7 +124,7 @@ public class ModuleSpecs {
 				for (String root : roots) {
 					if (root.equals(packageToCheck)) {
 						if (!modules.containsKey(root)) {
-							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root), registrars));
+							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root), imports));
 						}
 						modules.get(root).addInitializer(initializer);
 						initializers.remove(initializer);
