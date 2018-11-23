@@ -57,8 +57,8 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.messager = processingEnv.getMessager();
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
-		loadState();
 		this.imports = new ImportsSpec(this.utils);
+		loadState();
 		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer, this.imports);
 	}
 
@@ -231,12 +231,12 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				properties.load(stream);
 			}
 			messager.printMessage(Kind.NOTE,
-					"Loading registrar properties:" + properties);
+					"Loading imports information from previous build:" + properties);
 			for (Map.Entry<Object, Object> property : properties.entrySet()) {
 				String annotationType = (String) property.getKey(); // registrarinitializer.XXXX.YYY.ZZZ
 				String k = annotationType.substring("import.".length());
+				TypeElement kte = utils.asTypeElement(k);
 				for (String v : ((String) property.getValue()).split(",")) {
-					TypeElement kte = utils.asTypeElement(k);
 					TypeElement vte = utils.asTypeElement(v);
 					if (kte == null || vte == null) {
 						// TODO need to cope with types being removed across incremental
@@ -252,7 +252,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				}
 			}
 			messager.printMessage(Kind.NOTE,
-					"Loaded " + properties.size() + " registrar definitions");
+					"Loaded " + properties.size() + " import definitions");
 		}
 		catch (IOException e) {
 			messager.printMessage(Kind.NOTE,

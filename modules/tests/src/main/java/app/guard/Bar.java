@@ -10,5 +10,5 @@ public class Bar {
 
     public Foo getFoo() {
         return this.foo;
-    }
+    } 
 }

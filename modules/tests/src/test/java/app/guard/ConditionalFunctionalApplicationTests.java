@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(properties = "app.bar=false")
 @RunWith(SpringRunner.class)
-public class ConditionalFunctionalApplicationTests {
+public class ConditionalFunctionalApplicationTests { 
 
 	@Autowired(required = false)
 	private Bar bar;
