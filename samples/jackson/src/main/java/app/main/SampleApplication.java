@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAut
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
 @SpringBootConfiguration
 @Import({ PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class, JacksonAutoConfiguration.class,
-		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
+		ReactiveWebServerFactoryAutoConfigurationModule.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
 public class SampleApplication {
 
