@@ -16,6 +16,7 @@
 
 package app.selector;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -33,6 +34,7 @@ import lib.selector.Bar;
  */
 @SpringBootTest
 @RunWith(SpringRunner.class)
+@Ignore
 public class FunctionalApplicationTests {
 
 	@Autowired
