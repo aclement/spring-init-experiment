@@ -82,14 +82,16 @@ public class ElementUtils {
 					}
 					if (!seen.contains(annotation)) {
 						seen.add(annotation);
-						annotation = getAnnotation(annotation.getAnnotationType().asElement(),
-								type, seen);
+						annotation = getAnnotation(
+								annotation.getAnnotationType().asElement(), type, seen);
 						if (annotation != null) {
 							return annotation;
 						}
 					}
-				} catch (Throwable t) {
-					messager.printMessage(Kind.ERROR, "Problems working with annotation "+annotationTypename);
+				}
+				catch (Throwable t) {
+					messager.printMessage(Kind.ERROR,
+							"Problems working with annotation " + annotationTypename);
 				}
 			}
 		}
@@ -135,12 +137,14 @@ public class ElementUtils {
 
 	public List<TypeElement> getTypesFromAnnotation(AnnotationMirror annotationMirror,
 			String fieldname) {
-		Map<? extends ExecutableElement, ? extends AnnotationValue> values = annotationMirror
-				.getElementValues();
 		List<TypeElement> collected = new ArrayList<>();
-		for (ExecutableElement element : values.keySet()) {
-			if (element.getSimpleName().toString().equals(fieldname)) {
-				values.get(element).accept(typeCollector, collected);
+		if (annotationMirror != null) {
+			Map<? extends ExecutableElement, ? extends AnnotationValue> values = annotationMirror
+					.getElementValues();
+			for (ExecutableElement element : values.keySet()) {
+				if (element.getSimpleName().toString().equals(fieldname)) {
+					values.get(element).accept(typeCollector, collected);
+				}
 			}
 		}
 		return collected;
@@ -369,9 +373,9 @@ public class ElementUtils {
 	}
 
 	public void printMessage(Kind kind, CharSequence message) {
-		messager.printMessage(kind,message);
+		messager.printMessage(kind, message);
 	}
-	
+
 	public TypeMirror erasure(TypeMirror type) {
 		if (type.getKind() == TypeKind.ARRAY) {
 			// Erase the component type?
@@ -400,16 +404,16 @@ public class ElementUtils {
 		}
 		return new ArrayList<>(list);
 	}
-	
+
 	public boolean implementsInterface(TypeElement te, ClassName intface) {
-		if (te==null) {
+		if (te == null) {
 			return false;
 		}
 		if (ClassName.get(te).equals(intface)) {
 			return true;
 		}
-		for (TypeMirror t: te.getInterfaces()) {
-			boolean b = implementsInterface((TypeElement)asElement(t), intface);
+		for (TypeMirror t : te.getInterfaces()) {
+			boolean b = implementsInterface((TypeElement) asElement(t), intface);
 			if (b) {
 				return true;
 			}
@@ -418,6 +422,6 @@ public class ElementUtils {
 		if (superclass == null) {
 			return false;
 		}
-		return implementsInterface((TypeElement)asElement(superclass), intface);
+		return implementsInterface((TypeElement) asElement(superclass), intface);
 	}
 }
