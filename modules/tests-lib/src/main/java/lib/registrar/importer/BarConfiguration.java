@@ -14,33 +14,17 @@
  * limitations under the License.
  */
 
-package app.registrar;
+package lib.registrar.importer;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import lib.registrar.enabler.Bar;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties = "spring.functional.enabled=false")
-@RunWith(SpringRunner.class)
-public class SampleApplicationTests {
-
-	@Autowired
-	private Bar bar;
-
-	@Test
-	public void test() {
-		assertThat(bar).isNotNull();
-	}
+@Configuration
+@Import(SampleRegistrar.class)
+public class BarConfiguration {
 
 }

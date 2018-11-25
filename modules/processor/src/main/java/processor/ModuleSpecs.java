@@ -75,6 +75,9 @@ public class ModuleSpecs {
 
 	public void addInitializer(TypeElement initializer) {
 		initializers.add(new InitializerSpec(this.utils, initializer, imports));
+		for (TypeElement nested : imports.getImports(initializer)) {
+			addInitializer(nested);
+		}
 		Set<TypeElement> types = new HashSet<>();
 		findNestedInitializers(initializer, types);
 		types.remove(initializer);

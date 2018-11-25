@@ -1,4 +1,4 @@
-package lib.registrar;
+package lib.registrar.enabler;
 
 public class Bar {
 

@@ -1,4 +1,4 @@
-package lib.registrar;
+package lib.registrar.importer;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoCon
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
-import lib.registrar.EnableBar;
+import lib.registrar.enabler.EnableBar;
 
 @SpringBootConfiguration
 @EnableBar
