@@ -178,6 +178,10 @@ public class ModuleSpec {
 			// Can't make it private, will cause issues
 			modifiers.remove(Modifier.PRIVATE);
 		}
+		if (modifiers.contains(Modifier.STATIC)) {
+			// Can't make it private, will cause issues
+			modifiers.remove(Modifier.STATIC);
+		}
 		if (!modifiers.contains(Modifier.PUBLIC)) {
 			modifiers.add(Modifier.PUBLIC);
 		}
