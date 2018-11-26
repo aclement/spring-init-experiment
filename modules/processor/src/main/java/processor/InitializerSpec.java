@@ -154,12 +154,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		mb.addAnnotation(Override.class);
 		mb.addModifiers(Modifier.PUBLIC);
 		mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
-		// TODO use a service to register the registrar rather than calling
-		// registerBeanDefinitions right now (like conditionservice)
-		mb.addStatement("$T registrar = new $T()", registrar, registrar);
-		// TODO invoke relevant Aware related methods
-		mb.addStatement("registrar.registerBeanDefinitions(new $T($T.class),context)",
-				SpringClassNames.STANDARD_ANNOTATION_METADATA, registrar);
+		mb.addStatement(
+				"context.getBeanFactory().getBean($T.class).add($T.class, $T.class)",
+				SpringClassNames.IMPORT_REGISTRARS,
+				configurationType, registrar);
 		MethodSpec ms = mb.build();
 		return ms;
 	}

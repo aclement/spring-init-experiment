@@ -178,6 +178,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	private void initialize(GenericApplicationContext context,
 			ConditionService conditions) {
 		context.registerBean(ConditionService.class, () -> conditions);
+		context.registerBean(ImportRegistrars.class, () -> new ModuleInstallerImportRegistrars(context));
 		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
 				.loadFactoryNames(Module.class, context.getClassLoader()));
 		for (String typeName : autoTypeNames) {
@@ -255,6 +256,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void apply(GenericApplicationContext context, SpringApplication application,
 			ConditionService conditions) {
+		ImportRegistrars registrars = context.getBeanFactory().getBean(ImportRegistrars.class);
 		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
@@ -267,13 +269,13 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 						application.getClassLoader());
 			}
 			if (type != null) {
-				extract(context, conditions, type, seen);
+				extract(context, conditions, registrars, type, seen);
 			}
 		}
 		apply(context);
 	}
 
-	private void extract(GenericApplicationContext context, ConditionService conditions,
+	private void extract(GenericApplicationContext context, ConditionService conditions, ImportRegistrars registrars,
 			Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
 			// Causes inclusion of SampleApplicationModule if beanClass is
@@ -284,12 +286,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			if (moduleForBeanClass != null) {
 				addModule(moduleForBeanClass);
 			}
-			processImports(context, conditions, beanClass, seen);
+			processImports(context, conditions, registrars, beanClass, seen);
 		}
 	}
 
 	private void processImports(GenericApplicationContext context,
-			ConditionService conditions, Class<?> beanClass, Set<Class<?>> seen) {
+			ConditionService conditions, ImportRegistrars registrars, Class<?> beanClass, Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
@@ -314,14 +316,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							}
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(value)) {
-								ImportBeanDefinitionRegistrar registrar = BeanUtils
-										.instantiateClass(value,
-												ImportBeanDefinitionRegistrar.class);
-								invokeAwareMethods(registrar, context.getEnvironment(),
-										context, context);
-								registrar.registerBeanDefinitions(
-										new StandardAnnotationMetadata(beanClass),
-										context);
+								registrars.add(beanClass, value);
 							}
 							else if (ImportSelector.class.isAssignableFrom(value)) {
 								ImportSelector registrar = BeanUtils
@@ -337,7 +332,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 												select, context.getClassLoader());
 										if (clazz.getAnnotation(
 												Configuration.class) != null) {
-											processImports(context, conditions, clazz,
+											processImports(context, conditions, registrars, clazz,
 													seen);
 										}
 										// TODO this branch still necessary?
@@ -360,7 +355,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 								}
 								// TODO: support for deferred import selector
 							}
-							processImports(context, conditions, value, seen);
+							processImports(context, conditions, registrars, value, seen);
 							seen.add(value);
 						}
 					}
