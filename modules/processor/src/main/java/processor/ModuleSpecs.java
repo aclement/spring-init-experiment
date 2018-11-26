@@ -75,9 +75,6 @@ public class ModuleSpecs {
 
 	public void addInitializer(TypeElement initializer) {
 		initializers.add(new InitializerSpec(this.utils, initializer, imports));
-		for (TypeElement nested : imports.getImports(initializer)) {
-			addInitializer(nested);
-		}
 		Set<TypeElement> types = new HashSet<>();
 		findNestedInitializers(initializer, types);
 		types.remove(initializer);
@@ -142,6 +139,17 @@ public class ModuleSpecs {
 								"couldn't find module home for " + initializer);
 					}
 					packageToCheck = (idx == -1) ? "" : packageToCheck.substring(0, idx);
+				}
+			}
+		}
+		// Hoover up any imports that didn't already get turned into initializers
+		for (TypeElement importer : imports.getImports().keySet()) {
+			for (TypeElement imported : imports.getImports(importer)) {
+				for (String root : roots) {
+					// Only if they are in the same package (a reasonable proxy for "in this source module")
+					if (imported.getQualifiedName().toString().startsWith(root)) {
+						modules.get(root).addInitializer(new InitializerSpec(this.utils, imported, imports));
+					}
 				}
 			}
 		}
