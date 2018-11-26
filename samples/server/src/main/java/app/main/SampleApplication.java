@@ -16,8 +16,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootConfiguration
 // @EnableAutoConfiguration
-@Import({ SampleApplicationModule.class,
-		ReactiveWebServerFactoryAutoConfigurationModule.class })
+@Import({ ReactiveWebServerFactoryAutoConfigurationModule.class })
 public class SampleApplication {
 
 	@Value("${app.value}")

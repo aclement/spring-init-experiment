@@ -18,7 +18,11 @@ import org.springframework.orm.jpa.persistenceunit.PersistenceUnitManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
+@ModuleMapping(
+    module = HibernateJpaAutoConfigurationModule.class
+)
 public class HibernateJpaConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

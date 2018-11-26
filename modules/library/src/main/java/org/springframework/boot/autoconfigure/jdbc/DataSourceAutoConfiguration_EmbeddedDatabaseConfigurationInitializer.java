@@ -10,18 +10,17 @@ import slim.ModuleMapping;
 @ModuleMapping(
     module = DataSourceAutoConfigurationModule.class
 )
-public class DataSourceJmxConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+public class DataSourceAutoConfiguration_EmbeddedDatabaseConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
-    if (conditions.matches(DataSourceJmxConfiguration.class)) {
-      new DataSourceJmxConfiguration_HikariInitializer().initialize(context);
-      new DataSourceJmxConfiguration_TomcatDataSourceJmxConfigurationInitializer().initialize(context);
-      context.registerBean(DataSourceJmxConfiguration.class, () -> new DataSourceJmxConfiguration());
+    if (conditions.matches(DataSourceAutoConfiguration.EmbeddedDatabaseConfiguration.class)) {
+      new EmbeddedDataSourceConfigurationInitializer().initialize(context);
+      context.registerBean(DataSourceAutoConfiguration.EmbeddedDatabaseConfiguration.class, () -> new DataSourceAutoConfiguration.EmbeddedDatabaseConfiguration());
     }
   }
 
   public static Class<?> configurations() {
-    return DataSourceJmxConfiguration.class;
+    return DataSourceAutoConfiguration.EmbeddedDatabaseConfiguration.class;
   }
 }

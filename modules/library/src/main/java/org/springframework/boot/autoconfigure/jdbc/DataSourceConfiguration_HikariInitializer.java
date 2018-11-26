@@ -1,5 +1,6 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
+import com.zaxxer.hikari.HikariDataSource;
 import java.lang.Class;
 import java.lang.Override;
 import org.springframework.context.ApplicationContextInitializer;
@@ -10,18 +11,17 @@ import slim.ModuleMapping;
 @ModuleMapping(
     module = DataSourceAutoConfigurationModule.class
 )
-public class DataSourceJmxConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+public class DataSourceConfiguration_HikariInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
-    if (conditions.matches(DataSourceJmxConfiguration.class)) {
-      new DataSourceJmxConfiguration_HikariInitializer().initialize(context);
-      new DataSourceJmxConfiguration_TomcatDataSourceJmxConfigurationInitializer().initialize(context);
-      context.registerBean(DataSourceJmxConfiguration.class, () -> new DataSourceJmxConfiguration());
+    if (conditions.matches(DataSourceConfiguration.Hikari.class)) {
+      context.registerBean(DataSourceConfiguration.Hikari.class, () -> new DataSourceConfiguration.Hikari());
+      context.registerBean("dataSource", HikariDataSource.class, () -> context.getBean(DataSourceConfiguration.Hikari.class).dataSource(context.getBean(DataSourceProperties.class)));
     }
   }
 
   public static Class<?> configurations() {
-    return DataSourceJmxConfiguration.class;
+    return DataSourceConfiguration.Hikari.class;
   }
 }

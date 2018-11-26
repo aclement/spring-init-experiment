@@ -8,7 +8,11 @@ import org.springframework.boot.jdbc.XADataSourceWrapper;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
+@ModuleMapping(
+    module = DataSourceAutoConfigurationModule.class
+)
 public class XADataSourceAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

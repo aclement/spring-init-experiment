@@ -7,8 +7,12 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
-public class JdbcTemplateConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+@ModuleMapping(
+    module = DataSourceAutoConfigurationModule.class
+)
+public class JdbcTemplateAutoConfiguration_JdbcTemplateConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
     context.registerBean(JdbcTemplateAutoConfiguration.JdbcTemplateConfiguration.class, () -> new JdbcTemplateAutoConfiguration.JdbcTemplateConfiguration(context.getBean(DataSource.class),context.getBean(JdbcProperties.class)));

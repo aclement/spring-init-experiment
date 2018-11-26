@@ -7,10 +7,15 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
-public class NamedParameterJdbcTemplateConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+@ModuleMapping(
+    module = DataSourceAutoConfigurationModule.class
+)
+public class JdbcTemplateAutoConfiguration_NamedParameterJdbcTemplateConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
+    new JdbcTemplateAutoConfiguration_JdbcTemplateConfigurationInitializer().initialize(context);
     context.registerBean(JdbcTemplateAutoConfiguration.NamedParameterJdbcTemplateConfiguration.class, () -> new JdbcTemplateAutoConfiguration.NamedParameterJdbcTemplateConfiguration());
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(JdbcTemplateAutoConfiguration.NamedParameterJdbcTemplateConfiguration.class, NamedParameterJdbcTemplate.class)) {

@@ -6,7 +6,11 @@ import javax.sql.DataSource;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
+@ModuleMapping(
+    module = DataSourceAutoConfigurationModule.class
+)
 public class JndiDataSourceAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

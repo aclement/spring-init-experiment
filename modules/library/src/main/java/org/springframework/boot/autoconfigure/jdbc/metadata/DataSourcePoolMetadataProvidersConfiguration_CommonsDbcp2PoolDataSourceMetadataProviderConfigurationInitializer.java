@@ -6,8 +6,12 @@ import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import slim.ConditionService;
+import slim.ModuleMapping;
 
-public class CommonsDbcp2PoolDataSourceMetadataProviderConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+@ModuleMapping(
+    module = DataSourcePoolMetadataProvidersConfigurationModule.class
+)
+public class DataSourcePoolMetadataProvidersConfiguration_CommonsDbcp2PoolDataSourceMetadataProviderConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
