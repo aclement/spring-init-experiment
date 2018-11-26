@@ -234,15 +234,9 @@ public class ModuleSpec {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("getRoot");
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
-		builder.returns(ClassName.get(Class.class));
+		builder.returns(WildcardTypeName.get(Class.class));
 		builder.addStatement("return $T.class", rootType);
 		return builder.build();
-	}
-
-	private List<ClassName> previouslyAssociatedInitializers() {
-		return previouslyAssociatedConfigurations.stream()
-				.map(InitializerSpec::toInitializerNameFromConfigurationName)
-				.collect(Collectors.toList());
 	}
 
 	private MethodSpec createConfigurations() {
