@@ -126,7 +126,7 @@ public class ModuleSpecs {
 						if (!modules.containsKey(root)) {
 							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root), imports));
 						}
-						modules.get(root).addInitializer(initializer);
+						modules.get(root).addInitializer(initializer);;
 						initializers.remove(initializer);
 						moduleFound = true;
 					}
@@ -145,7 +145,8 @@ public class ModuleSpecs {
 		// Hoover up any imports that didn't already get turned into initializers
 		for (TypeElement importer : imports.getImports().keySet()) {
 			for (TypeElement imported : imports.getImports(importer)) {
-				for (String root : roots) {
+				for (String root : modules.keySet()) {
+					ModuleSpec module = modules.get(root);
 					// Only if they are in the same package (a reasonable proxy for "in this source module")
 					if (imported.getQualifiedName().toString().startsWith(root)) {
 						modules.get(root).addInitializer(new InitializerSpec(this.utils, imported, imports));

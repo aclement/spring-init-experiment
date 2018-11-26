@@ -1,6 +1,11 @@
 package app.nested;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
@@ -8,9 +13,13 @@ import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationMo
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.type.AnnotationMetadata;
+
+import app.nested.SampleApplication.SampleRegistrar;
 
 @SpringBootConfiguration
-@Import({ContextAutoConfigurationModule.class })
+@Import({ContextAutoConfigurationModule.class, SampleRegistrar.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {
@@ -33,13 +42,43 @@ public class SampleApplication {
 			return new Bar(foo);
 		}
 
-		@Bean
-		public CommandLineRunner runner(Bar bar) {
-			return args -> {
-				System.out.println("Message: " + message);
-				System.out.println("Bar: " + bar);
-				System.out.println("Foo: " + bar.getFoo());
-			};
+	}
+	
+	protected static class SampleRegistrar implements ImportBeanDefinitionRegistrar {
+
+		@Override
+		public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
+				BeanDefinitionRegistry registry) {
+			registry.registerBeanDefinition("internalBarConfiguration",
+					BeanDefinitionBuilder.genericBeanDefinition(BarPostProcessor.class).getBeanDefinition());
+		}
+
+		private static class BarPostProcessor implements BeanDefinitionRegistryPostProcessor {
+
+			private ConfigurableListableBeanFactory context;
+
+			public CommandLineRunner runner(Bar bar) {
+				return args -> {
+					System.out.println("Bar: " + bar);
+					System.out.println("Foo: " + bar.getFoo());
+				};
+			}
+
+			@Override
+			public void postProcessBeanFactory(ConfigurableListableBeanFactory context)
+					throws BeansException {
+				this.context = context;
+			}
+
+			@Override
+			public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
+					throws BeansException {
+				registry.registerBeanDefinition("runner",
+						BeanDefinitionBuilder
+								.genericBeanDefinition(CommandLineRunner.class,
+										() -> runner(context.getBean(Bar.class)))
+								.getBeanDefinition());
+			}
 		}
 	}
 }
