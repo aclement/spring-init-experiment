@@ -234,7 +234,7 @@ public class ModuleSpec {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("getRoot");
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
-		builder.returns(WildcardTypeName.get(Class.class));
+		builder.returns(ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(Object.class)));
 		builder.addStatement("return $T.class", rootType);
 		return builder.build();
 	}
