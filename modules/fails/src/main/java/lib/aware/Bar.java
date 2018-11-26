@@ -1,4 +1,4 @@
-package lib.registrar;
+package lib.aware;
 
 public class Bar {
 

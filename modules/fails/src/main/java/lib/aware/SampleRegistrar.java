@@ -1,4 +1,4 @@
-package lib.registrar;
+package lib.aware;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -6,14 +6,25 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.util.Assert;
 
-class SampleRegistrar implements ImportBeanDefinitionRegistrar {
+class SampleRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
+
+	private ResourceLoader resourceLoader;
+
+	@Override
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
 
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
 			BeanDefinitionRegistry registry) {
+		Assert.notNull(resourceLoader, "ResourceLoader cannot be null");
 		registry.registerBeanDefinition("internalBarConfiguration",
 				BeanDefinitionBuilder.genericBeanDefinition(BarPostProcessor.class).getBeanDefinition());
 	}
@@ -60,4 +71,5 @@ class SampleRegistrar implements ImportBeanDefinitionRegistrar {
 							.getBeanDefinition());
 		}
 	}
+
 }
