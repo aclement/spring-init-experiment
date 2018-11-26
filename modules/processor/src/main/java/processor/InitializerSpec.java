@@ -111,7 +111,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
-		if (imports.getRegistrars().contains(type)) {
+		if (imports.getRegistrars().contains(type) || imports.getSelectors().contains(type)) {
 			builder.addMethod(createSelectorInitializer(type));
 		}
 		else {
