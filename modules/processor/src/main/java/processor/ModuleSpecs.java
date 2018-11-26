@@ -51,10 +51,11 @@ public class ModuleSpecs {
 			+ "module-mapping-metadata.properties";
 
 	private Set<InitializerSpec> initializers = new HashSet<>();
-	
+
 	private Map<String, ModuleSpec> modules = new HashMap<>();
-	
-	// Example: app.main.SampleApplication=app.main.SampleApplication,app.main.SampleConfiguration
+
+	// Example:
+	// app.main.SampleApplication=app.main.SampleApplication,app.main.SampleConfiguration
 	private Map<String, List<String>> moduleMappingInfoFromPreviousBuild = new HashMap<>();
 
 	private ElementUtils utils;
@@ -65,7 +66,8 @@ public class ModuleSpecs {
 
 	private ImportsSpec imports;
 
-	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer, ImportsSpec imports) {
+	public ModuleSpecs(ElementUtils utils, Messager messager, Filer filer,
+			ImportsSpec imports) {
 		this.utils = utils;
 		this.messager = messager;
 		this.filer = filer;
@@ -124,9 +126,11 @@ public class ModuleSpecs {
 				for (String root : roots) {
 					if (root.equals(packageToCheck)) {
 						if (!modules.containsKey(root)) {
-							modules.put(root, new ModuleSpec(this.utils, findKnownRoot(root), imports));
+							modules.put(root, new ModuleSpec(this.utils,
+									findKnownRoot(root), imports));
 						}
-						modules.get(root).addInitializer(initializer);;
+						modules.get(root).addInitializer(initializer);
+						;
 						initializers.remove(initializer);
 						moduleFound = true;
 					}
@@ -146,10 +150,11 @@ public class ModuleSpecs {
 		for (TypeElement importer : imports.getImports().keySet()) {
 			for (TypeElement imported : imports.getImports(importer)) {
 				for (String root : modules.keySet()) {
-					ModuleSpec module = modules.get(root);
-					// Only if they are in the same package (a reasonable proxy for "in this source module")
-					if (imported.getQualifiedName().toString().startsWith(root)) {
-						modules.get(root).addInitializer(new InitializerSpec(this.utils, imported, imports));
+					// Only if they are in the same package (a reasonable proxy for "in
+					// this source module")
+					if (utils.getPackage(imported).equals(root)) {
+						modules.get(root).addInitializer(
+								new InitializerSpec(this.utils, imported, imports));
 					}
 				}
 			}
@@ -162,11 +167,12 @@ public class ModuleSpecs {
 	 * @param pkg the root package for a module
 	 */
 	private TypeElement findKnownRoot(String pkg) {
-		for (Map.Entry<String,List<String>> existingMapping: moduleMappingInfoFromPreviousBuild.entrySet()) {
+		for (Map.Entry<String, List<String>> existingMapping : moduleMappingInfoFromPreviousBuild
+				.entrySet()) {
 			String existingModuleClassName = existingMapping.getKey();
 			int idx = existingModuleClassName.lastIndexOf(".");
 			if (idx != -1) {
-				if (pkg.equals(existingModuleClassName.substring(0,idx))) {
+				if (pkg.equals(existingModuleClassName.substring(0, idx))) {
 					return utils.asTypeElement(existingModuleClassName);
 				}
 			}
@@ -181,17 +187,26 @@ public class ModuleSpecs {
 		}
 		return roots;
 	}
-	
+
 	public void addConfigurationsReferencedByModuleInPreviousBuild(ModuleSpec module) {
-		List<String> previousConfigurationsForModule = moduleMappingInfoFromPreviousBuild.get(module.getRootType().toString());
+		List<String> previousConfigurationsForModule = moduleMappingInfoFromPreviousBuild
+				.get(module.getRootType().toString());
 		if (previousConfigurationsForModule != null) {
-			messager.printMessage(Kind.NOTE, "existing config found for "+module.getRootType().toString()+" - number of configurations #"+(previousConfigurationsForModule==null?0:previousConfigurationsForModule.size()));
-			for (String previousConfiguration: previousConfigurationsForModule) {
+			messager.printMessage(Kind.NOTE,
+					"existing config found for " + module.getRootType().toString()
+							+ " - number of configurations #"
+							+ (previousConfigurationsForModule == null ? 0
+									: previousConfigurationsForModule.size()));
+			for (String previousConfiguration : previousConfigurationsForModule) {
 				if (utils.asTypeElement(previousConfiguration) == null) {
-					// messager.printMessage(Kind.NOTE, "unable to find "+previousConfiguration+" assuming deleted...");
-				} else {
-					// messager.printMessage(Kind.NOTE, "existence verified: "+previousConfiguration);
-					module.addConfigurationFromPreviousBuild(ClassName.bestGuess(previousConfiguration));
+					// messager.printMessage(Kind.NOTE, "unable to find
+					// "+previousConfiguration+" assuming deleted...");
+				}
+				else {
+					// messager.printMessage(Kind.NOTE, "existence verified:
+					// "+previousConfiguration);
+					module.addConfigurationFromPreviousBuild(
+							ClassName.bestGuess(previousConfiguration));
 				}
 			}
 		}
@@ -205,21 +220,25 @@ public class ModuleSpecs {
 			try (InputStream stream = resource.openInputStream();) {
 				properties.load(stream);
 			}
-			for (Map.Entry<Object, Object> property: properties.entrySet()) {
-				String moduleClassName = (String)property.getKey();
-				List<String> initializerClassNames = Arrays.asList(((String)property.getValue()).split(","));
-				this.moduleMappingInfoFromPreviousBuild.put(moduleClassName, initializerClassNames);
+			for (Map.Entry<Object, Object> property : properties.entrySet()) {
+				String moduleClassName = (String) property.getKey();
+				List<String> initializerClassNames = Arrays
+						.asList(((String) property.getValue()).split(","));
+				this.moduleMappingInfoFromPreviousBuild.put(moduleClassName,
+						initializerClassNames);
 			}
-			messager.printMessage(Kind.NOTE, "Loaded "+properties.size()+" existing module definitions");
+			messager.printMessage(Kind.NOTE,
+					"Loaded " + properties.size() + " existing module definitions");
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot load "+MODULE_MAPPINGS_PATH+" (normal on first full build)");
+			messager.printMessage(Kind.NOTE, "Cannot load " + MODULE_MAPPINGS_PATH
+					+ " (normal on first full build)");
 		}
 	}
-	
+
 	public void saveModuleSpecs() {
 		Properties properties = new Properties();
-		for (Map.Entry<String, ModuleSpec> modulesEntry: modules.entrySet()) {
+		for (Map.Entry<String, ModuleSpec> modulesEntry : modules.entrySet()) {
 			ModuleSpec moduleSpec = modulesEntry.getValue();
 			Set<InitializerSpec> moduleInitializerSpecs = moduleSpec.getInitializers();
 			String root = moduleSpec.getRootType().toString();
@@ -229,8 +248,10 @@ public class ModuleSpecs {
 			toSave.addAll(moduleInitializerSpecs.stream()
 					.map(ispec -> ispec.getConfigurationType().asType().toString())
 					.collect(Collectors.toList()));
-			toSave.addAll(moduleSpec.getPreviouslyAssociatedConfigurations().stream().map(cn -> cn.toString()).collect(Collectors.toList()));
-			properties.setProperty(root, toSave.stream().collect(Collectors.joining(",")));
+			toSave.addAll(moduleSpec.getPreviouslyAssociatedConfigurations().stream()
+					.map(cn -> cn.toString()).collect(Collectors.toList()));
+			properties.setProperty(root,
+					toSave.stream().collect(Collectors.joining(",")));
 		}
 		try {
 			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
@@ -240,7 +261,7 @@ public class ModuleSpecs {
 			}
 		}
 		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot write "+MODULE_MAPPINGS_PATH);
+			messager.printMessage(Kind.NOTE, "Cannot write " + MODULE_MAPPINGS_PATH);
 		}
 	}
 
@@ -248,7 +269,7 @@ public class ModuleSpecs {
 	 * @return the module (if any) handling a particular configuration
 	 */
 	public ModuleSpec findModuleHandling(ClassName config) {
-		for (Map.Entry<String,ModuleSpec> entry: modules.entrySet()) {
+		for (Map.Entry<String, ModuleSpec> entry : modules.entrySet()) {
 			if (entry.getValue().includesConfiguration(config)) {
 				return entry.getValue();
 			}

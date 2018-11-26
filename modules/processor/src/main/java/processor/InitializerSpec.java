@@ -64,12 +64,14 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		this.utils = utils;
 		this.className = toInitializerNameFromConfigurationName(type);
 		this.pkg = ClassName.get(type).packageName();
-		type = imports.getImports().containsKey(type) && type.getKind()==ElementKind.ANNOTATION_TYPE
-				? imports.getImports().get(type).iterator().next()
-				: type;
+		type = imports.getImports().containsKey(type)
+				&& type.getKind() == ElementKind.ANNOTATION_TYPE
+						? imports.getImports().get(type).iterator().next()
+						: type;
 		this.configurationType = type;
 		this.imports = imports;
-		for (TypeElement imported : utils.getTypesFromAnnotation(type, SpringClassNames.IMPORT.toString(), "value")) {
+		for (TypeElement imported : utils.getTypesFromAnnotation(type,
+				SpringClassNames.IMPORT.toString(), "value")) {
 			imports.addImport(type, imported);
 		}
 	}
@@ -177,10 +179,11 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
 		if (registrarInitializers != null) {
 			for (TypeElement imported : imports.getImports().get(element)) {
-				if (imported.getQualifiedName().toString().startsWith(pkg)) {
+				if (utils.getPackage(imported).equals(pkg)) {
 					builder.addStatement("new $T().initialize(context)", InitializerSpec
 							.toInitializerNameFromConfigurationName(imported));
-				} else {
+				}
+				else {
 					// TODO: import external module somehow (using a utility?)
 				}
 			}
@@ -491,7 +494,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	@Override
 	public String toString() {
-		return "InitializerSpec:" + configurationType.toString();
+		return "InitializerSpec:" + className.toString();
 	}
 
 	public ClassName getClassName() {

@@ -424,4 +424,8 @@ public class ElementUtils {
 		}
 		return implementsInterface((TypeElement) asElement(superclass), intface);
 	}
+
+	public String getPackage(TypeElement imported) {
+		return ClassName.get(imported).packageName();
+	}
 }

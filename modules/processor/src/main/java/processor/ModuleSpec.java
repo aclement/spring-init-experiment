@@ -202,7 +202,8 @@ public class ModuleSpec {
 			// This prevents an app from @Importing itself (libraries don't usually do
 			// it). We could add another annotation to signal the "module-root" or
 			// something, but this seems OK for now.
-			if (!object.getConfigurationType().equals(rootType) && imports.getIncluded().contains(object.getConfigurationType())) {
+			if (!object.getConfigurationType().equals(rootType)
+					&& imports.getIncluded().contains(object.getConfigurationType())) {
 				// It's going to be imported somewhere else
 				continue;
 			}
@@ -213,28 +214,31 @@ public class ModuleSpec {
 		// If this is an incremental build we may just be building 1 initializer (when the
 		// module in fact includes multiple)
 		utils.printMessage(Kind.NOTE,
-				"Creating module initializers() method for " + getClassName() + ": current initializers: "
-						+ subset + " previous initializers: "
+				"Creating module initializers() method for " + getClassName()
+						+ ": current initializers: " + subset + " previous initializers: "
 						+ previouslyAssociatedConfigurations);
 		builder.addStatement("return $T.asList(" + newInstances(subset.size()) + ")",
 				array(Arrays.class, subset));
 		return builder.build();
 	}
 
-	// This code is used both in computing the annotation (@Imports) and computing the initializers - are the
-	// filter expressions the same in both cases? (tests so far do pass...)
+	// This code is used both in computing the annotation (@Imports) and computing the
+	// initializers - are the filter expressions the same in both cases? (tests so far do
+	// pass...)
 	private List<ClassName> nonSelfImportedPreviouslyAssociatedConfigurations() {
 		return previouslyAssociatedConfigurations.stream()
 				.filter(cn -> !isSelfImport(utils.asTypeElement(cn.toString())))
-				.filter(cn -> !isMyPackageSpace(cn)) // should this check 'imports' instead?
+				// should this check 'imports' instead?
+				.filter(cn -> !isMyPackageSpace(cn)) //
 				.collect(Collectors.toList());
 	}
-	
+
 	private MethodSpec createGetRoot() {
 		MethodSpec.Builder builder = MethodSpec.methodBuilder("getRoot");
 		builder.addAnnotation(Override.class);
 		builder.addModifiers(Modifier.PUBLIC);
-		builder.returns(ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(Object.class)));
+		builder.returns(ParameterizedTypeName.get(ClassName.get(Class.class),
+				WildcardTypeName.subtypeOf(Object.class)));
 		builder.addStatement("return $T.class", rootType);
 		return builder.build();
 	}
@@ -296,9 +300,6 @@ public class ModuleSpec {
 			ModuleSpec spec = specs.findModuleHandling(o);
 			if (spec != null) {
 				if (spec != null && spec != this) {
-					System.out.println("Modifying autoconfig reference for module "
-							+ this.getClassName() + ": changing from " + o + " to "
-							+ spec.getClassName());
 					newImports.add(ClassName.bestGuess(spec.getClassName().toString()));
 				}
 				else {
@@ -382,7 +383,7 @@ public class ModuleSpec {
 	private ClassName[] findImports(Collection<InitializerSpec> collection) {
 		List<TypeElement> types = new ArrayList<>();
 		for (TypeElement imported : imports.getImports(rootType)) {
-			if (!imported.getQualifiedName().toString().startsWith(pkg)) {
+			if (!utils.getPackage(imported).equals(pkg)) {
 				types.add(imported);
 			}
 		}
