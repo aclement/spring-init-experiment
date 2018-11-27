@@ -9,7 +9,8 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -19,7 +20,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import app.nested.SampleApplication.SampleRegistrar;
 
 @SpringBootConfiguration
-@Import({ContextAutoConfigurationModule.class, SampleRegistrar.class })
+@Import({ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class, SampleRegistrar.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {

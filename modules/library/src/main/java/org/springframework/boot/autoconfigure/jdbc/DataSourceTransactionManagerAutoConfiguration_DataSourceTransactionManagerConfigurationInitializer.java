@@ -1,18 +1,14 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
-import java.lang.Class;
-import java.lang.Override;
 import javax.sql.DataSource;
+
 import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = DataSourceAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class DataSourceTransactionManagerAutoConfiguration_DataSourceTransactionManagerConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

@@ -1,18 +1,14 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
-import java.lang.Class;
-import java.lang.Override;
 import javax.sql.DataSource;
 import javax.sql.XADataSource;
+
 import org.springframework.boot.jdbc.XADataSourceWrapper;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = DataSourceAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class XADataSourceAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

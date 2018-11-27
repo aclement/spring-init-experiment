@@ -48,17 +48,11 @@ public class SpringClassNames {
 	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
 			"Nullable");
 
-	public static final ClassName MODULE_MAPPING = ClassName.get("slim", "ModuleMapping");
-
-	public static final ClassName MODULE_ROOT = ClassName.get("slim", "ModuleRoot");
-
 	public static final ClassName CONDITION_SERVICE = ClassName.get("slim",
 			"ConditionService");
 
 	public static final ClassName IMPORT_REGISTRARS = ClassName.get("slim",
 			"ImportRegistrars");
-
-	public static final ClassName MODULE = ClassName.get("slim", "Module");
 
 	public static final ClassName APPLICATION_CONTEXT_INITIALIZER = ClassName
 			.get("org.springframework.context", "ApplicationContextInitializer");

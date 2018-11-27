@@ -2,12 +2,13 @@ package app.resource;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 
 @SpringBootConfiguration
-@Import({ ContextAutoConfigurationModule.class })
+@Import({ ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class })
 @ImportResource("bar-config.xml")
 public class SampleApplication {
 

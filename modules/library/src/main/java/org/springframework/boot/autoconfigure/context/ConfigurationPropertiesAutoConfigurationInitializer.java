@@ -16,19 +16,12 @@
 
 package org.springframework.boot.autoconfigure.context;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
-import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessorRegistrar;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-
-import slim.Module;
 
 /**
  * @author Dave Syer
@@ -37,29 +30,16 @@ import slim.Module;
 @Configuration
 @Import({ PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class })
-public class ContextAutoConfigurationModule implements Module {
+public class ConfigurationPropertiesAutoConfigurationInitializer
+		implements ApplicationContextInitializer<GenericApplicationContext> {
 
 	@Override
-	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(ContextAutoConfigurationModule.initializer());
-	}
-
-	public static ApplicationContextInitializer<GenericApplicationContext> initializer() {
-		return new Initializer();
-	}
-
-	private static class Initializer
-			implements ApplicationContextInitializer<GenericApplicationContext> {
-
-		@Override
-		public void initialize(GenericApplicationContext context) {
-			// TODO: how to get from @EnableConfigurationProperties to this?
-			new ConfigurationPropertiesBindingPostProcessorRegistrar()
-					.registerBeanDefinitions(null, context);
-			context.registerBean(PropertySourcesPlaceholderConfigurer.class,
-					() -> new PropertySourcesPlaceholderConfigurer());
-		}
-
+	public void initialize(GenericApplicationContext context) {
+		// TODO: how to get from @EnableConfigurationProperties to this?
+		new ConfigurationPropertiesBindingPostProcessorRegistrar()
+				.registerBeanDefinitions(null, context);
+		context.registerBean(PropertySourcesPlaceholderConfigurer.class,
+				() -> new PropertySourcesPlaceholderConfigurer());
 	}
 
 }

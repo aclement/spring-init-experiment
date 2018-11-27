@@ -1,11 +1,12 @@
 package org.springframework.boot.autoconfigure.orm.jpa;
 
-import java.lang.Class;
-import java.lang.Override;
 import java.util.Collection;
+
 import javax.sql.DataSource;
+
 import org.hibernate.boot.model.naming.ImplicitNamingStrategy;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
+
 import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
 import org.springframework.boot.jdbc.SchemaManagementProvider;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -17,12 +18,9 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.persistenceunit.PersistenceUnitManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.jta.JtaTransactionManager;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = HibernateJpaAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class HibernateJpaConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

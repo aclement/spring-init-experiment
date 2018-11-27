@@ -1,16 +1,11 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
-import java.lang.Class;
-import java.lang.Override;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvidersConfigurationInitializer;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = DataSourceAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class DataSourceAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

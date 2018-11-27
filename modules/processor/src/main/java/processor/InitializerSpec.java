@@ -37,7 +37,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic.Kind;
 
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -57,7 +56,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private TypeElement configurationType;
 	private ElementUtils utils;
 	private ClassName className;
-	private ClassName moduleName;
 	private ImportsSpec imports;
 
 	public InitializerSpec(ElementUtils utils, TypeElement type, ImportsSpec imports) {
@@ -78,10 +76,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	public TypeElement getConfigurationType() {
 		return configurationType;
-	}
-
-	public void setModuleName(ClassName moduleName) {
-		this.moduleName = moduleName;
 	}
 
 	public void setConfigurationType(TypeElement configurationType) {
@@ -118,7 +112,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.addMethod(createInitializer());
 		}
 		builder.addMethod(createConfigurations());
-		builder.addAnnotation(moduleMappingAnnotation());
 		return builder.build();
 	}
 
@@ -132,12 +125,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			name = type.enclosingClassName().simpleName() + "_" + name;
 		}
 		return ClassName.get(type.packageName(), name + "Initializer");
-	}
-
-	// TODO better as a method that returns the class?? means less reflection
-	private AnnotationSpec moduleMappingAnnotation() {
-		return AnnotationSpec.builder(SpringClassNames.MODULE_MAPPING)
-				.addMember("module", "$T.class", moduleName).build();
 	}
 
 	private MethodSpec createInitializer() {

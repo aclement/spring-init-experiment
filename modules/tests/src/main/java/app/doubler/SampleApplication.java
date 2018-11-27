@@ -2,7 +2,8 @@ package app.doubler;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import lib.enable.EnableBar;
@@ -10,7 +11,7 @@ import lib.enabler.SomeConfiguration;
 
 @SpringBootConfiguration
 @EnableBar
-@Import({ SomeConfiguration.class, ContextAutoConfigurationModule.class })
+@Import({ SomeConfiguration.class, ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {

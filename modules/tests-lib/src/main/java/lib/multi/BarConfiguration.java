@@ -3,10 +3,7 @@ package lib.multi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import slim.ModuleRoot;
-
 @Configuration
-@ModuleRoot
 public class BarConfiguration {
 
 	@Bean

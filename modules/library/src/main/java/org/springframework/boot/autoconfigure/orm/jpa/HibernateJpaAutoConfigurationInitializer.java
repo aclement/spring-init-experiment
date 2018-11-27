@@ -1,15 +1,10 @@
 package org.springframework.boot.autoconfigure.orm.jpa;
 
-import java.lang.Class;
-import java.lang.Override;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = HibernateJpaAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class HibernateJpaAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

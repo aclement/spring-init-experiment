@@ -41,7 +41,9 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebApplicationContext;
@@ -73,7 +75,6 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -89,11 +90,11 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> autos = new LinkedHashSet<>();
 
-	private Set<Class<? extends Module>> types = new LinkedHashSet<>();
+	private Set<Class<? extends ApplicationContextInitializer<?>>> types = new LinkedHashSet<>();
 
 	private Set<String> autoTypeNames = new LinkedHashSet<>();
 
-	private Map<Class<?>, Class<? extends Module>> autoTypes = new HashMap<>();
+	private Map<Class<?>, Class<? extends ApplicationContextInitializer<?>>> autoTypes = new HashMap<>();
 
 	@Override
 	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
@@ -178,39 +179,19 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	private void initialize(GenericApplicationContext context,
 			ConditionService conditions) {
 		context.registerBean(ConditionService.class, () -> conditions);
-		context.registerBean(ImportRegistrars.class, () -> new ModuleInstallerImportRegistrars(context));
-		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader
-				.loadFactoryNames(Module.class, context.getClassLoader()));
-		for (String typeName : autoTypeNames) {
+		context.registerBean(ImportRegistrars.class,
+				() -> new ModuleInstallerImportRegistrars(context));
+		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader.loadFactoryNames(
+				EnableAutoConfiguration.class, context.getClassLoader()));
+		for (String autoName : autoTypeNames) {
+			String typeName = autoName + "Initializer";
 			if (ClassUtils.isPresent(typeName, context.getClassLoader())) {
 				@SuppressWarnings("unchecked")
-				Class<? extends Module> module = (Class<? extends Module>) ClassUtils
+				Class<? extends ApplicationContextInitializer<?>> module = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
 						.resolveClassName(typeName, context.getClassLoader());
 				try {
-					Module m = BeanUtils.instantiateClass(module, Module.class);
-					this.autoTypes.put(m.getRoot(), module);
-
-					MultiValueMap<String, Object> merged = AnnotatedElementUtils
-							.getAllAnnotationAttributes(module, Import.class.getName(),
-									true, true);
-					if (merged != null && merged.containsKey("value")) {
-						for (Object list : merged.get("value")) {
-							if (list instanceof String[]) {
-								for (String type : (String[]) list) {
-									try {
-										Class<?> loadedType = ClassUtils.forName(type,
-												context.getClassLoader());
-										this.autoTypes.put(loadedType, module);
-									}
-									catch (Throwable cnfe) {
-										// skip it... effectively there is no support for
-										// that but it doesnt matter because it isnt
-										// around?
-									}
-								}
-							}
-						}
-					}
+					this.autoTypes.put(ClassUtils.resolveClassName(autoName,
+							context.getClassLoader()), module);
 				}
 				catch (Throwable t) {
 					throw new IllegalStateException(
@@ -250,7 +231,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void apply(GenericApplicationContext context, SpringApplication application,
 			ConditionService conditions) {
-		ImportRegistrars registrars = context.getBeanFactory().getBean(ImportRegistrars.class);
+		ImportRegistrars registrars = context.getBeanFactory()
+				.getBean(ImportRegistrars.class);
 		Set<Class<?>> seen = new HashSet<>();
 		for (Object source : application.getAllSources()) {
 			Class<?> type = null;
@@ -269,23 +251,40 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		apply(context);
 	}
 
-	private void extract(GenericApplicationContext context, ConditionService conditions, ImportRegistrars registrars,
-			Class<?> beanClass, Set<Class<?>> seen) {
+	private void extract(GenericApplicationContext context, ConditionService conditions,
+			ImportRegistrars registrars, Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
 			// Causes inclusion of SampleApplicationModule if beanClass is
 			// SampleApplication (without this
 			// we'll only include SampleApplicationModule if it depends on other
 			// autoconfig that pulls in SampleApplicationModule!)
-			Class<? extends Module> moduleForBeanClass = this.autoTypes.get(beanClass);
+			Class<? extends ApplicationContextInitializer<?>> moduleForBeanClass = this.autoTypes
+					.get(beanClass);
 			if (moduleForBeanClass != null) {
 				addModule(moduleForBeanClass);
+			}
+			else {
+				maybeAddInitializer(context, beanClass);
 			}
 			processImports(context, conditions, registrars, beanClass, seen);
 		}
 	}
 
+	private void maybeAddInitializer(GenericApplicationContext context,
+			Class<?> beanClass) {
+		if (ClassUtils.isPresent(beanClass.getName() + "Initializer",
+				context.getClassLoader())) {
+			@SuppressWarnings("unchecked")
+			Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
+					.resolveClassName(beanClass.getName() + "Initializer",
+							context.getClassLoader());
+			addModule(initializer);
+		}
+	}
+
 	private void processImports(GenericApplicationContext context,
-			ConditionService conditions, ImportRegistrars registrars, Class<?> beanClass, Set<Class<?>> seen) {
+			ConditionService conditions, ImportRegistrars registrars, Class<?> beanClass,
+			Set<Class<?>> seen) {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
@@ -298,14 +297,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							if (logger.isDebugEnabled()) {
 								logger.debug("Import: " + value);
 							}
-							Class<? extends Module> type = this.autoTypes.get(value);
-							if (Module.class.isAssignableFrom(value)) {
-								@SuppressWarnings("unchecked")
-								Class<? extends Module> module = (Class<? extends Module>) value;
-								addModule(module);
-								seen.add(value);
-							}
-							else if (type != null) {
+							Class<? extends ApplicationContextInitializer<?>> type = this.autoTypes
+									.get(value);
+							if (type != null) {
 								addModule(type);
 							}
 							else if (ImportBeanDefinitionRegistrar.class
@@ -326,8 +320,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 												select, context.getClassLoader());
 										if (clazz.getAnnotation(
 												Configuration.class) != null) {
-											processImports(context, conditions, registrars, clazz,
-													seen);
+											processImports(context, conditions,
+													registrars, clazz, seen);
 										}
 										// TODO this branch still necessary?
 										else if (ImportBeanDefinitionRegistrar.class
@@ -348,6 +342,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 									}
 								}
 								// TODO: support for deferred import selector
+							} else {
+								maybeAddInitializer(context, value);
 							}
 							processImports(context, conditions, registrars, value, seen);
 							seen.add(value);
@@ -375,7 +371,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		}
 	}
 
-	private void addModule(Class<? extends Module> type) {
+	@SuppressWarnings("unchecked")
+	private void addModule(Class<? extends ApplicationContextInitializer<?>> type) {
 		if (type == null || this.types.contains(type)) {
 			return;
 		}
@@ -384,12 +381,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		}
 		this.types.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {
-			this.autos.addAll(
-					BeanUtils.instantiateClass(type, Module.class).initializers());
+			this.autos.add(BeanUtils.instantiateClass(type,
+					ApplicationContextInitializer.class));
 		}
 		else {
-			initializers.addAll(
-					BeanUtils.instantiateClass(type, Module.class).initializers());
+			initializers.add(BeanUtils.instantiateClass(type,
+					ApplicationContextInitializer.class));
 		}
 	}
 
@@ -423,10 +420,10 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 		BeanClassLoaderAware, PriorityOrdered {
 
 	private ClassLoader classLoader;
-	private Map<Class<?>, Class<? extends Module>> autoTypes;
+	private Map<Class<?>, Class<? extends ApplicationContextInitializer<?>>> autoTypes;
 
 	public SlimConfigurationClassPostProcessor(
-			Map<Class<?>, Class<? extends Module>> autoTypes) {
+			Map<Class<?>, Class<? extends ApplicationContextInitializer<?>>> autoTypes) {
 		this.autoTypes = autoTypes;
 	}
 
@@ -490,15 +487,7 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 		if (autoTypes.containsKey(beanClass)) {
 			return true;
 		}
-		Import slim = beanClass.getAnnotation(Import.class);
-		if (slim != null) {
-			for (Class<?> module : slim.value()) {
-				if (Module.class.isAssignableFrom(module)) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return beanClass.isAnnotationPresent(SpringBootConfiguration.class);
 	}
 
 }

@@ -1,16 +1,12 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
-import java.lang.Class;
-import java.lang.Override;
 import org.apache.commons.dbcp2.BasicDataSource;
+
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = DataSourceAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class DataSourceConfiguration_Dbcp2Initializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {

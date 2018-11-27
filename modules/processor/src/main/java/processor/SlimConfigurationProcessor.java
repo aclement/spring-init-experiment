@@ -42,7 +42,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private Messager messager;
 
-	private ModuleSpecs specs;
+	private InitializerSpecs specs;
 
 	private ElementUtils utils;
 
@@ -59,7 +59,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				processingEnv.getElementUtils(), this.messager);
 		this.imports = new ImportsSpec(this.utils);
 		loadState();
-		this.specs = new ModuleSpecs(this.utils, this.messager, this.filer, this.imports);
+		this.specs = new InitializerSpecs(this.utils, this.imports);
 	}
 
 	@Override
@@ -73,8 +73,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		// messager.printMessage(Kind.NOTE, "processor instance running
 		// #"+Integer.toHexString(System.identityHashCode(this)));
 		if (roundEnv.processingOver()) {
-			updateFactories();
-			specs.saveModuleSpecs();
 			saveState();
 		}
 		else if (!processed) {
@@ -82,45 +80,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			processed = true;
 		}
 		return true;
-	}
-
-	private void updateFactories() {
-		Properties properties = new Properties();
-		try {
-			FileObject resource = filer.getResource(StandardLocation.CLASS_OUTPUT, "",
-					"META-INF/spring.factories");
-			try (InputStream stream = resource.openInputStream()) {
-				properties.load(stream);
-			}
-		}
-		catch (IOException e) {
-			messager.printMessage(Kind.OTHER, "Cannot open spring.factories for reading");
-		}
-		String values = properties.getProperty(SpringClassNames.MODULE.toString());
-		if (values == null) {
-			values = "";
-		}
-		StringBuilder builder = new StringBuilder(values);
-		for (ModuleSpec module : specs.getModules()) {
-			if (module.getModule() != null
-					&& !values.contains(module.getClassName().toString())) {
-				if (builder.length() > 0) {
-					builder.append(",");
-				}
-				builder.append(module.getClassName().toString());
-			}
-		}
-		properties.setProperty(SpringClassNames.MODULE.toString(), builder.toString());
-		try {
-			FileObject resource = filer.createResource(StandardLocation.CLASS_OUTPUT, "",
-					"META-INF/spring.factories");
-			try (OutputStream stream = resource.openOutputStream();) {
-				properties.store(stream, "Created by " + getClass().getName());
-			}
-		}
-		catch (IOException e) {
-			messager.printMessage(Kind.NOTE, "Cannot open spring.factories for writing");
-		}
 	}
 
 	private Set<TypeElement> collectTypes(RoundEnvironment roundEnv,
@@ -138,8 +97,10 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			types.add(type);
 			for (Element element : type.getEnclosedElements()) {
 				if (element instanceof TypeElement) {
-					if (utils.hasAnnotation(element, SpringClassNames.CONFIGURATION.toString())) {
-						messager.printMessage(Kind.NOTE, "Found nested @Configuration in " + element, element);
+					if (utils.hasAnnotation(element,
+							SpringClassNames.CONFIGURATION.toString())) {
+						messager.printMessage(Kind.NOTE,
+								"Found nested @Configuration in " + element, element);
 						imports.addNested(type, (TypeElement) element);
 					}
 					collectTypes((TypeElement) element, types, typeSelectionCondition);
@@ -158,35 +119,26 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
 				specs.addInitializer(type);
 			}
-			if (utils.hasAnnotation(type,
-					SpringClassNames.SPRING_BOOT_CONFIGURATION.toString())) {
-				messager.printMessage(Kind.NOTE,
-						"Found @SpringBootConfiguration in " + type, type);
-				specs.addModule(type);
-			}
-			else if (utils.hasAnnotation(type, SpringClassNames.MODULE_ROOT.toString())) {
-				messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + type, type);
-				specs.addModule(type);
-			}
 		}
 		discoverAndProcessAtEnabledRegistrarsAndSelectors(roundEnv);
-		// Work out what these modules include
-		for (ModuleSpec module : specs.getModules()) {
-			module.prepare(specs);
-		}
-		for (ModuleSpec module : specs.getModules()) {
-			module.produce(specs);
-			for (InitializerSpec initializer : module.getInitializers()) {
-				initializer.setModuleName(module.getClassName());
-				messager.printMessage(Kind.NOTE,
-						"Writing Initializer " + ClassName.get(initializer.getPackage(),
-								initializer.getInitializer().name),
-						initializer.getConfigurationType());
-				write(initializer.getInitializer(), initializer.getPackage());
+		// Hoover up any imports that didn't already get turned into initializers
+		for (TypeElement importer : imports.getImports().keySet()) {
+			for (TypeElement imported : imports.getImports(importer)) {
+				String root = utils.getPackage(importer);
+				// Only if they are in the same package (a reasonable proxy for "in
+				// this source module")
+				if (utils.getPackage(imported).equals(root)) {
+					specs.addInitializer(imported);
+				}
 			}
-			messager.printMessage(Kind.NOTE, "Writing Module " + module.getClassName(),
-					module.getRootType());
-			write(module.getModule(), module.getPackage());
+		}
+		// Work out what these modules include
+		for (InitializerSpec initializer : specs.getInitializers()) {
+			messager.printMessage(Kind.NOTE,
+					"Writing Initializer " + ClassName.get(initializer.getPackage(),
+							initializer.getInitializer().name),
+					initializer.getConfigurationType());
+			write(initializer.getInitializer(), initializer.getPackage());
 		}
 	}
 
@@ -203,10 +155,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				imports.addImport(type, te); // @EnableBar > SampleRegistrar
 				messager.printMessage(Kind.NOTE,
 						"Recording import @" + type + " > " + te);
-				if (utils.hasAnnotation(te, SpringClassNames.MODULE_ROOT.toString())) {
-					messager.printMessage(Kind.NOTE, "Found @ModuleRoot in " + te, te);
-					specs.addModule(te);
-				}
 				specs.addInitializer(type);
 			}
 		}

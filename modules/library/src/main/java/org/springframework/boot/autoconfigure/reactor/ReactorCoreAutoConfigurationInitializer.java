@@ -16,47 +16,30 @@
 
 package org.springframework.boot.autoconfigure.reactor;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreAutoConfiguration;
 import org.springframework.boot.autoconfigure.reactor.core.ReactorCoreProperties;
 import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.support.GenericApplicationContext;
 
 import slim.ConditionService;
-import slim.Module;
 
 /**
  * @author Dave Syer
  *
  */
-@Configuration
-@Import(ReactorCoreAutoConfiguration.class)
-public class ReactorCoreAutoConfigurationModule implements Module {
+public class ReactorCoreAutoConfigurationInitializer
+		implements ApplicationContextInitializer<GenericApplicationContext> {
 
 	@Override
-	public List<ApplicationContextInitializer<GenericApplicationContext>> initializers() {
-		return Arrays.asList(new Initializer());
-	}
-
-	static class Initializer
-			implements ApplicationContextInitializer<GenericApplicationContext> {
-
-		@Override
-		public void initialize(GenericApplicationContext context) {
-			ConditionService conditions = context.getBeanFactory()
-					.getBean(ConditionService.class);
-			if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
-				context.registerBean(ReactorCoreProperties.class,
-						() -> new ReactorCoreProperties());
-				context.registerBean(ReactorCoreAutoConfiguration.class,
-						() -> new ReactorCoreAutoConfiguration());
-			}
+	public void initialize(GenericApplicationContext context) {
+		ConditionService conditions = context.getBeanFactory()
+				.getBean(ConditionService.class);
+		if (conditions.matches(ReactorCoreAutoConfiguration.class)) {
+			context.registerBean(ReactorCoreProperties.class,
+					() -> new ReactorCoreProperties());
+			context.registerBean(ReactorCoreAutoConfiguration.class,
+					() -> new ReactorCoreAutoConfiguration());
 		}
-
 	}
 
 }

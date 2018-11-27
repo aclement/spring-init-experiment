@@ -2,11 +2,12 @@ package app.provider.plain;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 @SpringBootConfiguration
-@Import({ SampleConfiguration.class,ContextAutoConfigurationModule.class})
+@Import({ SampleConfiguration.class, ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class})
 public class SampleApplication {
 
 	public static void main(String[] args) {

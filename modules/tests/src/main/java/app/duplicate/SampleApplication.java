@@ -4,11 +4,12 @@ import java.util.Collections;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.context.ContextAutoConfigurationModule;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 @SpringBootConfiguration
-@Import({ FooConfiguration.class, BarConfiguration.class, ContextAutoConfigurationModule.class })
+@Import({ FooConfiguration.class, BarConfiguration.class, ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class })
 public class SampleApplication {
 
 	public static void main(String[] args) {

@@ -1,16 +1,12 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
-import java.lang.Class;
-import java.lang.Override;
 import org.apache.tomcat.jdbc.pool.DataSource;
+
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-import slim.ConditionService;
-import slim.ModuleMapping;
 
-@ModuleMapping(
-    module = DataSourceAutoConfigurationModule.class
-)
+import slim.ConditionService;
+
 public class DataSourceConfiguration_TomcatInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
