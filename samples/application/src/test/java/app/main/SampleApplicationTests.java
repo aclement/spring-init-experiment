@@ -29,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dave Syer
  *
  */
-// TODO: fix this in the run listener
-@SpringBootTest
+@SpringBootTest(properties = "spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
 public class SampleApplicationTests {
 

@@ -30,9 +30,9 @@ import org.springframework.web.server.WebHandler;
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties = "spring.functional.enabled=false")
+@SpringBootTest
 @RunWith(SpringRunner.class)
-public class SampleApplicationTests {
+public class FunctionalApplicationTests {
 
 	@Autowired
 	private WebHandler webHandler;

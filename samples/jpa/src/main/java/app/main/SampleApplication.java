@@ -4,7 +4,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
@@ -38,27 +37,29 @@ import reactor.core.scheduler.Schedulers;
 public class SampleApplication {
 
 	private EntityManagerFactory entities;
+	private boolean initialized;
 
 	public SampleApplication(EntityManagerFactory entities) {
 		this.entities = entities;
 	}
 
-	@Bean
-	public CommandLineRunner runner() {
-		return args -> {
-			EntityManager manager = entities.createEntityManager();
-			EntityTransaction transaction = manager.getTransaction();
-			transaction.begin();
-			Foo foo = manager.find(Foo.class, 1L);
-			if (foo == null) {
-				manager.persist(new Foo("Hello"));
-			}
-			transaction.commit();
-		};
+	private void runner() {
+		EntityManager manager = entities.createEntityManager();
+		EntityTransaction transaction = manager.getTransaction();
+		transaction.begin();
+		Foo foo = manager.find(Foo.class, 1L);
+		if (foo == null) {
+			manager.persist(new Foo("Hello"));
+		}
+		transaction.commit();
 	}
 
 	@Bean
 	public RouterFunction<?> userEndpoints() {
+		if (!initialized) {
+			runner();
+			initialized = true;
+		}
 		return route(GET("/"),
 				request -> ok().body(Mono
 						.fromCallable(
