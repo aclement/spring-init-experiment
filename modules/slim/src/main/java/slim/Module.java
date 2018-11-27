@@ -16,7 +16,6 @@
 
 package slim;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.context.ApplicationContextInitializer;
@@ -30,10 +29,6 @@ public interface Module {
 
 	List<ApplicationContextInitializer<GenericApplicationContext>> initializers();
 
-	default List<Class<?>> configurations() {
-		return Collections.emptyList();
-	}
-	
 	default Class<?> getRoot() { // TODO perhaps not default
 		return null;
 	}

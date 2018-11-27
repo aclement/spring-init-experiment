@@ -110,26 +110,9 @@ public class ModuleSpec {
 	}
 
 	public void produce(ModuleSpecs specs) {
-		if (hasNonVisibleConfiguration()) {
-			// Use configurations() method
-			this.module = module.toBuilder().addMethod(createInitializers())
-					.addMethod(createConfigurations()).addMethod(createGetRoot()).build();
-		}
-		else {
-			// Use @Import annotation
-			this.module = importAnnotation(specs, module.toBuilder())
-					.addMethod(createInitializers()).addMethod(createGetRoot()).build();
-		}
-	}
-
-	private boolean hasNonVisibleConfiguration() {
-		for (InitializerSpec initializer : initializers) {
-			if (initializer.getConfigurationType().getModifiers()
-					.contains(Modifier.PRIVATE)) {
-				return true;
-			}
-		}
-		return false;
+		// Use @Import annotation
+		this.module = importAnnotation(specs, module.toBuilder())
+				.addMethod(createInitializers()).addMethod(createGetRoot()).build();
 	}
 
 	private void findModuleRoot() {
@@ -243,41 +226,6 @@ public class ModuleSpec {
 		return builder.build();
 	}
 
-	private MethodSpec createConfigurations() {
-		// Want to include the same thing in configurations() method that would be in
-		// @Import annotation
-		Set<ClassName> subset = new HashSet<>();
-		Set<ClassName> imported = new HashSet<>();
-		for (InitializerSpec object : initializers) {
-			// This prevents an app from @Importing itself (libraries don't usually do
-			// it). We could add another annotation to signal the "module-root" or
-			// something, but this seems OK for now.
-			if (isSelfImport(object.getConfigurationType())) {
-				continue;
-			}
-			subset.add(object.getClassName());
-			if (imports.getImports().containsKey(object.getConfigurationType())) {
-				for (TypeElement item : imports.getImports()
-						.get(object.getConfigurationType())) {
-					imported.add(ClassName.get(item));
-				}
-			}
-		}
-		// Only import them once
-		subset.removeAll(imported);
-		subset.addAll(nonSelfImportedPreviouslyAssociatedConfigurations());
-		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
-		builder.addAnnotation(Override.class);
-		builder.addModifiers(Modifier.PUBLIC);
-		builder.returns(ParameterizedTypeName.get(ClassName.get(List.class),
-				ParameterizedTypeName.get(ClassName.get(Class.class),
-						WildcardTypeName.subtypeOf(Object.class))));
-		builder.addStatement(
-				"return $T.asList(" + queryConfigurations(subset.size()) + ")",
-				array(Arrays.class, subset));
-		return builder.build();
-	}
-
 	private TypeSpec.Builder importAnnotation(ModuleSpecs specs, TypeSpec.Builder type) {
 		ClassName[] array = findImports(initializers);
 		array = convertImportsToModules(specs, array);
@@ -341,17 +289,6 @@ public class ModuleSpec {
 		System.out.println("Arrays from " + Arrays.toString(array) + " to "
 				+ Arrays.toString(result));
 		return result;
-	}
-
-	private String queryConfigurations(int count) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < count; i++) {
-			if (builder.length() > 0) {
-				builder.append(", ");
-			}
-			builder.append("$T.configurations()");
-		}
-		return builder.toString();
 	}
 
 	private String newInstances(int count) {

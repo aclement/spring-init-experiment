@@ -130,7 +130,6 @@ public class ModuleSpecs {
 									findKnownRoot(root), imports));
 						}
 						modules.get(root).addInitializer(initializer);
-						;
 						initializers.remove(initializer);
 						moduleFound = true;
 					}

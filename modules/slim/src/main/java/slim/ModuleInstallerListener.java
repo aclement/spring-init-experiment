@@ -211,12 +211,6 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							}
 						}
 					}
-					else {
-						List<Class<?>> configurations = m.configurations();
-						for (Class<?> type : configurations) {
-							this.autoTypes.put(type, module);
-						}
-					}
 				}
 				catch (Throwable t) {
 					throw new IllegalStateException(
