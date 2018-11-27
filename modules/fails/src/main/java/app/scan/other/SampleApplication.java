@@ -1,4 +1,4 @@
-package app.scan;
+package app.scan.other;
 
 import java.util.Collections;
 
@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoCon
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 
-import app.scanned.SampleConfiguration;
+import app.scan.scanned.SampleConfiguration;
 
 @SpringBootConfiguration
 @ComponentScan(basePackageClasses = SampleConfiguration.class)

@@ -27,7 +27,7 @@ import javax.lang.model.element.TypeElement;
  * @author Dave Syer
  *
  */
-public class ImportsSpec {
+public class Imports {
 
 	private ElementUtils utils;
 	private Map<TypeElement, Set<TypeElement>> imports = new ConcurrentHashMap<>();
@@ -35,15 +35,16 @@ public class ImportsSpec {
 	private Set<TypeElement> registrars = new LinkedHashSet<>();
 	private Set<TypeElement> selectors = new LinkedHashSet<>();
 
-	public ImportsSpec(ElementUtils utils) {
+	public Imports(ElementUtils utils) {
 		this.utils = utils;
 	}
 
 	public void addImport(TypeElement owner, TypeElement imported) {
-		Set<TypeElement> set = imports.computeIfAbsent(owner,
-				key -> new LinkedHashSet<>());
-		set.add(imported);
 		this.included.add(imported);
+		if (owner.equals(imported)) {
+			return;
+		}
+		imports.computeIfAbsent(owner, key -> new LinkedHashSet<>()).add(imported);
 		classify(imported);
 	}
 
@@ -73,7 +74,8 @@ public class ImportsSpec {
 	}
 
 	public Set<TypeElement> getImports(TypeElement type) {
-		return this.imports.containsKey(type) ? this.getImports().get(type) : Collections.emptySet();
+		return this.imports.containsKey(type) ? this.getImports().get(type)
+				: Collections.emptySet();
 	}
 
 	public Set<TypeElement> getRegistrars() {

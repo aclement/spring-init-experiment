@@ -56,10 +56,12 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private TypeElement configurationType;
 	private ElementUtils utils;
 	private ClassName className;
-	private ImportsSpec imports;
+	private Imports imports;
+	private Components components;
 
-	public InitializerSpec(ElementUtils utils, TypeElement type, ImportsSpec imports) {
+	public InitializerSpec(ElementUtils utils, TypeElement type, Imports imports, Components components) {
 		this.utils = utils;
+		this.components = components;
 		this.className = toInitializerNameFromConfigurationName(type);
 		this.pkg = ClassName.get(type).packageName();
 		type = imports.getImports().containsKey(type)
@@ -164,7 +166,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
 		if (registrarInitializers != null) {
 			for (TypeElement imported : imports.getImports().get(element)) {
-				if (utils.getPackage(imported).equals(pkg)) {
+				if (utils.getPackage(imported).equals(pkg) || components.getAll().contains(imported)) {
 					builder.addStatement("new $T().initialize(context)", InitializerSpec
 							.toInitializerNameFromConfigurationName(imported));
 				}

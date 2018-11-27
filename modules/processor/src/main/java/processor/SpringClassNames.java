@@ -36,6 +36,12 @@ public class SpringClassNames {
 	public static final ClassName CONFIGURATION = ClassName
 			.get("org.springframework.context.annotation", "Configuration");
 
+	public static final ClassName COMPONENT = ClassName
+			.get("org.springframework.stereotype", "Component");
+
+	public static final ClassName COMPONENT_SCAN = ClassName
+			.get("org.springframework.context.annotation", "ComponentScan");
+
 	public static final ClassName SPRING_BOOT_CONFIGURATION = ClassName
 			.get("org.springframework.boot", "SpringBootConfiguration");
 

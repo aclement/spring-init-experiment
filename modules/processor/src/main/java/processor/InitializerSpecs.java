@@ -36,11 +36,14 @@ public class InitializerSpecs {
 
 	private ElementUtils utils;
 
-	private ImportsSpec imports;
+	private Imports imports;
 
-	public InitializerSpecs(ElementUtils utils, ImportsSpec imports) {
+	private Components components;
+
+	public InitializerSpecs(ElementUtils utils, Imports imports, Components components) {
 		this.utils = utils;
 		this.imports = imports;
+		this.components = components;
 	}
 
 	public Set<InitializerSpec> getInitializers() {
@@ -48,7 +51,7 @@ public class InitializerSpecs {
 	}
 
 	public void addInitializer(TypeElement initializer) {
-		initializers.put(initializer, new InitializerSpec(this.utils, initializer, imports));
+		initializers.put(initializer, new InitializerSpec(this.utils, initializer, imports, components));
 		Set<TypeElement> types = new HashSet<>();
 		findNestedInitializers(initializer, types);
 		types.remove(initializer);

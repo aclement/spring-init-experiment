@@ -1,4 +1,4 @@
-package app.scanned;
+package app.scan.scanned;
 
 public class Bar {
 

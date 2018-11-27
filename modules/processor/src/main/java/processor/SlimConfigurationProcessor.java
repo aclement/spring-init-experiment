@@ -48,7 +48,9 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 
 	private boolean processed;
 
-	private ImportsSpec imports;
+	private Imports imports;
+
+	private Components components;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -57,9 +59,10 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		this.messager = processingEnv.getMessager();
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
-		this.imports = new ImportsSpec(this.utils);
+		this.imports = new Imports(this.utils);
+		this.components = new Components(this.utils);
 		loadState();
-		this.specs = new InitializerSpecs(this.utils, this.imports);
+		this.specs = new InitializerSpecs(this.utils, this.imports, this.components);
 	}
 
 	@Override
@@ -119,8 +122,16 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				messager.printMessage(Kind.NOTE, "Found @Configuration in " + type, type);
 				specs.addInitializer(type);
 			}
+			components.addComponent(type);
 		}
 		discoverAndProcessAtEnabledRegistrarsAndSelectors(roundEnv);
+		Map<TypeElement, Set<TypeElement>> scanned = components.getComponents();
+		for (TypeElement importer : scanned.keySet()) {
+			specs.addInitializer(importer);
+			for (TypeElement imported : scanned.get(importer)) {
+				imports.addImport(importer, imported);
+			}
+		}
 		// Hoover up any imports that didn't already get turned into initializers
 		for (TypeElement importer : imports.getImports().keySet()) {
 			for (TypeElement imported : imports.getImports(importer)) {

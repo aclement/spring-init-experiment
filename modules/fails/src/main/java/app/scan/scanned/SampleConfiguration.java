@@ -1,4 +1,4 @@
-package app.scanned;
+package app.scan.scanned;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

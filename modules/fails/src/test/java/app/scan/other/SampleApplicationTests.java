@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.scan;
+package app.scan.other;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,15 +25,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import app.scanned.Bar;
+import app.scan.scanned.Bar;
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
-public class FunctionalApplicationTests {
+public class SampleApplicationTests {
 
 	@Autowired
 	private Bar bar;
