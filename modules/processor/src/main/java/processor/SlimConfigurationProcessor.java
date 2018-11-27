@@ -130,6 +130,12 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			specs.addInitializer(importer);
 			for (TypeElement imported : scanned.get(importer)) {
 				imports.addImport(importer, imported);
+				if (!utils.hasAnnotation(imported,
+						SpringClassNames.CONFIGURATION.toString())) {
+					messager.printMessage(Kind.NOTE, "Found @Component in " + imported,
+							imported);
+					specs.addInitializer(imported);
+				}
 			}
 		}
 		// Hoover up any imports that didn't already get turned into initializers
