@@ -47,6 +47,7 @@ public class ElementUtils {
 
 	private Types types;
 	private TypeCollector typeCollector = new TypeCollector();
+	private StringCollector stringCollector = new StringCollector();
 	private TypeFinder typeFinder = new TypeFinder();
 	private Elements elements;
 	private Messager messager;
@@ -150,6 +151,21 @@ public class ElementUtils {
 		return collected;
 	}
 
+	public List<String> getStringsFromAnnotation(AnnotationMirror annotationMirror,
+			String fieldname) {
+		List<String> collected = new ArrayList<>();
+		if (annotationMirror != null) {
+			Map<? extends ExecutableElement, ? extends AnnotationValue> values = annotationMirror
+					.getElementValues();
+			for (ExecutableElement element : values.keySet()) {
+				if (element.getSimpleName().toString().equals(fieldname)) {
+					values.get(element).accept(stringCollector, collected);
+				}
+			}
+		}
+		return collected;
+	}
+
 	// TODO [ac] isn't there a quicker way?
 	private class TypeCollector
 			implements AnnotationValueVisitor<Boolean, List<TypeElement>> {
@@ -242,6 +258,99 @@ public class ElementUtils {
 
 		@Override
 		public Boolean visitUnknown(AnnotationValue av, List<TypeElement> collected) {
+			return false;
+		}
+
+	}
+
+	private class StringCollector
+			implements AnnotationValueVisitor<Boolean, List<String>> {
+
+		@Override
+		public Boolean visit(AnnotationValue av, List<String> collected) {
+			return av.accept(this, collected);
+		}
+
+		@Override
+		public Boolean visit(AnnotationValue av) {
+			return av.accept(this, null);
+		}
+
+		@Override
+		public Boolean visitBoolean(boolean b, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitByte(byte b, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitChar(char c, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitDouble(double d, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitFloat(float f, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitInt(int i, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitLong(long i, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitShort(short s, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitString(String s, List<String> collected) {
+			collected.add(((String) s));
+			return false;
+		}
+
+		@Override
+		public Boolean visitType(TypeMirror t, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitEnumConstant(VariableElement c, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitAnnotation(AnnotationMirror a, List<String> collected) {
+			return false;
+		}
+
+		@Override
+		public Boolean visitArray(List<? extends AnnotationValue> vals,
+				List<String> collected) {
+			for (AnnotationValue value : vals) {
+				// TODO: really?
+				if (this.visit(value, collected) || value.toString().equals("<error>")) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public Boolean visitUnknown(AnnotationValue av, List<String> collected) {
 			return false;
 		}
 
@@ -400,6 +509,23 @@ public class ElementUtils {
 					annotation);
 			if (meta != null) {
 				list.addAll(getTypesFromAnnotation(meta, attribute));
+			}
+		}
+		return new ArrayList<>(list);
+	}
+
+	public List<String> getStringsFromAnnotation(TypeElement type, String annotation,
+			String attribute) {
+		Set<String> list = new HashSet<>();
+		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
+			if (((TypeElement) mirror.getAnnotationType().asElement()).getQualifiedName()
+					.toString().equals(annotation)) {
+				list.addAll(getStringsFromAnnotation(mirror, attribute));
+			}
+			AnnotationMirror meta = getAnnotation(mirror.getAnnotationType().asElement(),
+					annotation);
+			if (meta != null) {
+				list.addAll(getStringsFromAnnotation(meta, attribute));
 			}
 		}
 		return new ArrayList<>(list);

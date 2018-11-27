@@ -17,6 +17,7 @@ package processor;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,7 +44,8 @@ public class Components {
 			String pkg = utils.getPackage(type);
 			while (pkg.length() > 0) {
 				packages.computeIfAbsent(pkg, key -> new LinkedHashSet<>()).add(type);
-				pkg = pkg.lastIndexOf(".") > 0 ? pkg.substring(0,pkg.lastIndexOf(".")) : "";
+				pkg = pkg.lastIndexOf(".") > 0 ? pkg.substring(0, pkg.lastIndexOf("."))
+						: "";
 			}
 		}
 		if (utils.hasAnnotation(type, SpringClassNames.COMPONENT_SCAN.toString())) {
@@ -54,7 +56,7 @@ public class Components {
 	private void addScan(TypeElement owner) {
 		this.scans.add(owner);
 	}
-	
+
 	public Set<TypeElement> getAll() {
 		return this.components;
 	}
@@ -62,9 +64,27 @@ public class Components {
 	public Map<TypeElement, Set<TypeElement>> getComponents() {
 		Map<TypeElement, Set<TypeElement>> result = new LinkedHashMap<>();
 		for (TypeElement owner : scans) {
-			Set<TypeElement> computed = result.computeIfAbsent(owner, key -> new LinkedHashSet<>());
-			String pkg = utils.getPackage(owner);
-			computed.addAll(packages.get(pkg));
+			Set<TypeElement> computed = result.computeIfAbsent(owner,
+					key -> new LinkedHashSet<>());
+			for (String pkg : getBasePackage(owner)) {
+				computed.addAll(packages.get(pkg));
+			}
+		}
+		return result;
+	}
+
+	private Set<String> getBasePackage(TypeElement owner) {
+		Set<String> result = new LinkedHashSet<>();
+		List<TypeElement> bases = utils.getTypesFromAnnotation(owner,
+				SpringClassNames.COMPONENT_SCAN.toString(), "basePackageClasses");
+		for (TypeElement base : bases) {
+			String pkg = utils.getPackage(base);
+			result.add(pkg);
+		}
+		result.addAll(utils.getStringsFromAnnotation(owner,
+				SpringClassNames.COMPONENT_SCAN.toString(), "basePackages"));
+		if (result.isEmpty()) {
+			result.add(utils.getPackage(owner));
 		}
 		return result;
 	}
