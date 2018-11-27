@@ -1,4 +1,4 @@
-package app.nested;
+package app.nested.vanilla;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

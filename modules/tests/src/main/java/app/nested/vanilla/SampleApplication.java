@@ -1,4 +1,4 @@
-package app.nested;
+package app.nested.vanilla;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
-import app.nested.SampleApplication.SampleRegistrar;
+import app.nested.vanilla.SampleApplication.SampleRegistrar;
 
 @SpringBootConfiguration
 @Import({ConfigurationPropertiesAutoConfiguration.class, PropertyPlaceholderAutoConfiguration.class, SampleRegistrar.class })

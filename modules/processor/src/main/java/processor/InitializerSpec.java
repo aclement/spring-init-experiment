@@ -174,7 +174,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 							.toInitializerNameFromConfigurationName(imported));
 				}
 				else {
-					// TODO: import external module somehow (using a utility?)
+//					builder.addStatement(
+//							"context.getBeanFactory().getBean($T.class).add($T.class, $T.class)",
+//							SpringClassNames.IMPORT_REGISTRARS, configurationType,
+//							imported);
 				}
 			}
 		}

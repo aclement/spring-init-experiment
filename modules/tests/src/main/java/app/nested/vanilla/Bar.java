@@ -1,4 +1,4 @@
-package app.nested;
+package app.nested.vanilla;
 
 public class Bar {
 
