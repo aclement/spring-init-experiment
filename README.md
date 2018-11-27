@@ -69,7 +69,7 @@ Bar: com.acme.Bar@7c3ebc6b
 
 The command line runner output comes out on stdout after the Spring Boot app has started.
 
-== Building
+## Building
 
 You can build and run everything from the command line, or from an IDE. If you are using https://github.com/jbosstools/m2e-apt/issues/64[Eclipse], you need to disable the Maven project nature for the "processor" project (or work with it in a different workspace). It only has 2 dependencies, so it's quite easy to manually set up the classpath for that project (then you have to build it on the command line before you refresh the sample apps).
 
