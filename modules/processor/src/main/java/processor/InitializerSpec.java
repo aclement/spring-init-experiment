@@ -18,6 +18,7 @@ package processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,7 +60,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private Imports imports;
 	private Components components;
 
-	public InitializerSpec(ElementUtils utils, TypeElement type, Imports imports, Components components) {
+	public InitializerSpec(ElementUtils utils, TypeElement type, Imports imports,
+			Components components) {
 		this.utils = utils;
 		this.components = components;
 		this.className = toInitializerNameFromConfigurationName(type);
@@ -107,7 +109,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
-		if (imports.getRegistrars().contains(type) || imports.getSelectors().contains(type)) {
+		if (imports.getRegistrars().contains(type)
+				|| imports.getSelectors().contains(type)) {
 			builder.addMethod(createRegistrarInitializer(type));
 		}
 		else {
@@ -145,8 +148,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
 		mb.addStatement(
 				"context.getBeanFactory().getBean($T.class).add($T.class, $T.class)",
-				SpringClassNames.IMPORT_REGISTRARS,
-				configurationType, registrar);
+				SpringClassNames.IMPORT_REGISTRARS, configurationType, registrar);
 		MethodSpec ms = mb.build();
 		return ms;
 	}
@@ -166,7 +168,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
 		if (registrarInitializers != null) {
 			for (TypeElement imported : imports.getImports().get(element)) {
-				if (utils.getPackage(imported).equals(pkg) || components.getAll().contains(imported)) {
+				if (utils.getPackage(imported).equals(pkg)
+						|| components.getAll().contains(imported)) {
 					builder.addStatement("new $T().initialize(context)", InitializerSpec
 							.toInitializerNameFromConfigurationName(imported));
 				}
@@ -395,6 +398,38 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				|| paramTypename.equals(
 						SpringClassNames.CONFIGURABLE_LISTABLE_BEAN_FACTORY.toString())) {
 			result.format = "context.getBeanFactory()";
+		}
+		else if (paramTypename.contains("Optional")) {
+			result.format = "context.getBeanProvider($T.class)";
+			if (paramType instanceof DeclaredType) {
+				DeclaredType declaredType = (DeclaredType) paramType;
+				List<? extends TypeMirror> args = declaredType.getTypeArguments();
+				if (!args.isEmpty()) {
+					TypeMirror type = args.iterator().next();
+					TypeName value = TypeName.get(utils.erasure(type));
+					if (type instanceof DeclaredType
+							&& !((DeclaredType) type).getTypeArguments().isEmpty()) {
+						// The target type itself is generic. So far we only support one
+						// level of generic parameters. Further levels could be supported
+						// by adding calls to ResolvableType
+						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
+						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
+						if ("?".equals(value.toString())) {
+							result.types.add(TypeName.OBJECT);
+						}
+						else {
+							result.types.add(value);
+						}
+						type = ((DeclaredType) type).getTypeArguments().iterator().next();
+					}
+					else if (type instanceof ArrayType) {
+						// TODO: something special with an array of generic types?
+					}
+					result.types.add(value);
+				}
+				result.format = "$T.ofNullable(" + result.format + ".getIfAvailable())";
+				result.types.add(0, ClassName.get(Optional.class));
+			}
 		}
 		else {
 			if (paramType instanceof ArrayType) {
