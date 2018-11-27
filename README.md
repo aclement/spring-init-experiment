@@ -24,24 +24,14 @@ public class SampleConfiguration {
 and transforms it to this:
 
 ```java
-@Configuration
-public class SampleConfiguration implements ApplicationContextInitializer<GenericApplicationContext> {
-
-    @Bean
-    public Foo foo() {
-        return new Foo();
-    }
-
-    @Bean
-    public Bar bar(Foo foo) {
-        return new Bar(foo);
-    }
+public class SampleConfigurationInitializer 
+      implements ApplicationContextInitializer<GenericApplicationContext> {
 
     @Override
     public void initialize(GenericApplicationContext context) {
-        context.registerBean(MyConfig.class);
-        context.registerBean(Foo.class, () -> context.getBean(MyConfig.class).foo());
-        context.registerBean(Bar.class, () -> context.getBean(MyConfig.class).bar(context.getBean(Foo.class)));
+        context.registerBean( SampleConfiguration.class);
+        context.registerBean(Foo.class, () -> context.getBean(SampleConfiguration.class).foo());
+        context.registerBean(Bar.class, () -> context.getBean(SampleConfiguration.class).bar(context.getBean(Foo.class)));
     }
     
 }
