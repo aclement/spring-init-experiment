@@ -16,9 +16,8 @@
 
 package slim;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -38,11 +37,9 @@ import org.springframework.util.ClassUtils;
 public class ModuleInstallerImportRegistrars
 		implements BeanDefinitionRegistryPostProcessor, ImportRegistrars {
 
-	private Map<Class<?>, Class<?>> registrars = new LinkedHashMap<>();
+	private Set<Imported> registrars = new LinkedHashSet<>();
 
 	private GenericApplicationContext context;
-
-	private Map<String, Class<?>> typeNames = new LinkedHashMap<>();
 
 	public ModuleInstallerImportRegistrars(GenericApplicationContext context) {
 		this.context = context;
@@ -55,58 +52,144 @@ public class ModuleInstallerImportRegistrars
 
 	@Override
 	public void add(Class<?> importer, Class<?> registrar) {
-		this.registrars.put(registrar, importer);
+		this.registrars.add(new Imported(importer, registrar));
 	}
 
 	@Override
 	public void add(Class<?> importer, String typeName) {
-		this.typeNames.put(typeName, importer);
+		this.registrars.add(new Imported(importer, typeName, context.getClassLoader()));
 	}
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 			throws BeansException {
-		for (String typeName : new LinkedHashSet<>(typeNames.keySet())) {
-			if (ClassUtils.isPresent(typeName, context.getClassLoader())) {
-				Class<?> clazz = ClassUtils.resolveClassName(typeName,
-						context.getClassLoader());
-				add(typeNames.get(typeName), clazz);
-			}
-			typeNames.remove(typeName);
-		}
-		for (Class<?> type : new LinkedHashSet<>(registrars.keySet())) {
-			if (ImportSelector.class.isAssignableFrom(type)) {
-				ImportSelector registrar = (ImportSelector) context
-						.getAutowireCapableBeanFactory().createBean(type);
-				String[] selected = registrar.selectImports(
-						new StandardAnnotationMetadata(registrars.get(type)));
-				for (String select : selected) {
-					if (ClassUtils.isPresent(select, context.getClassLoader())) {
-						Class<?> clazz = ClassUtils.resolveClassName(select,
-								context.getClassLoader());
-						if (clazz.getAnnotation(Configuration.class) != null) {
-							// recurse?
-						}
-						// TODO this branch still necessary?
-						else if (ImportBeanDefinitionRegistrar.class
-								.isAssignableFrom(clazz)) {
-							add(type, clazz);
-						}
-						else {
-							context.registerBean(clazz);
+		Set<Imported> added = new LinkedHashSet<>();
+		for (Imported imported : registrars) {
+			Class<?> type = imported.getType();
+			if (type != null) {
+				if (ImportSelector.class.isAssignableFrom(type)) {
+					ImportSelector registrar = (ImportSelector) context
+							.getAutowireCapableBeanFactory().createBean(type);
+					String[] selected = registrar.selectImports(
+							new StandardAnnotationMetadata(imported.getSource()));
+					for (String select : selected) {
+						if (ClassUtils.isPresent(select, context.getClassLoader())) {
+							Class<?> clazz = ClassUtils.resolveClassName(select,
+									context.getClassLoader());
+							if (clazz.getAnnotation(Configuration.class) != null) {
+								// recurse?
+							}
+							// TODO this branch still necessary?
+							else if (ImportBeanDefinitionRegistrar.class
+									.isAssignableFrom(clazz)) {
+								added.add(new Imported(imported.getSource(), clazz));
+							}
+							else {
+								context.registerBean(clazz);
+							}
 						}
 					}
 				}
+				else if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(type)) {
+					importRegistrar(registry, imported);
+				}
+				else {
+					context.registerBean(type);
+				}
 			}
 		}
-		for (Class<?> type : registrars.keySet()) {
-			if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(type)) {
-				Object bean = context.getAutowireCapableBeanFactory().createBean(type);
-				ImportBeanDefinitionRegistrar registrar = (ImportBeanDefinitionRegistrar) bean;
-				registrar.registerBeanDefinitions(
-						new StandardAnnotationMetadata(registrars.get(type)), registry);
+		for (Imported imported : added) {
+			if (!registrars.contains(imported)) {
+				Class<?> type = imported.getType();
+				if (type != null
+						&& ImportBeanDefinitionRegistrar.class.isAssignableFrom(type)) {
+					importRegistrar(registry, imported);
+				}
 			}
 		}
 	}
 
+	public void importRegistrar(BeanDefinitionRegistry registry, Imported imported) {
+		Class<?> type = imported.getType();
+		Object bean = context.getAutowireCapableBeanFactory().createBean(type);
+		ImportBeanDefinitionRegistrar registrar = (ImportBeanDefinitionRegistrar) bean;
+		registrar.registerBeanDefinitions(
+				new StandardAnnotationMetadata(imported.getSource()), registry);
+	}
+
+	private static class Imported {
+		private Class<?> source;
+		private String typeName;
+		private Class<?> type;
+
+		public Imported(Class<?> source, Class<?> type) {
+			this.source = source;
+			this.type = type;
+			this.typeName = type.getName();
+		}
+
+		private Class<?> resolve(ClassLoader classLoader, String typeName) {
+			if (ClassUtils.isPresent(typeName, classLoader)) {
+				Class<?> clazz = ClassUtils.resolveClassName(typeName, classLoader);
+				return clazz;
+			}
+			return null;
+		}
+
+		public Imported(Class<?> source, String typeName, ClassLoader classLoader) {
+			this.source = source;
+			this.type = resolve(classLoader, typeName);
+			this.typeName = type==null ? typeName : type.getName();
+		}
+
+		public Class<?> getSource() {
+			return this.source;
+		}
+
+		public Class<?> getType() {
+			return this.type;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((this.source == null) ? 0 : this.source.getName().hashCode());
+			result = prime * result
+					+ ((this.typeName == null) ? 0 : this.typeName.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Imported other = (Imported) obj;
+			if (this.source == null) {
+				if (other.source != null)
+					return false;
+			}
+			else if (!this.source.equals(other.source))
+				return false;
+			if (this.typeName == null) {
+				if (other.typeName != null)
+					return false;
+			}
+			else if (!this.typeName.equals(other.typeName))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "Imported [source=" + this.source.getName()
+
+					+ ", type=" + this.typeName + "]";
+		}
+	}
 }

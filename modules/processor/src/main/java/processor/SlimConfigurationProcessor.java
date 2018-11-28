@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -18,7 +17,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
@@ -124,7 +122,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			}
 			components.addComponent(type);
 		}
-		discoverAndProcessAtEnabledRegistrarsAndSelectors(roundEnv);
 		Map<TypeElement, Set<TypeElement>> scanned = components.getComponents();
 		for (TypeElement importer : scanned.keySet()) {
 			specs.addInitializer(importer);
@@ -144,7 +141,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 				String root = utils.getPackage(importer);
 				// Only if they are in the same package (a reasonable proxy for "in
 				// this source module")
-				if (utils.getPackage(imported).equals(root)) {
+				if (utils.getPackage(imported).equals(root) && !utils.isImporter(imported)) {
 					specs.addInitializer(imported);
 				}
 			}
@@ -156,24 +153,6 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 							initializer.getInitializer().name),
 					initializer.getConfigurationType());
 			write(initializer.getInitializer(), initializer.getPackage());
-		}
-	}
-
-	private void discoverAndProcessAtEnabledRegistrarsAndSelectors(
-			RoundEnvironment roundEnv) {
-		Set<TypeElement> annotationTypes = collectTypes(roundEnv, te -> te
-				.getKind() == ElementKind.ANNOTATION_TYPE /* TODO visibility check? */);
-		for (TypeElement type : annotationTypes) {
-			AnnotationMirror annotationMirror = utils.getAnnotation(type,
-					SpringClassNames.IMPORT.toString());
-			List<TypeElement> typesFromAnnotation = utils
-					.getTypesFromAnnotation(annotationMirror, "value");
-			for (TypeElement te : typesFromAnnotation) {
-				imports.addImport(type, te); // @EnableBar > SampleRegistrar
-				messager.printMessage(Kind.NOTE,
-						"Recording import @" + type + " > " + te);
-				specs.addInitializer(type);
-			}
 		}
 	}
 

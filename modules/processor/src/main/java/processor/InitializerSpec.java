@@ -107,13 +107,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Builder builder = TypeSpec.classBuilder(getClassName());
 		builder.addSuperinterface(SpringClassNames.INITIALIZER_TYPE);
 		builder.addModifiers(Modifier.PUBLIC);
-		if (imports.getRegistrars().contains(type)
-				|| imports.getSelectors().contains(type)) {
-			builder.addMethod(createRegistrarInitializer(type));
-		}
-		else {
-			builder.addMethod(createInitializer());
-		}
+		builder.addMethod(createInitializer());
 		return builder.build();
 	}
 
@@ -138,18 +132,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		return builder.build();
 	}
 
-	private MethodSpec createRegistrarInitializer(TypeElement registrar) {
-		MethodSpec.Builder mb = MethodSpec.methodBuilder("initialize");
-		mb.addAnnotation(Override.class);
-		mb.addModifiers(Modifier.PUBLIC);
-		mb.addParameter(SpringClassNames.GENERIC_APPLICATION_CONTEXT, "context");
-		mb.addStatement(
-				"context.getBeanFactory().getBean($T.class).add($T.class, $T.class)",
-				SpringClassNames.IMPORT_REGISTRARS, configurationType, registrar);
-		MethodSpec ms = mb.build();
-		return ms;
-	}
-
 	private void addRegistrarInvokers(MethodSpec.Builder builder) {
 		addImportInvokers(builder, configurationType);
 		List<? extends AnnotationMirror> annotationMirrors = configurationType
@@ -165,18 +147,16 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
 		if (registrarInitializers != null) {
 			for (TypeElement imported : imports.getImports().get(element)) {
-				if (utils.getPackage(imported).equals(pkg)
+				if (utils.isImporter(imported)) {
+					builder.addStatement(
+							"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
+							SpringClassNames.IMPORT_REGISTRARS, configurationType,
+							imported.getQualifiedName());
+				}
+				else if (utils.getPackage(imported).equals(pkg)
 						|| components.getAll().contains(imported)) {
 					builder.addStatement("new $T().initialize(context)", InitializerSpec
 							.toInitializerNameFromConfigurationName(imported));
-				}
-				else {
-					if (utils.isImporter(imported)) {
-						builder.addStatement(
-								"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
-								SpringClassNames.IMPORT_REGISTRARS, configurationType,
-								imported.getQualifiedName());
-					}
 				}
 			}
 		}
@@ -193,7 +173,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
 		addRegistrarInvokers(builder);
-		addAnyEnableConfigurationPropertiesRegistrations(builder, type);
 		addNewBeanForConfig(builder, type);
 		boolean conditionsAvailable = conditional;
 		for (ExecutableElement method : getBeanMethods(type)) {
@@ -215,26 +194,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
 				ArrayUtils.merge(type, type, params.args));
 		builder.endControlFlow();
-	}
-
-	private void addAnyEnableConfigurationPropertiesRegistrations(
-			MethodSpec.Builder builder, TypeElement type) {
-		AnnotationMirror enableConfigurationProperties = utils.getAnnotation(type,
-				SpringClassNames.ENABLE_CONFIGURATION_PROPERTIES.toString());
-		if (enableConfigurationProperties != null) {
-			List<TypeElement> configurationPropertyTypes = utils
-					.getTypesFromAnnotation(enableConfigurationProperties, "value");
-			if (configurationPropertyTypes.size() > 0) {
-				// builder.addComment("Register calls for @EnableConfigurationProperties:
-				// #$L",configurationPropertyTypes.size());
-				for (TypeElement t : configurationPropertyTypes) {
-					ExecutableElement constructor = getConstructor(t);
-					Parameters params = autowireParamsForMethod(constructor);
-					builder.addStatement("context.registerBean($T.class, () -> new $T("
-							+ params.format + "))", ArrayUtils.merge(t, t, params.args));
-				}
-			}
-		}
 	}
 
 	private boolean createBeanMethod(MethodSpec.Builder builder,
