@@ -171,10 +171,12 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 							.toInitializerNameFromConfigurationName(imported));
 				}
 				else {
-//					builder.addStatement(
-//							"context.getBeanFactory().getBean($T.class).add($T.class, $T.class)",
-//							SpringClassNames.IMPORT_REGISTRARS, configurationType,
-//							imported);
+					if (utils.isImporter(imported)) {
+						builder.addStatement(
+								"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
+								SpringClassNames.IMPORT_REGISTRARS, configurationType,
+								imported.getQualifiedName());
+					}
 				}
 			}
 		}
@@ -206,7 +208,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
 		ExecutableElement constructor = getConstructor(type);
 		Parameters params = autowireParamsForMethod(constructor);
-		builder.beginControlFlow("if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)", type);
+		builder.beginControlFlow(
+				"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
+				type);
 		builder.addStatement(
 				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
 				ArrayUtils.merge(type, type, params.args));
