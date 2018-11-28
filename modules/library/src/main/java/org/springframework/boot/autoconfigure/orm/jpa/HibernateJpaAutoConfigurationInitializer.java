@@ -11,7 +11,6 @@ public class HibernateJpaAutoConfigurationInitializer implements ApplicationCont
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(HibernateJpaAutoConfiguration.class)) {
       new HibernateJpaConfigurationInitializer().initialize(context);
-      context.registerBean(JpaProperties.class, () -> new JpaProperties());
       context.registerBean(HibernateJpaAutoConfiguration.class, () -> new HibernateJpaAutoConfiguration());
     }
   }

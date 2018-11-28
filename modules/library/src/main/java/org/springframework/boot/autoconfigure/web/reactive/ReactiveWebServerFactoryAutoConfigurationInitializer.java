@@ -16,8 +16,6 @@
 
 package org.springframework.boot.autoconfigure.web.reactive;
 
-import org.springframework.boot.autoconfigure.web.ResourceProperties;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -40,10 +38,7 @@ public class ReactiveWebServerFactoryAutoConfigurationInitializer
 			// This one has to jump the queue. TODO: try something different
 			ReactiveWebServerFactoryAutoConfigurationGenerated.initializer()
 					.initialize(context);
-			context.registerBean(ServerProperties.class, () -> new ServerProperties());
 			context.registerBean(WebFluxProperties.class, () -> new WebFluxProperties());
-			context.registerBean(ResourceProperties.class,
-					() -> new ResourceProperties());
 		}
 	}
 

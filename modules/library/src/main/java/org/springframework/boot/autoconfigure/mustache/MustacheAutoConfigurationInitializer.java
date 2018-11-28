@@ -37,8 +37,6 @@ public class MustacheAutoConfigurationInitializer
 				.getBean(ConditionService.class);
 		if (conditions.matches(MustacheAutoConfiguration.class)) {
 			MustacheReactiveWebConfigurationGenerated.initializer().initialize(context);
-			context.registerBean(MustacheProperties.class,
-					() -> new MustacheProperties());
 			context.registerBean(MustacheAutoConfiguration.class);
 			if (conditions.matches(MustacheAutoConfiguration.class, Compiler.class)) {
 				context.registerBean(Compiler.class,
