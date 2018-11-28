@@ -24,4 +24,6 @@ public interface ImportRegistrars {
 
 	void add(Class<?> importer, Class<?> registrar);
 
+	void add(Class<?> importer, String typeName);
+
 }

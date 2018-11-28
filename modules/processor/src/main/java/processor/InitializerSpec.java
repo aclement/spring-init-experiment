@@ -204,26 +204,13 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	}
 
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
-		if (type.getModifiers().contains(Modifier.PRIVATE)) {
-			// We want to do:
-			// context.registerBean(Foo.class, () -> new Foo())
-			// BUT Foo is private so we can't refer to it directly from some other source
-			// file
-			builder.beginControlFlow("try");
-			builder.addStatement(
-					"context.registerBean(org.springframework.util.ClassUtils.forName(\"$L\",null))",
-					type);
-			builder.endControlFlow();
-			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
-			builder.endControlFlow();
-		}
-		else {
-			ExecutableElement constructor = getConstructor(type);
-			Parameters params = autowireParamsForMethod(constructor);
-			builder.addStatement(
-					"context.registerBean($T.class, () -> new $T(" + params.format + "))",
-					ArrayUtils.merge(type, type, params.args));
-		}
+		ExecutableElement constructor = getConstructor(type);
+		Parameters params = autowireParamsForMethod(constructor);
+		builder.beginControlFlow("if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)", type);
+		builder.addStatement(
+				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
+				ArrayUtils.merge(type, type, params.args));
+		builder.endControlFlow();
 	}
 
 	private void addAnyEnableConfigurationPropertiesRegistrations(

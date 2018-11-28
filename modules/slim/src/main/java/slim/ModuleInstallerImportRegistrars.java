@@ -42,6 +42,8 @@ public class ModuleInstallerImportRegistrars
 
 	private GenericApplicationContext context;
 
+	private Map<String, Class<?>> typeNames = new LinkedHashMap<>();
+
 	public ModuleInstallerImportRegistrars(GenericApplicationContext context) {
 		this.context = context;
 	}
@@ -57,8 +59,21 @@ public class ModuleInstallerImportRegistrars
 	}
 
 	@Override
+	public void add(Class<?> importer, String typeName) {
+		this.typeNames.put(typeName, importer);
+	}
+
+	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 			throws BeansException {
+		for (String typeName : new LinkedHashSet<>(typeNames.keySet())) {
+			if (ClassUtils.isPresent(typeName, context.getClassLoader())) {
+				Class<?> clazz = ClassUtils.resolveClassName(typeName,
+						context.getClassLoader());
+				add(typeNames.get(typeName), clazz);
+			}
+			typeNames.remove(typeName);
+		}
 		for (Class<?> type : new LinkedHashSet<>(registrars.keySet())) {
 			if (ImportSelector.class.isAssignableFrom(type)) {
 				ImportSelector registrar = (ImportSelector) context
