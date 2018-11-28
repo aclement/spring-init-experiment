@@ -40,11 +40,9 @@ import javax.tools.Diagnostic.Kind;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
-import com.squareup.javapoet.WildcardTypeName;
 
 /**
  * @author Dave Syer
@@ -116,7 +114,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		else {
 			builder.addMethod(createInitializer());
 		}
-		builder.addMethod(createConfigurations());
 		return builder.build();
 	}
 
@@ -181,41 +178,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Looks like:
-	 * 
-	 * <pre>
-	 * <code>
-	 * public static Class configurations() {
-	 *   return SecondConfiguration.class;
-	 * }
-	 * </code>
-	 * </pre>
-	 * 
-	 * Or, if the type is private there will be a forName() call. It is called
-	 * <tt>configurations()</tt> as might want to return nested configurations as well as
-	 * top level? The returned data here mirrors what is in InitializerMapping annotation.
-	 */
-	private MethodSpec createConfigurations() {
-		MethodSpec.Builder builder = MethodSpec.methodBuilder("configurations");
-		builder.addModifiers(Modifier.PUBLIC).addModifiers(Modifier.STATIC);
-		builder.returns(ParameterizedTypeName.get(ClassName.get(Class.class),
-				WildcardTypeName.subtypeOf(Object.class)));
-		if (getConfigurationType().getModifiers().contains(Modifier.PRIVATE)) {
-			builder.beginControlFlow("try");
-			builder.addStatement("return $T.forName(\"$L\",null)",
-					SpringClassNames.CLASS_UTILS, getConfigurationType());
-			builder.endControlFlow();
-			builder.beginControlFlow("catch (ClassNotFoundException cnfe)");
-			builder.addStatement("return null");
-			builder.endControlFlow();
-		}
-		else {
-			builder.addStatement("return $T.class", getConfigurationType());
-		}
-		return builder.build();
 	}
 
 	private void addBeanMethods(MethodSpec.Builder builder, TypeElement type) {
