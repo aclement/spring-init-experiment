@@ -18,11 +18,13 @@ package slim;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.ImportSelector;
@@ -37,7 +39,7 @@ import org.springframework.util.ClassUtils;
 public class ModuleInstallerImportRegistrars
 		implements BeanDefinitionRegistryPostProcessor, ImportRegistrars {
 
-	private Set<Imported> registrars = new LinkedHashSet<>();
+	private Set<Imported> registrars = new TreeSet<>();
 
 	private GenericApplicationContext context;
 
@@ -117,7 +119,7 @@ public class ModuleInstallerImportRegistrars
 				new StandardAnnotationMetadata(imported.getSource()), registry);
 	}
 
-	private static class Imported {
+	private static class Imported implements Comparable<Imported> {
 		private Class<?> source;
 		private String typeName;
 		private Class<?> type;
@@ -139,7 +141,7 @@ public class ModuleInstallerImportRegistrars
 		public Imported(Class<?> source, String typeName, ClassLoader classLoader) {
 			this.source = source;
 			this.type = resolve(classLoader, typeName);
-			this.typeName = type==null ? typeName : type.getName();
+			this.typeName = type == null ? typeName : type.getName();
 		}
 
 		public Class<?> getSource() {
@@ -190,6 +192,17 @@ public class ModuleInstallerImportRegistrars
 			return "Imported [source=" + this.source.getName()
 
 					+ ", type=" + this.typeName + "]";
+		}
+
+		@Override
+		public int compareTo(Imported other) {
+			if (this.typeName.startsWith(AutoConfigurationPackages.class.getName())) {
+				if (!other.typeName
+						.startsWith(AutoConfigurationPackages.class.getName())) {
+					return -1;
+				}
+			}
+			return toString().compareTo(other.toString());
 		}
 	}
 }

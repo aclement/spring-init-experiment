@@ -253,17 +253,15 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			ImportRegistrars registrars, Class<?> beanClass, Set<Class<?>> seen) {
 		if (conditions.matches(beanClass)) {
 			// Causes inclusion of SampleApplicationModule if beanClass is
-			// SampleApplication (without this
-			// we'll only include SampleApplicationModule if it depends on other
-			// autoconfig that pulls in SampleApplicationModule!)
+			// SampleApplication (without this we'll only include SampleApplicationModule
+			// if it depends on other autoconfig that pulls in SampleApplicationModule!)
 			maybeAddInitializer(context, registrars, beanClass, beanClass);
 			processImports(context, conditions, registrars, beanClass, seen);
 		}
 	}
 
-	private void maybeAddInitializer(GenericApplicationContext context, ImportRegistrars registrars, 
-			Class<?> source,
-			Class<?> beanClass) {
+	private void maybeAddInitializer(GenericApplicationContext context,
+			ImportRegistrars registrars, Class<?> source, Class<?> beanClass) {
 		if (autoTypes.containsKey(beanClass)) {
 			addInitializer(autoTypes.get(beanClass));
 		}
@@ -279,7 +277,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 					.resolveClassName(beanClass.getName() + "Initializer",
 							context.getClassLoader());
 			addInitializer(initializer);
-		} else if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(beanClass) || ImportSelector.class.isAssignableFrom(beanClass)) {
+		}
+		else if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(beanClass)
+				|| ImportSelector.class.isAssignableFrom(beanClass)) {
 			registrars.add(source, beanClass);
 		}
 	}
