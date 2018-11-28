@@ -19,7 +19,8 @@
                 <module>server</module>
                 <module>jackson</module>
                 <module>mustache</module>
-                <module>jpa</module>
+                <module>mongo</module>
+                <module>jdbc</module>
 	</modules>
 
 	<properties>
