@@ -520,7 +520,13 @@ public class ElementUtils {
 		return new ArrayList<>(list);
 	}
 
-	public List<String> getStringsFromAnnotation(TypeElement type, String annotation,
+	public String getStringFromAnnotation(Element type, String annotation,
+			String attribute) {
+		List<String> list = getStringsFromAnnotation(type, annotation, attribute);
+		return list.isEmpty() ? null : list.iterator().next();
+	}
+
+	public List<String> getStringsFromAnnotation(Element type, String annotation,
 			String attribute) {
 		Set<String> list = new HashSet<>();
 		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {

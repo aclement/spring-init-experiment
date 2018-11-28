@@ -227,7 +227,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.addStatement(
 					"context.registerBean(" + "\"" + beanMethod.getSimpleName()
 							+ "\", $T.class, " + supplier(type, beanMethod, params.format)
-							+ ")",
+							+ customizer(beanMethod) + ")",
 					ArrayUtils.merge(utils.erasure(returnType), type, params.args));
 
 			if (conditional) {
@@ -240,6 +240,36 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			throw new RuntimeException("Problem performing createBeanMethod for method "
 					+ type.toString() + "." + beanMethod.toString(), t);
 		}
+	}
+
+	private String customizer(ExecutableElement beanMethod) {
+		StringBuilder builder = new StringBuilder(", ");
+		if (utils.hasAnnotation(beanMethod, SpringClassNames.BEAN.toString())) {
+			StringBuilder body = new StringBuilder();
+			String methodName = utils.getStringFromAnnotation(beanMethod,
+					SpringClassNames.BEAN.toString(), "initMethod");
+			if (methodName != null && methodName.length() > 0) {
+				body.append("def.setInitMethodName(\"" + methodName + "\")");
+			}
+			methodName = utils.getStringFromAnnotation(beanMethod,
+					SpringClassNames.BEAN.toString(), "destroyMethod");
+			if (methodName != null && methodName.length() > 0) {
+				boolean hasInit = false;
+				if (body.length() > 0) {
+					body.insert(0, "{");
+					body.append("; ");
+					hasInit = true;
+				}
+				body.append("def.setDestroyMethodName(\"" + methodName + "\")");
+				if (hasInit) {
+					body.append(";}");
+				}
+			}
+			if (body.length() > 0) {
+				builder.append("def -> ").append(body.toString());
+			}
+		}
+		return builder.length() > 2 ? builder.toString() : "";
 	}
 
 	private Parameters autowireParamsForMethod(ExecutableElement method) {
