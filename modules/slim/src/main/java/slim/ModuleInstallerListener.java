@@ -57,7 +57,6 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.ImportResource;
@@ -72,7 +71,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.SpringFactoriesLoader;
-import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -90,7 +88,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private Collection<ApplicationContextInitializer<GenericApplicationContext>> autos = new LinkedHashSet<>();
 
-	private Set<Class<? extends ApplicationContextInitializer<?>>> types = new LinkedHashSet<>();
+	private Set<Class<? extends ApplicationContextInitializer<?>>> added = new LinkedHashSet<>();
 
 	private Set<String> autoTypeNames = new LinkedHashSet<>();
 
@@ -258,27 +256,31 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 			// SampleApplication (without this
 			// we'll only include SampleApplicationModule if it depends on other
 			// autoconfig that pulls in SampleApplicationModule!)
-			Class<? extends ApplicationContextInitializer<?>> moduleForBeanClass = this.autoTypes
-					.get(beanClass);
-			if (moduleForBeanClass != null) {
-				addModule(moduleForBeanClass);
-			}
-			else {
-				maybeAddInitializer(context, beanClass);
-			}
+			maybeAddInitializer(context, registrars, beanClass, beanClass);
 			processImports(context, conditions, registrars, beanClass, seen);
 		}
 	}
 
-	private void maybeAddInitializer(GenericApplicationContext context,
+	private void maybeAddInitializer(GenericApplicationContext context, ImportRegistrars registrars, 
+			Class<?> source,
 			Class<?> beanClass) {
-		if (ClassUtils.isPresent(beanClass.getName() + "Initializer",
+		if (autoTypes.containsKey(beanClass)) {
+			addInitializer(autoTypes.get(beanClass));
+		}
+		else if (ApplicationContextInitializer.class.isAssignableFrom(beanClass)) {
+			@SuppressWarnings("unchecked")
+			Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) beanClass;
+			addInitializer(initializer);
+		}
+		else if (ClassUtils.isPresent(beanClass.getName() + "Initializer",
 				context.getClassLoader())) {
 			@SuppressWarnings("unchecked")
 			Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
 					.resolveClassName(beanClass.getName() + "Initializer",
 							context.getClassLoader());
-			addModule(initializer);
+			addInitializer(initializer);
+		} else if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(beanClass) || ImportSelector.class.isAssignableFrom(beanClass)) {
+			registrars.add(source, beanClass);
 		}
 	}
 
@@ -297,54 +299,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							if (logger.isDebugEnabled()) {
 								logger.debug("Import: " + value);
 							}
-							Class<? extends ApplicationContextInitializer<?>> type = this.autoTypes
-									.get(value);
-							if (type != null) {
-								addModule(type);
-							}
-							else if (ImportBeanDefinitionRegistrar.class
-									.isAssignableFrom(value)) {
-								registrars.add(beanClass, value);
-							}
-							else if (ImportSelector.class.isAssignableFrom(value)) {
-								ImportSelector registrar = BeanUtils
-										.instantiateClass(value, ImportSelector.class);
-								invokeAwareMethods(registrar, context.getEnvironment(),
-										context, context);
-								String[] selected = registrar.selectImports(
-										new StandardAnnotationMetadata(value));
-								for (String select : selected) {
-									if (ClassUtils.isPresent(select,
-											context.getClassLoader())) {
-										Class<?> clazz = ClassUtils.resolveClassName(
-												select, context.getClassLoader());
-										if (clazz.getAnnotation(
-												Configuration.class) != null) {
-											processImports(context, conditions,
-													registrars, clazz, seen);
-										}
-										// TODO this branch still necessary?
-										else if (ImportBeanDefinitionRegistrar.class
-												.isAssignableFrom(clazz)) {
-											ImportBeanDefinitionRegistrar registrar2 = BeanUtils
-													.instantiateClass(clazz,
-															ImportBeanDefinitionRegistrar.class);
-											invokeAwareMethods(registrar2,
-													context.getEnvironment(), context,
-													context);
-											registrar2.registerBeanDefinitions(
-													new StandardAnnotationMetadata(clazz),
-													context);
-										}
-										else {
-											context.registerBean(clazz);
-										}
-									}
-								}
-								// TODO: support for deferred import selector
-							} else {
-								maybeAddInitializer(context, value);
-							}
+							maybeAddInitializer(context, registrars, beanClass, value);
 							processImports(context, conditions, registrars, value, seen);
 							seen.add(value);
 						}
@@ -372,14 +327,14 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addModule(Class<? extends ApplicationContextInitializer<?>> type) {
-		if (type == null || this.types.contains(type)) {
+	private void addInitializer(Class<? extends ApplicationContextInitializer<?>> type) {
+		if (type == null || this.added.contains(type)) {
 			return;
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug("adding module: " + type);
+			logger.debug("Adding initializer: " + type);
 		}
-		this.types.add(type);
+		this.added.add(type);
 		if (this.autoTypeNames.contains(type.getName())) {
 			this.autos.add(BeanUtils.instantiateClass(type,
 					ApplicationContextInitializer.class));

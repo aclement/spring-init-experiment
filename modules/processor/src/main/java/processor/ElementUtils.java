@@ -99,6 +99,12 @@ public class ElementUtils {
 		return null;
 	}
 
+	public boolean isImporter(TypeElement imported) {
+		return implementsInterface(imported,
+				SpringClassNames.IMPORT_BEAN_DEFINITION_REGISTRAR)
+				|| implementsInterface(imported, SpringClassNames.IMPORT_SELECTOR);
+	}
+
 	public TypeElement getSuperType(TypeElement type) {
 		TypeMirror superType = type.getSuperclass();
 		return (superType == null ? null : (TypeElement) types.asElement(superType));

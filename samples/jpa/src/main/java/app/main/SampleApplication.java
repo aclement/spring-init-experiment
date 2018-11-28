@@ -29,9 +29,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @SpringBootConfiguration
-@Import({ DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
-		PropertyPlaceholderAutoConfiguration.class,
-		ConfigurationPropertiesAutoConfiguration.class, JacksonAutoConfiguration.class,
+@Import({ PropertyPlaceholderAutoConfiguration.class,
+		ConfigurationPropertiesAutoConfiguration.class, DataSourceAutoConfiguration.class,
+		HibernateJpaAutoConfiguration.class, JacksonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
 @EntityScan
