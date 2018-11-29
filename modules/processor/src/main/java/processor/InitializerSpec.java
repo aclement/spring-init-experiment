@@ -303,7 +303,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		Parameter result = new Parameter();
 		TypeMirror paramType = param.asType();
 		String paramTypename = utils.getParameterType(param);
-		if (paramTypename.contains("ObjectProvider")) {
+		TypeElement typeElement = (TypeElement) utils.asElement(paramType);
+		if (utils.implementsInterface(typeElement, SpringClassNames.OBJECT_PROVIDER)) {
 			result.format = "context.getBeanProvider($T.class)";
 			if (paramType instanceof DeclaredType) {
 				DeclaredType declaredType = (DeclaredType) paramType;
@@ -333,18 +334,15 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				}
 			}
 		}
-		else if (paramTypename.equals(SpringClassNames.APPLICATION_CONTEXT.toString())
+		else if (utils.implementsInterface(typeElement, SpringClassNames.APPLICATION_CONTEXT)
 				|| paramTypename.equals(
 						SpringClassNames.CONFIGURABLE_APPLICATION_CONTEXT.toString())) {
 			result.format = "context";
 		}
-		else if (paramTypename.equals(SpringClassNames.BEAN_FACTORY.toString())
-				|| paramTypename.equals(SpringClassNames.LISTABLE_BEAN_FACTORY.toString())
-				|| paramTypename.equals(
-						SpringClassNames.CONFIGURABLE_LISTABLE_BEAN_FACTORY.toString())) {
+		else if (utils.implementsInterface(typeElement, SpringClassNames.BEAN_FACTORY)) {
 			result.format = "context.getBeanFactory()";
 		}
-		else if (paramTypename.contains("Optional")) {
+		else if (utils.implementsInterface(typeElement, ClassName.get(Optional.class))) {
 			result.format = "context.getBeanProvider($T.class)";
 			if (paramType instanceof DeclaredType) {
 				DeclaredType declaredType = (DeclaredType) paramType;
@@ -376,22 +374,31 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				result.types.add(0, ClassName.get(Optional.class));
 			}
 		}
-		else {
-			if (paramType instanceof ArrayType) {
-				ArrayType arrayType = (ArrayType) paramType;
-				// Really?
-				result.format = "context.getBeanProvider($T.class).stream().collect($T.toList()).toArray(new $T[0])";
-				result.types
-						.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
-				result.types.add(TypeName.get(Collectors.class));
-				result.types
-						.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
+		else if (paramType instanceof ArrayType) {
+			ArrayType arrayType = (ArrayType) paramType;
+			// Really?
+			result.format = "context.getBeanProvider($T.class).stream().collect($T.toList()).toArray(new $T[0])";
+			result.types.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
+			result.types.add(TypeName.get(Collectors.class));
+			result.types.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
 
+		}
+		else if (utils.implementsInterface(typeElement, ClassName.get(List.class))
+				&& paramType instanceof DeclaredType) {
+			DeclaredType declaredType = (DeclaredType) paramType;
+			List<? extends TypeMirror> args = declaredType.getTypeArguments();
+			// TODO: make this work with more general collection elements types
+			if (!args.isEmpty()) {
+				TypeMirror type = args.iterator().next();
+				TypeName value = TypeName.get(utils.erasure(type));
+				result.format = "context.getBeanProvider($T.class).stream().collect($T.toList())";
+				result.types.add(value);
+				result.types.add(TypeName.get(Collectors.class));
 			}
-			else {
-				result.format = "context.getBean($T.class)";
-				result.types.add(TypeName.get(utils.erasure(param)));
-			}
+		}
+		else {
+			result.format = "context.getBean($T.class)";
+			result.types.add(TypeName.get(utils.erasure(param)));
 		}
 		return result;
 	}

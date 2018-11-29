@@ -27,6 +27,9 @@ public class SpringClassNames {
 	public static final ClassName IMPORT_SELECTOR = ClassName
 			.get("org.springframework.context.annotation", "ImportSelector");
 
+	public static final ClassName OBJECT_PROVIDER = ClassName
+			.get("org.springframework.beans.factory", "ObjectProvider");
+
 	public static final ClassName IMPORT_BEAN_DEFINITION_REGISTRAR = ClassName.get(
 			"org.springframework.context.annotation", "ImportBeanDefinitionRegistrar");
 
