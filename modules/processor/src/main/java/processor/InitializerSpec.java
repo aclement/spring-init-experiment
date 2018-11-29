@@ -18,6 +18,7 @@ package processor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -394,6 +395,18 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				result.format = "context.getBeanProvider($T.class).stream().collect($T.toList())";
 				result.types.add(value);
 				result.types.add(TypeName.get(Collectors.class));
+			}
+		}
+		else if (utils.implementsInterface(typeElement, ClassName.get(Map.class))
+				&& paramType instanceof DeclaredType) {
+			DeclaredType declaredType = (DeclaredType) paramType;
+			List<? extends TypeMirror> args = declaredType.getTypeArguments();
+			// TODO: make this work with more general collection elements types
+			if (args.size()>1) {
+				TypeMirror type = args.get(1);
+				TypeName value = TypeName.get(utils.erasure(type));
+				result.format = "context.getBeansOfType($T.class)";
+				result.types.add(value);
 			}
 		}
 		else {
