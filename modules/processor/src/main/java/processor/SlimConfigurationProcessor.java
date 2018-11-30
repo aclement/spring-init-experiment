@@ -3,6 +3,7 @@ package processor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		super.init(processingEnv);
 		this.filer = processingEnv.getFiler();
 		this.messager = processingEnv.getMessager();
+		messager.printMessage(Kind.NOTE, "SlimConfigurationProcessor.init() running, id #"+Integer.toHexString(System.identityHashCode(this)));
 		this.utils = new ElementUtils(processingEnv.getTypeUtils(),
 				processingEnv.getElementUtils(), this.messager);
 		this.imports = new ImportsSpec(this.utils);
@@ -227,6 +229,14 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 		try {
 			FileObject resource = filer.getResource(StandardLocation.CLASS_OUTPUT, "",
 					SLIM_STATE_PATH);
+//			try {
+//				Field f = resource.getClass().getDeclaredField("_file");
+//				f.setAccessible(true);
+//				Object object = f.get(resource); // IFile
+//				messager.printMessage(Kind.NOTE, ">"+object.toString()+"< "+object.getClass());
+//			} catch (Throwable t) {
+//				messager.printMessage(Kind.NOTE, "BLURGH"+t.toString());
+//			}
 			try (InputStream stream = resource.openInputStream();) {
 				properties.load(stream);
 			}
@@ -278,6 +288,7 @@ public class SlimConfigurationProcessor extends AbstractProcessor {
 			try (OutputStream stream = resource.openOutputStream();) {
 				properties.store(stream, "Created by " + getClass().getName());
 			}
+			messager.printMessage(Kind.NOTE, "Storing import data - #"+properties.size()+" entries");
 		}
 		catch (IOException e) {
 			messager.printMessage(Kind.NOTE, "Cannot write " + SLIM_STATE_PATH);

@@ -295,15 +295,16 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		if (!seen.contains(beanClass)) {
 			XmlBeanDefinitionReader xml = null;
 			if (conditions.matches(beanClass)) {
-				// logger.info("processing beanclass: "+beanClass);
+				 logger.info("processing beanclass: "+beanClass);
 				Set<Import> imports = AnnotatedElementUtils
 						.findAllMergedAnnotations(beanClass, Import.class);
+				logger.info("  - "+imports);
 				if (imports != null) {
 					for (Import imported : imports) {
 						for (Class<?> value : imported.value()) {
-							if (logger.isDebugEnabled()) {
-								logger.debug("Import: " + value);
-							}
+//							if (logger.isDebugEnabled()) {
+								logger.info("Import: " + value);
+//							}
 							Class<? extends Module> type = this.autoTypes.get(value);
 							if (Module.class.isAssignableFrom(value)) {
 								@SuppressWarnings("unchecked")
@@ -316,9 +317,11 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							}
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(value)) {
+								logger.info("found registrar: "+value);
 								registrars.add(beanClass, value);
 							}
 							else if (ImportSelector.class.isAssignableFrom(value)) {
+								logger.info("found selector: "+value);
 								ImportSelector registrar = BeanUtils
 										.instantiateClass(value, ImportSelector.class);
 								invokeAwareMethods(registrar, context.getEnvironment(),
@@ -338,6 +341,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 										// TODO this branch still necessary?
 										else if (ImportBeanDefinitionRegistrar.class
 												.isAssignableFrom(clazz)) {
+											logger.info("found registrar from selector: "+value);
 											ImportBeanDefinitionRegistrar registrar2 = BeanUtils
 													.instantiateClass(clazz,
 															ImportBeanDefinitionRegistrar.class);
