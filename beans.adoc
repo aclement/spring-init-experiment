@@ -1,0 +1,73 @@
+
+== Server Sample
+
+```
+Version      Beans   Classes Startup
+------------------------------------
+2.0.x Auto   73      4155    835
+2.1.x Auto   91      4281    893
+2.1.x Manual 55      3801    711
+2.1.x Func   44      3551    649
+```
+
+Beans in Auto, but not in Manual (JMX is disabled):
+
+```
+* applicationTaskExecutor
+* clientConnectorCustomizer
+* exchangeStrategiesCustomizer
+* loggingCodecCustomizer
+* mbeanExporter
+* mbeanServer
+* messageConverters
+* nettyWebServerFactoryCustomizer
+* objectNamingStrategy
+* org.springframework.boot.autoconfigure.AutoConfigurationPackages
+* org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration
+* org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration$StringHttpMessageConverterConfiguration
+* org.springframework.boot.autoconfigure.http.JacksonHttpMessageConvertersConfiguration
+* org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration
+* org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration$LoggingCodecConfiguration
+* org.springframework.boot.autoconfigure.info.ProjectInfoAutoConfiguration
+* org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration
+* org.springframework.boot.autoconfigure.reactor.core.ReactorCoreAutoConfiguration
+* org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration
+* org.springframework.boot.autoconfigure.task.TaskSchedulingAutoConfiguration
+* org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration
+* org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration
+* org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration$NettyWebServerFactoryCustomizerConfiguration
+* org.springframework.boot.autoconfigure.web.reactive.function.client.ClientHttpConnectorAutoConfiguration
+* org.springframework.boot.autoconfigure.web.reactive.function.client.ClientHttpConnectorConfiguration$ReactorNetty
+* org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration
+* org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration$WebClientCodecsConfiguration
+* reactorClientHttpConnector
+* restTemplateBuilder
+* spring.http-org.springframework.boot.autoconfigure.http.HttpProperties
+* spring.info-org.springframework.boot.autoconfigure.info.ProjectInfoProperties
+* spring.reactor-org.springframework.boot.autoconfigure.reactor.core.ReactorCoreProperties
+* spring.task.execution-org.springframework.boot.autoconfigure.task.TaskExecutionProperties
+* spring.task.scheduling-org.springframework.boot.autoconfigure.task.TaskSchedulingProperties
+* stringHttpMessageConverter
+* taskExecutorBuilder
+* taskSchedulerBuilder
+* webClientBuilder
+```
+
+We can trace those to the auto configurations:
+
+```
+AutoConfigurationPackages
+HttpMessageConvertersAutoConfiguration
+CodecsAutoConfiguration
+ProjectInfoAutoConfiguration
+JmxAutoConfiguration
+ReactorCoreAutoConfiguration
+TaskExecutionAutoConfiguration
+TaskSchedulingAutoConfiguration
+RestTemplateAutoConfiguration
+EmbeddedWebServerFactoryCustomizerAutoConfiguration
+ClientHttpConnectorAutoConfiguration
+WebClientAutoConfiguration
+```
+
+Differences between Manual and Func are almost all to do with the details of the initailizer implementations. If we use the generated initializers instead of the hand coded ones for the webflux part we end up with 53 beans in the Func sample (so very comparable with Manual), but not much difference in classes loaded or startup time. Complete feature parity is achieved by adding the task and executor autoconfigs, and that puts another 7 beans into the context and adds about 20ms to the startup time. So most of the delta comes from `@Configuration` class processing, and it comes down basically to loading another 300 classes.

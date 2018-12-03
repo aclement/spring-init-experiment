@@ -21,6 +21,7 @@
                 <module>mustache</module>
                 <module>mongo</module>
                 <module>jdbc</module>
+                <module>db</module>
 	</modules>
 
 	<properties>

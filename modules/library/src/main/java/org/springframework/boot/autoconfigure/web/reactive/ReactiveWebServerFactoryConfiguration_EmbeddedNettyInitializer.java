@@ -14,10 +14,17 @@ public class ReactiveWebServerFactoryConfiguration_EmbeddedNettyInitializer impl
     if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class)) {
       if (context.getBeanFactory().getBeanNamesForType(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class).length==0) {
         context.registerBean(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class, () -> new ReactiveWebServerFactoryConfiguration.EmbeddedNetty());
+<<<<<<< HEAD
         if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class, ReactorResourceFactory.class)) {
           context.registerBean("reactorServerResourceFactory", ReactorResourceFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class).reactorServerResourceFactory());
         }
         context.registerBean("nettyReactiveWebServerFactory", NettyReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class).nettyReactiveWebServerFactory(context.getBean(ReactorResourceFactory.class)));
+=======
+      }
+      context.registerBean("nettyReactiveWebServerFactory", NettyReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class).nettyReactiveWebServerFactory(context.getBean(ReactorResourceFactory.class)));
+      if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class, ReactorResourceFactory.class)) {
+        context.registerBean("reactorServerResourceFactory", ReactorResourceFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedNetty.class).reactorServerResourceFactory());
+>>>>>>> Add plain JDBC sample (db)
       }
     }
   }

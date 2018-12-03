@@ -12,6 +12,7 @@ public class DataSourceAutoConfigurationInitializer implements ApplicationContex
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(DataSourceAutoConfiguration.class)) {
+<<<<<<< HEAD
       if (context.getBeanFactory().getBeanNamesForType(DataSourceAutoConfiguration.class).length==0) {
         new DataSourceAutoConfiguration_EmbeddedDatabaseConfigurationInitializer().initialize(context);
         new DataSourceAutoConfiguration_PooledDataSourceConfigurationInitializer().initialize(context);
@@ -20,6 +21,13 @@ public class DataSourceAutoConfigurationInitializer implements ApplicationContex
         new DataSourcePoolMetadataProvidersConfigurationInitializer().initialize(context);
         context.registerBean(DataSourceAutoConfiguration.class, () -> new DataSourceAutoConfiguration());
       }
+=======
+      new DataSourceAutoConfiguration_EmbeddedDatabaseConfigurationInitializer().initialize(context);
+      new DataSourceAutoConfiguration_PooledDataSourceConfigurationInitializer().initialize(context);
+      new DataSourceInitializationConfigurationInitializer().initialize(context);
+      new DataSourcePoolMetadataProvidersConfigurationInitializer().initialize(context);
+      context.registerBean(DataSourceAutoConfiguration.class, () -> new DataSourceAutoConfiguration());
+>>>>>>> Add plain JDBC sample (db)
     }
   }
 }

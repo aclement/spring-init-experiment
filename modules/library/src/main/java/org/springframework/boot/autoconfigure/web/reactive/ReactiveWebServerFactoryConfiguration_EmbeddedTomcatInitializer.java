@@ -13,8 +13,8 @@ public class ReactiveWebServerFactoryConfiguration_EmbeddedTomcatInitializer imp
     if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedTomcat.class)) {
       if (context.getBeanFactory().getBeanNamesForType(ReactiveWebServerFactoryConfiguration.EmbeddedTomcat.class).length==0) {
         context.registerBean(ReactiveWebServerFactoryConfiguration.EmbeddedTomcat.class, () -> new ReactiveWebServerFactoryConfiguration.EmbeddedTomcat());
-        context.registerBean("tomcatReactiveWebServerFactory", TomcatReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedTomcat.class).tomcatReactiveWebServerFactory());
       }
+      context.registerBean("tomcatReactiveWebServerFactory", TomcatReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedTomcat.class).tomcatReactiveWebServerFactory());
     }
   }
 }

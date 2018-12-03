@@ -28,6 +28,7 @@ public class WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer impl
   public void initialize(GenericApplicationContext context) {
     if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).length==0) {
       context.registerBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class, () -> new WebFluxAutoConfiguration.EnableWebFluxConfiguration(context.getBean(WebFluxProperties.class),context.getBeanProvider(WebFluxRegistrations.class)));
+<<<<<<< HEAD
       context.registerBean("webFluxConversionService", FormattingConversionService.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxConversionService());
       context.registerBean("webFluxValidator", Validator.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxValidator());
       context.registerBean("handlerFunctionAdapter", HandlerFunctionAdapter.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).handlerFunctionAdapter());
@@ -48,5 +49,27 @@ public class WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer impl
       context.registerBean("webFluxContentTypeResolver", RequestedContentTypeResolver.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxContentTypeResolver());
       context.registerBean("webHandler", DispatcherHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webHandler());
     }
+=======
+    }
+    context.registerBean("webFluxConversionService", FormattingConversionService.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxConversionService());
+    context.registerBean("webFluxValidator", Validator.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxValidator());
+    context.registerBean("handlerFunctionAdapter", HandlerFunctionAdapter.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).handlerFunctionAdapter());
+    context.registerBean("localeContextResolver", LocaleContextResolver.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).localeContextResolver());
+    context.registerBean("requestMappingHandlerAdapter", RequestMappingHandlerAdapter.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).requestMappingHandlerAdapter());
+    context.registerBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).requestMappingHandlerMapping());
+    context.registerBean("resourceHandlerMapping", HandlerMapping.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).resourceHandlerMapping());
+    context.registerBean("resourceUrlProvider", ResourceUrlProvider.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).resourceUrlProvider());
+    context.registerBean("responseBodyResultHandler", ResponseBodyResultHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).responseBodyResultHandler());
+    context.registerBean("responseEntityResultHandler", ResponseEntityResultHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).responseEntityResultHandler());
+    context.registerBean("responseStatusExceptionHandler", WebExceptionHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).responseStatusExceptionHandler());
+    context.registerBean("routerFunctionMapping", RouterFunctionMapping.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).routerFunctionMapping());
+    context.registerBean("serverCodecConfigurer", ServerCodecConfigurer.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).serverCodecConfigurer());
+    context.registerBean("serverResponseResultHandler", ServerResponseResultHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).serverResponseResultHandler());
+    context.registerBean("simpleHandlerAdapter", SimpleHandlerAdapter.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).simpleHandlerAdapter());
+    context.registerBean("viewResolutionResultHandler", ViewResolutionResultHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).viewResolutionResultHandler());
+    context.registerBean("webFluxAdapterRegistry", ReactiveAdapterRegistry.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxAdapterRegistry());
+    context.registerBean("webFluxContentTypeResolver", RequestedContentTypeResolver.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxContentTypeResolver());
+    context.registerBean("webHandler", DispatcherHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webHandler());
+>>>>>>> Add plain JDBC sample (db)
   }
 }

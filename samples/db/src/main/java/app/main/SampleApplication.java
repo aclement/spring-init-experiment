@@ -1,20 +1,19 @@
 package app.main;
 
-import java.lang.management.ManagementFactory;
-import java.util.Arrays;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.HttpHandlerAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.reactive.function.server.RouterFunction;
 
@@ -22,37 +21,45 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
+import app.main.foo.Foo;
+import app.main.foo.FooRepository;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @SpringBootConfiguration
 @Import({ PropertyPlaceholderAutoConfiguration.class,
-		ConfigurationPropertiesAutoConfiguration.class,
-		// TaskSchedulingAutoConfiguration.class, TaskExecutionAutoConfiguration.class,
+		ConfigurationPropertiesAutoConfiguration.class, DataSourceAutoConfiguration.class,
+		JdbcTemplateAutoConfiguration.class, JacksonAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
-// @SpringBootApplication
+@ComponentScan
 public class SampleApplication {
 
-	@Value("${app.value}")
-	private String value;
+	private FooRepository entities;
 
-	@Bean
-	public RouterFunction<?> userEndpoints() {
-		return route(GET("/"), request -> ok().body(Mono.just(value), String.class));
+	public SampleApplication(FooRepository entities) {
+		this.entities = entities;
 	}
 
 	@Bean
-	public CommandLineRunner runner(ConfigurableListableBeanFactory beans) {
+	public CommandLineRunner runner() {
 		return args -> {
-			System.err.println("Class count: " + ManagementFactory.getClassLoadingMXBean()
-					.getTotalLoadedClassCount());
-			System.err.println("Bean count: " + beans.getBeanDefinitionNames().length);
-			System.err.println(
-					"Bean names: " + Arrays.asList(beans.getBeanDefinitionNames()));
+			Foo foo = entities.find(1L);
+			if (foo == null) {
+				entities.save(new Foo("Hello"));
+			}
 		};
+	}
+
+	@Bean
+	public RouterFunction<?> userEndpoints() {
+		return route(GET("/"),
+				request -> ok().body(Mono.fromCallable(() -> entities.find(1L))
+						.subscribeOn(Schedulers.elastic()), Foo.class));
 	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(SampleApplication.class, args);
 	}
+
 }
