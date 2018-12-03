@@ -1,7 +1,10 @@
 package app.main;
 
+import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 import java.util.Optional;
 
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
@@ -46,12 +49,17 @@ public class SampleApplication {
 	}
 
 	@Bean
-	public CommandLineRunner runner() {
+	public CommandLineRunner runner(ConfigurableListableBeanFactory beans) {
 		return args -> {
 			Optional<Foo> foo = foos.findById(1L);
 			if (!foo.isPresent()) {
 				foos.save(new Foo("Hello"));
 			}
+			System.err.println("Class count: " + ManagementFactory.getClassLoadingMXBean()
+					.getTotalLoadedClassCount());
+			System.err.println("Bean count: " + beans.getBeanDefinitionNames().length);
+			System.err.println(
+					"Bean names: " + Arrays.asList(beans.getBeanDefinitionNames()));
 		};
 	}
 
