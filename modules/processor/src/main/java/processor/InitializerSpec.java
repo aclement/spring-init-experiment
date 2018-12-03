@@ -193,20 +193,17 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				if (!imported.equals(configurationType)) {
 					if (utils.hasAnnotation(imported,
 							SpringClassNames.CONFIGURATION.toString())) {
-						builder.addStatement("new $T().initialize(context)", InitializerSpec
-								.toInitializerNameFromConfigurationName(imported));
+						builder.addStatement("new $T().initialize(context)",
+								InitializerSpec.toInitializerNameFromConfigurationName(
+										imported));
 					}
 					else {
 						ExecutableElement constructor = getConstructor(imported);
 						Parameters params = autowireParamsForMethod(constructor);
-						builder.beginControlFlow(
-								"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
-								imported);
 						builder.addStatement(
 								"context.registerBean($T.class, () -> new $T("
 										+ params.format + "))",
 								ArrayUtils.merge(imported, imported, params.args));
-						builder.endControlFlow();
 					}
 				}
 			}
