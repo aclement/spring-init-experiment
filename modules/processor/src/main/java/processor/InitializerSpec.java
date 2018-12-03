@@ -174,6 +174,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
 		addRegistrarInvokers(builder);
+		addScannedComponents(builder);
 		addNewBeanForConfig(builder, type);
 		boolean conditionsAvailable = conditional;
 		for (ExecutableElement method : getBeanMethods(type)) {
@@ -182,6 +183,33 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		}
 		if (conditional) {
 			builder.endControlFlow();
+		}
+	}
+
+	private void addScannedComponents(MethodSpec.Builder builder) {
+		Set<TypeElement> set = components.getComponents().get(configurationType);
+		if (set != null) {
+			for (TypeElement imported : set) {
+				if (!imported.equals(configurationType)) {
+					if (utils.hasAnnotation(imported,
+							SpringClassNames.CONFIGURATION.toString())) {
+						builder.addStatement("new $T().initialize(context)", InitializerSpec
+								.toInitializerNameFromConfigurationName(imported));
+					}
+					else {
+						ExecutableElement constructor = getConstructor(imported);
+						Parameters params = autowireParamsForMethod(constructor);
+						builder.beginControlFlow(
+								"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
+								imported);
+						builder.addStatement(
+								"context.registerBean($T.class, () -> new $T("
+										+ params.format + "))",
+								ArrayUtils.merge(imported, imported, params.args));
+						builder.endControlFlow();
+					}
+				}
+			}
 		}
 	}
 
@@ -335,7 +363,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				}
 			}
 		}
-		else if (utils.implementsInterface(typeElement, SpringClassNames.APPLICATION_CONTEXT)
+		else if (utils.implementsInterface(typeElement,
+				SpringClassNames.APPLICATION_CONTEXT)
 				|| paramTypename.equals(
 						SpringClassNames.CONFIGURABLE_APPLICATION_CONTEXT.toString())) {
 			result.format = "context";
@@ -402,7 +431,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			DeclaredType declaredType = (DeclaredType) paramType;
 			List<? extends TypeMirror> args = declaredType.getTypeArguments();
 			// TODO: make this work with more general collection elements types
-			if (args.size()>1) {
+			if (args.size() > 1) {
 				TypeMirror type = args.get(1);
 				TypeName value = TypeName.get(utils.erasure(type));
 				result.format = "context.getBeansOfType($T.class)";

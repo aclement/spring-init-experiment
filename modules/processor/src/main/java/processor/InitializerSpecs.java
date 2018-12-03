@@ -51,6 +51,9 @@ public class InitializerSpecs {
 	}
 
 	public void addInitializer(TypeElement initializer) {
+		if (initializers.containsKey(initializer) ) {
+			return;
+		}
 		initializers.put(initializer, new InitializerSpec(this.utils, initializer, imports, components));
 		Set<TypeElement> types = new HashSet<>();
 		findNestedInitializers(initializer, types);
