@@ -9,16 +9,16 @@ import org.springframework.cloud.function.compiler.java.CompilationOptions;
 import org.springframework.cloud.function.compiler.java.CompilationResult;
 import org.springframework.cloud.function.compiler.java.InMemoryJavaFileObject;
 import org.springframework.cloud.function.compiler.java.RuntimeJavaCompiler;
-import org.springframework.cloud.function.compiler.java.SourceDescriptor;
+import org.springframework.cloud.function.compiler.java.FileDescriptor;
 
 public class CompilerRunner {
 
-	public static CompilationResult run(Collection<SourceDescriptor> sources, List<File> dependencies) {
+	public static CompilationResult run(Collection<FileDescriptor> sources, Collection<FileDescriptor> resources, List<File> dependencies) {
 		RuntimeJavaCompiler compiler = new RuntimeJavaCompiler();
 		CompilationOptions options = new CompilationOptions();
 		boolean hasErrors = false;
 		System.out.println("Starting compiler...");
-		CompilationResult result = compiler.compile(sources.toArray(new SourceDescriptor[0]), options, dependencies);
+		CompilationResult result = compiler.compile(sources.toArray(new FileDescriptor[0]),resources.toArray(new FileDescriptor[0]), options, dependencies);
 		List<CompilationMessage> compilationMessages = result.getCompilationMessages();
 		for (CompilationMessage compilationMessage : compilationMessages) {
 			if (compilationMessage.getKind().toString().equals("OTHER")) {

@@ -111,14 +111,14 @@ public class RuntimeJavaCompiler {
 	}
 	
 
-	public CompilationResult compile(SourceDescriptor[] sources, CompilationOptions compilationOptions, List<File> dependencies) {
+	public CompilationResult compile(FileDescriptor[] sources, FileDescriptor[] resources, CompilationOptions compilationOptions, List<File> dependencies) {
 		logger.debug("Compiling {} sources",sources.length);
 
 		DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
 		MemoryBasedJavaFileManager fileManager = new MemoryBasedJavaFileManager();
 		fileManager.addResolvedDependencies(dependencies);
 		List<JavaFileObject> compilationUnits = new ArrayList<>();
-		for (SourceDescriptor source: sources) {
+		for (FileDescriptor source: sources) {
 			compilationUnits.add(InMemoryJavaFileObject.getSourceJavaFileObject(source.getClassName(), source.getContent()));
 		}
 
@@ -135,7 +135,7 @@ public class RuntimeJavaCompiler {
 		CompilationResult compilationResult = new CompilationResult(success);
 //		compilationResult.recordCompilationMessages(resolutionMessages);
 		compilationResult.setResolvedAdditionalDependencies(new ArrayList<>(fileManager.getResolvedAdditionalDependencies().values()));
-
+		compilationResult.setResources(resources);
 		// If successful there may be no errors but there might be info/warnings
 		for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
 			CompilationMessage.Kind kind = (diagnostic.getKind()==Kind.ERROR?CompilationMessage.Kind.ERROR:CompilationMessage.Kind.OTHER);

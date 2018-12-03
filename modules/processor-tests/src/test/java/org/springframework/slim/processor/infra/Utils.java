@@ -2,11 +2,14 @@ package org.springframework.slim.processor.infra;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -29,8 +32,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.function.compiler.java.CompilationResult;
 import org.springframework.cloud.function.compiler.java.DependencyResolver;
 import org.springframework.cloud.function.compiler.java.InMemoryJavaFileObject;
-import org.springframework.cloud.function.compiler.java.SourceDescriptor;
+import org.springframework.cloud.function.compiler.java.FileDescriptor;
 import org.springframework.core.io.FileUrlResource;
+import org.springframework.util.ClassUtils;
 
 public class Utils {
 
@@ -83,8 +87,14 @@ public class Utils {
 						// Resolve locally
 						StringTokenizer st = new StringTokenizer(dependency.toString(), ":");
 						st.nextToken();
-						resolvedDependency = new File(projectRootFolder, "../" + st.nextToken() + "/target/classes")
+						String submodule = st.nextToken();
+						resolvedDependency = new File(projectRootFolder, "../" + submodule + "/target/classes")
 								.getCanonicalFile();
+						if (!resolvedDependency.exists()) {
+							// try another place
+							resolvedDependency = new File(projectRootFolder, "../../modules/" + submodule + "/target/classes")
+									.getCanonicalFile();
+						}
 						if (!resolvedDependency.exists()) {
 							System.out.println("Bad miss? " + resolvedDependency.getAbsolutePath().toString());
 							resolvedDependency = null;
@@ -241,7 +251,7 @@ public class Utils {
 		}
 
 		public URL findResource(String name) {
-			System.out.println("Asked to find resource " + name);
+//			System.out.println("Asked to find resource " + name);
 //			for (CompiledClassDefinition ccd: cr.getCcds()) {
 ////				if (ccd.getClassName().equals(name)) {
 //					System.out.println(" - checking "+ccd.getClassName());
@@ -268,17 +278,18 @@ public class Utils {
 		return new CompilationResultClassLoader(dependencies, result,parent);
 	}
 
-	public static Map<File, List<SourceDescriptor>> filesCache = new HashMap<>();
+	public static Map<File, List<FileDescriptor>> filesCache = new HashMap<>();
 
-	public static List<SourceDescriptor> getFiles(File rootFolder) {
-		List<SourceDescriptor> sourcesInFolder = filesCache.get(rootFolder);
+	public static List<FileDescriptor> getFiles(File rootFolder) {
+		List<FileDescriptor> sourcesInFolder = filesCache.get(rootFolder);
 		if (sourcesInFolder == null) {
-			final List<SourceDescriptor> collectedFiles = new ArrayList<>();
+			final List<FileDescriptor> collectedFiles = new ArrayList<>();
 			try {
 				Files.walkFileTree(rootFolder.toPath(), new SimpleFileVisitor<Path>() {
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						collectedFiles.add(new SourceDescriptor(file.toFile(),
+						File relativeFile = rootFolder.toPath().relativize(file).toFile();
+						collectedFiles.add(new FileDescriptor(file.toFile(), relativeFile.toString(),
 								guessClassName(rootFolder.toPath().relativize(file).toFile())));
 						return super.visitFile(file, attrs);
 					}
@@ -292,6 +303,7 @@ public class Utils {
 						}
 					}
 				});
+			} catch (NoSuchFileException nsfe) {
 			} catch (IOException e) {
 				throw new IllegalStateException("Problems walking folder: " + rootFolder, e);
 			}
@@ -300,5 +312,36 @@ public class Utils {
 		}
 		return sourcesInFolder;
 	}
+
+	public static void executeTests(CompilationResult result,
+				List<File> dependencies, FileDescriptor... testFiles) {
+			try {
+				ClassLoader cl = getCompilationResultClassLoader(dependencies, result, Thread.currentThread().getContextClassLoader().getParent());
+				Thread.currentThread().setContextClassLoader(cl);
+				Class<?> junitLauncher = ClassUtils.forName("org.junit.platform.console.ConsoleLauncher", cl);
+				// Call execute rather than main to avoid process exit
+				Method declaredMethod = junitLauncher.getDeclaredMethod("execute", PrintStream.class, PrintStream.class,
+						String[].class);
+				// Type of o is ConsoleLauncherExecutionResult
+				List<String> options = new ArrayList<>();
+				for (FileDescriptor testFile: testFiles) {
+					options.add("-c");
+					options.add(testFile.getClassName());
+				}
+				options.add("--details");
+				options.add("tree");
+				System.out.println(options);
+				Object o = declaredMethod.invoke(null, System.out, System.err, (Object)options.toArray(new String[] {}));
+	//					(Object) new String[] { "-c", testSourceFile.getClassName(), "--details", "none" });
+				Method getExitCode = ClassUtils.forName("org.junit.platform.console.ConsoleLauncherExecutionResult", cl).getDeclaredMethod("getExitCode");
+				Integer i = (Integer)getExitCode.invoke(o);
+				if (i != 0) {
+					throw new IllegalStateException("Test failed");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new IllegalStateException("Failed", e);
+			}
+		}
 
 }

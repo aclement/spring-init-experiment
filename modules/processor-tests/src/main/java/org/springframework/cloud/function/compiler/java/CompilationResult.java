@@ -18,8 +18,8 @@ package org.springframework.cloud.function.compiler.java;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.zip.ZipException;
 
 import javax.tools.JavaFileObject.Kind;
 
@@ -49,6 +48,8 @@ public class CompilationResult {
 	List<CompilationMessage> compilationMessages = new ArrayList<>();
 
 	List<Class<?>> compiledClasses = new ArrayList<>();
+	
+	List<FileDescriptor> resources = new ArrayList<>();
 
 	private Map<String, byte[]> classBytes = new HashMap<>();
 
@@ -117,7 +118,7 @@ public class CompilationResult {
 		return ccds;
 	}
 
-	public File dumpToZip() {
+	public File dumpToTemporaryJar() {
 		File f = null;
 		try {
 			f = File.createTempFile("aaa", ".jar");
@@ -141,17 +142,29 @@ public class CompilationResult {
 				jos.write(bs, 0, bs.length);
 				jos.closeEntry();
 			}
+			for (FileDescriptor resource: resources) {
+//				System.out.println("Adding: "+resource);
+				JarEntry ze = new JarEntry(resource.getName());
+				jos.putNextEntry(ze);
+				byte[] bs = resource.getContent().getBytes();
+				jos.write(bs, 0, bs.length);
+				jos.closeEntry();
+			}
 			for (String pkg : packages) {
 				JarEntry ze = new JarEntry(pkg);
 				jos.putNextEntry(ze);
 				jos.closeEntry();
 			}
 			jos.close();
-			f.deleteOnExit();
+//			f.deleteOnExit();
 		} catch (Throwable t) {
 			throw new IllegalStateException("Problem storing compilation result",t);
 		}
 		return f;
+	}
+
+	public void setResources(FileDescriptor[] resources) {
+		this.resources = Arrays.asList(resources);
 	}
 
 }

@@ -3,22 +3,22 @@ package org.springframework.cloud.function.compiler.java;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * @author Andy Clement
  *
  */
-public class SourceDescriptor {
+public class FileDescriptor {
 
 	private File file;
+	private String name;
 	private String classname;
 	private String content;
 
-	public SourceDescriptor(File file, String classname) {//, String content) {
+	public FileDescriptor(File file, String name, String classname) {
 		this.file = file;
+		this.name=name;
 		this.classname = classname;
-//		this.content = content;
 	}
 	
 	@Override
@@ -28,7 +28,7 @@ public class SourceDescriptor {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof SourceDescriptor) && ((SourceDescriptor)obj).getFile().equals(file);
+		return (obj instanceof FileDescriptor) && ((FileDescriptor)obj).getFile().equals(file);
 	}
 	
 	public String getClassName() {
@@ -54,13 +54,6 @@ public class SourceDescriptor {
 		return file;
 	}
 
-//
-//	private static String getPackage(File f) { // a/b/C.java
-//		String n = f.toString();
-//		n =  n.substring(0,n.lastIndexOf("/")).replace("/",".");
-//		return n;
-//	}
-
 	public String getPackageName() {
 		int idx = classname.lastIndexOf(".");
 		if (idx == -1) {
@@ -69,10 +62,9 @@ public class SourceDescriptor {
 			return classname.substring(0,idx);
 		}
 	}
-//
-//	public String getName() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+
+	public String getName() {
+		return this.name;
+	}
 
 }
