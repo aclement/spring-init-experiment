@@ -566,4 +566,12 @@ public class ElementUtils {
 	public String getPackage(TypeElement imported) {
 		return ClassName.get(imported).packageName();
 	}
+
+	public String getQualifier(VariableElement param) {
+		if (!hasAnnotation(param, SpringClassNames.QUALIFIER.toString())) {
+			return null;
+		}
+		String qualifier = getStringFromAnnotation(param, SpringClassNames.QUALIFIER.toString(), "value");
+		return qualifier!=null && qualifier.length()==0 ? null : qualifier;
+	}
 }

@@ -42,6 +42,12 @@ public class SpringClassNames {
 	public static final ClassName COMPONENT = ClassName
 			.get("org.springframework.stereotype", "Component");
 
+	public static final ClassName QUALIFIER = ClassName
+			.get("org.springframework.beans.factory.annotation", "Qualifier");
+
+	public static final ClassName BEAN_FACTORY_ANNOTATION_UTILS = ClassName.get(
+			"org.springframework.beans.factory.annotation", "BeanFactoryAnnotationUtils");
+
 	public static final ClassName COMPONENT_SCAN = ClassName
 			.get("org.springframework.context.annotation", "ComponentScan");
 

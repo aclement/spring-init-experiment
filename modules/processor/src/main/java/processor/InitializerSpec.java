@@ -436,8 +436,16 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			}
 		}
 		else {
-			result.format = "context.getBean($T.class)";
-			result.types.add(TypeName.get(utils.erasure(param)));
+			String qualifier = utils.getQualifier(param);
+			if (qualifier != null) {
+				result.format = "$T.qualifiedBeanOfType(context, $T.class, \"" + qualifier + "\")";
+				result.types.add(SpringClassNames.BEAN_FACTORY_ANNOTATION_UTILS);
+				result.types.add(TypeName.get(utils.erasure(param)));
+			}
+			else {
+				result.format = "context.getBean($T.class)";
+				result.types.add(TypeName.get(utils.erasure(param)));
+			}
 		}
 		return result;
 	}
