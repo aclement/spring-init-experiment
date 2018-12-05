@@ -16,6 +16,7 @@
 package processor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -425,8 +426,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			result.types.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
 
 		}
-		else if (utils.implementsInterface(typeElement, ClassName.get(List.class))
-				&& paramType instanceof DeclaredType) {
+		else if (paramType instanceof DeclaredType && (utils.implementsInterface(typeElement, ClassName.get(List.class))
+				|| utils.implementsInterface(typeElement, ClassName.get(Collection.class)))) {
 			DeclaredType declaredType = (DeclaredType) paramType;
 			List<? extends TypeMirror> args = declaredType.getTypeArguments();
 			// TODO: make this work with more general collection elements types
