@@ -12,18 +12,8 @@ public class WebFluxAutoConfiguration_ResourceChainCustomizerConfigurationInitia
     if (conditions.matches(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class)) {
       if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class).length==0) {
         context.registerBean(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class, () -> new WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration());
-<<<<<<< HEAD
-<<<<<<< HEAD
         context.registerBean("resourceHandlerRegistrationCustomizer", ResourceChainResourceHandlerRegistrationCustomizer.class, () -> context.getBean(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class).resourceHandlerRegistrationCustomizer());
       }
-=======
-      }
-      context.registerBean("resourceHandlerRegistrationCustomizer", ResourceChainResourceHandlerRegistrationCustomizer.class, () -> context.getBean(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class).resourceHandlerRegistrationCustomizer());
->>>>>>> Add plain JDBC sample (db)
-=======
-        context.registerBean("resourceHandlerRegistrationCustomizer", ResourceChainResourceHandlerRegistrationCustomizer.class, () -> context.getBean(WebFluxAutoConfiguration.ResourceChainCustomizerConfiguration.class).resourceHandlerRegistrationCustomizer());
-      }
->>>>>>> Update the library
     }
   }
 }
