@@ -299,8 +299,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							if (logger.isDebugEnabled()) {
 								logger.debug("Import: " + value);
 							}
-							maybeAddInitializer(context, registrars, beanClass, value);
-							processImports(context, conditions, registrars, value, seen);
+							//maybeAddInitializer(context, registrars, beanClass, value);
+							//processImports(context, conditions, registrars, value, seen);
 							seen.add(value);
 						}
 					}

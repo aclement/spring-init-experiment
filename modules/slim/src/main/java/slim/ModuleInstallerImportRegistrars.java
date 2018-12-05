@@ -20,11 +20,13 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
+import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.ImportSelector;
@@ -65,8 +67,31 @@ public class ModuleInstallerImportRegistrars
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 			throws BeansException {
+		Set<Imported> seen = new LinkedHashSet<>();
+		Set<Imported> added = findAdded(seen, registry);
+		while (!added.isEmpty()) {
+			for (Imported imported : added) {
+				if (!registrars.contains(imported)) {
+					Class<?> type = imported.getType();
+					if (type != null && ImportBeanDefinitionRegistrar.class
+							.isAssignableFrom(type)) {
+						importRegistrar(registry, imported);
+					}
+				}
+			}
+			added = findAdded(seen, registry);
+		}
+	}
+
+	private Set<Imported> findAdded(Set<Imported> seen, BeanDefinitionRegistry registry) {
 		Set<Imported> added = new LinkedHashSet<>();
+		Set<Imported> start = new LinkedHashSet<>(registrars);
+		Set<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 		for (Imported imported : registrars) {
+			if (seen.contains(imported)) {
+				continue;
+			}
+			seen.add(imported);
 			Class<?> type = imported.getType();
 			if (type != null) {
 				if (ImportSelector.class.isAssignableFrom(type)) {
@@ -80,8 +105,18 @@ public class ModuleInstallerImportRegistrars
 									context.getClassLoader());
 							if (clazz.getAnnotation(Configuration.class) != null) {
 								// recurse?
+								if (ClassUtils.isPresent(select + "Initializer",
+										context.getClassLoader())) {
+									@SuppressWarnings("unchecked")
+									ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
+											.instantiateClass(
+													ClassUtils.resolveClassName(
+															select + "Initializer",
+															context.getClassLoader()),
+													ApplicationContextInitializer.class);
+									initializers.add(initializer);
+								}
 							}
-							// TODO this branch still necessary?
 							else if (ImportBeanDefinitionRegistrar.class
 									.isAssignableFrom(clazz)) {
 								added.add(new Imported(imported.getSource(), clazz));
@@ -96,19 +131,35 @@ public class ModuleInstallerImportRegistrars
 					importRegistrar(registry, imported);
 				}
 				else {
-					context.registerBean(type);
+					if (type.getAnnotation(Configuration.class) != null) {
+						// recurse?
+						if (ClassUtils.isPresent(type.getName() + "Initializer",
+								context.getClassLoader())) {
+							@SuppressWarnings("unchecked")
+							ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
+									.instantiateClass(
+											ClassUtils.resolveClassName(
+													type.getName() + "Initializer",
+													context.getClassLoader()),
+											ApplicationContextInitializer.class);
+							initializers.add(initializer);
+						}
+					}
+					else {
+						context.registerBean(type);
+					}
 				}
 			}
 		}
-		for (Imported imported : added) {
-			if (!registrars.contains(imported)) {
-				Class<?> type = imported.getType();
-				if (type != null
-						&& ImportBeanDefinitionRegistrar.class.isAssignableFrom(type)) {
-					importRegistrar(registry, imported);
-				}
+		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
+			initializer.initialize(context);
+		}
+		for (Imported imported : registrars) {
+			if (!start.contains(imported)) {
+				added.add(imported);
 			}
 		}
+		return added;
 	}
 
 	public void importRegistrar(BeanDefinitionRegistry registry, Imported imported) {

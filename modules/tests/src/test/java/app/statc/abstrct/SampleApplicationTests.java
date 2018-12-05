@@ -14,42 +14,43 @@
  * limitations under the License.
  */
 
-package app.main;
+package app.statc.abstrct;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.server.WebHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties="spring.functional.enabled=false")
+@SpringBootTest(properties = "spring.functional.enabled=false")
 @RunWith(SpringRunner.class)
 public class SampleApplicationTests {
 
 	@Autowired
-	private WebHandler webHandler;
+	private Foo foo;
 
-	private WebTestClient client;
+	@Autowired(required = false)
+	private Bar bar;
 
-	@Before
-	public void init() {
-		client = WebTestClient.bindToWebHandler(webHandler).build();
-	}
+	@Autowired
+	private ApplicationContext context;
 
 	@Test
 	public void test() {
-		client.get().uri("/").exchange().expectBody(String.class)
-				.value(value -> assertThat(value).contains("Hello"));
+		assertThat(foo).isNotNull();
+		assertThat(bar).isNotNull();
+		assertThat(context.getBeanNamesForType(CommandLineRunner.class)).isNotEmpty();
+		assertThat(foo.getValue()).isEqualTo("Hello");
 	}
 
 }

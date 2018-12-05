@@ -32,9 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dave Syer
  *
  */
-@SpringBootTest(properties="spring.functional.enabled=false")
+@SpringBootTest("debug=true")
 @RunWith(SpringRunner.class)
-public class SampleApplicationTests {
+public class FunctionalApplicationTests {
 
 	@Autowired
 	private WebHandler webHandler;

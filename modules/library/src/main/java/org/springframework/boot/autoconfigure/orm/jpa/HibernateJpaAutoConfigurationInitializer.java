@@ -12,6 +12,7 @@ public class HibernateJpaAutoConfigurationInitializer implements ApplicationCont
     if (conditions.matches(HibernateJpaAutoConfiguration.class)) {
       new HibernateJpaConfigurationInitializer().initialize(context);
       context.registerBean(HibernateJpaAutoConfiguration.class, () -> new HibernateJpaAutoConfiguration());
+      context.registerBean(JpaProperties.class, () -> new JpaProperties());
     }
   }
 

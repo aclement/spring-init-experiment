@@ -16,6 +16,7 @@ public class DataSourceAutoConfigurationInitializer implements ApplicationContex
       new DataSourceInitializationConfigurationInitializer().initialize(context);
       new DataSourcePoolMetadataProvidersConfigurationInitializer().initialize(context);
       context.registerBean(DataSourceAutoConfiguration.class, () -> new DataSourceAutoConfiguration());
+      context.registerBean(DataSourceProperties.class, () -> new DataSourceProperties());
     }
   }
 

@@ -1,30 +1,12 @@
-/*
- * Copyright 2018 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.springframework.boot.autoconfigure.web.reactive;
 
+import java.lang.Override;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
-
 import slim.ConditionService;
+import slim.ImportRegistrars;
 
-/**
- * @author Dave Syer
- *
- */
 public class ReactiveWebServerFactoryAutoConfigurationInitializer
 		implements ApplicationContextInitializer<GenericApplicationContext> {
 	@Override
@@ -32,14 +14,31 @@ public class ReactiveWebServerFactoryAutoConfigurationInitializer
 		ConditionService conditions = context.getBeanFactory()
 				.getBean(ConditionService.class);
 		if (conditions.matches(ReactiveWebServerFactoryAutoConfiguration.class)) {
-			WebFluxAutoConfigurationGenerated.initializer().initialize(context);
-			HttpHandlerAutoConfigurationGenerated.initializer().initialize(context);
-			ErrorWebFluxAutoConfigurationGenerated.initializer().initialize(context);
-			// This one has to jump the queue. TODO: try something different
-			ReactiveWebServerFactoryAutoConfigurationGenerated.initializer()
-					.initialize(context);
-			context.registerBean(WebFluxProperties.class, () -> new WebFluxProperties());
+			if (context.getBeanFactory().getBeanNamesForType(
+					ReactiveWebServerFactoryAutoConfiguration.class).length == 0) {
+				new ReactiveWebServerFactoryConfiguration_EmbeddedUndertowInitializer()
+						.initialize(context);
+				new ReactiveWebServerFactoryConfiguration_EmbeddedJettyInitializer()
+						.initialize(context);
+				context.getBeanFactory().getBean(ImportRegistrars.class).add(
+						ReactiveWebServerFactoryAutoConfiguration.class,
+						"org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfiguration.BeanPostProcessorsRegistrar");
+				new ReactiveWebServerFactoryConfiguration_EmbeddedTomcatInitializer()
+						.initialize(context);
+				context.getBeanFactory().getBean(ImportRegistrars.class).add(
+						ReactiveWebServerFactoryAutoConfiguration.class,
+						"org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
+				new ReactiveWebServerFactoryConfiguration_EmbeddedNettyInitializer()
+						.initialize(context);
+				context.registerBean(ReactiveWebServerFactoryAutoConfiguration.class,
+						() -> new ReactiveWebServerFactoryAutoConfiguration());
+				context.registerBean("reactiveWebServerFactoryCustomizer",
+						ReactiveWebServerFactoryCustomizer.class,
+						() -> context
+								.getBean(ReactiveWebServerFactoryAutoConfiguration.class)
+								.reactiveWebServerFactoryCustomizer(
+										context.getBean(ServerProperties.class)));
+			}
 		}
 	}
-
 }

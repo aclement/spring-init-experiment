@@ -159,6 +159,12 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					builder.addStatement("new $T().initialize(context)", InitializerSpec
 							.toInitializerNameFromConfigurationName(imported));
 				}
+				else {
+					builder.addStatement(
+							"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
+							SpringClassNames.IMPORT_REGISTRARS, configurationType,
+							imported.getQualifiedName());
+				}
 			}
 		}
 	}
@@ -173,6 +179,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					SpringClassNames.CONDITION_SERVICE);
 			builder.beginControlFlow("if (conditions.matches($T.class))", type);
 		}
+		builder.beginControlFlow(
+				"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
+				type);
 		addRegistrarInvokers(builder);
 		addScannedComponents(builder);
 		addNewBeanForConfig(builder, type);
@@ -181,6 +190,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			conditionsAvailable |= createBeanMethod(builder, method, type,
 					conditionsAvailable);
 		}
+		builder.endControlFlow();
 		if (conditional) {
 			builder.endControlFlow();
 		}
@@ -207,8 +217,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 									ArrayUtils.merge(imported, imported, params.args));
 						}
 						else {
-							builder.addStatement("context.registerBean($T.resolveClassName(\"$L\", context.getClassLoader()))",
-									SpringClassNames.CLASS_UTILS, imported.getQualifiedName());
+							builder.addStatement(
+									"context.registerBean($T.resolveClassName(\"$L\", context.getClassLoader()))",
+									SpringClassNames.CLASS_UTILS,
+									imported.getQualifiedName());
 
 						}
 					}
@@ -220,13 +232,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private void addNewBeanForConfig(MethodSpec.Builder builder, TypeElement type) {
 		ExecutableElement constructor = getConstructor(type);
 		Parameters params = autowireParamsForMethod(constructor);
-		builder.beginControlFlow(
-				"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
-				type);
 		builder.addStatement(
 				"context.registerBean($T.class, () -> new $T(" + params.format + "))",
 				ArrayUtils.merge(type, type, params.args));
-		builder.endControlFlow();
 	}
 
 	private boolean createBeanMethod(MethodSpec.Builder builder,
