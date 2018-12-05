@@ -198,12 +198,19 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 										imported));
 					}
 					else {
-						ExecutableElement constructor = getConstructor(imported);
-						Parameters params = autowireParamsForMethod(constructor);
-						builder.addStatement(
-								"context.registerBean($T.class, () -> new $T("
-										+ params.format + "))",
-								ArrayUtils.merge(imported, imported, params.args));
+						if (imported.getModifiers().contains(Modifier.PUBLIC)) {
+							ExecutableElement constructor = getConstructor(imported);
+							Parameters params = autowireParamsForMethod(constructor);
+							builder.addStatement(
+									"context.registerBean($T.class, () -> new $T("
+											+ params.format + "))",
+									ArrayUtils.merge(imported, imported, params.args));
+						}
+						else {
+							builder.addStatement("context.registerBean($T.resolveClassName(\"$L\", context.getClassLoader()))",
+									SpringClassNames.CLASS_UTILS, imported.getQualifiedName());
+
+						}
 					}
 				}
 			}
@@ -438,7 +445,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		else {
 			String qualifier = utils.getQualifier(param);
 			if (qualifier != null) {
-				result.format = "$T.qualifiedBeanOfType(context, $T.class, \"" + qualifier + "\")";
+				result.format = "$T.qualifiedBeanOfType(context, $T.class, \"" + qualifier
+						+ "\")";
 				result.types.add(SpringClassNames.BEAN_FACTORY_ANNOTATION_UTILS);
 				result.types.add(TypeName.get(utils.erasure(param)));
 			}
