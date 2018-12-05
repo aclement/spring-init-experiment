@@ -25,40 +25,19 @@ public class JdbcRepositoriesAutoConfiguration_SpringBootJdbcConfigurationInitia
 						JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration.class,
 						() -> new JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration());
 				context.registerBean("jdbcCustomConversions", JdbcCustomConversions.class,
-						() -> context.getBean(SpringBootJdbcConfiguration.class)
+						() -> context.getBean(JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration.class)
 								.jdbcCustomConversions());
 				context.registerBean("jdbcMappingContext", RelationalMappingContext.class,
-						() -> context.getBean(SpringBootJdbcConfiguration.class)
+						() -> context.getBean(JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration.class)
 								.jdbcMappingContext(Optional.ofNullable(
 										context.getBeanProvider(NamingStrategy.class)
 												.getIfAvailable())));
 				context.registerBean("relationalConverter", RelationalConverter.class,
-						() -> context.getBean(SpringBootJdbcConfiguration.class)
+						() -> context.getBean(JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration.class)
 								.relationalConverter(
 										context.getBean(RelationalMappingContext.class)));
 			}
 		}
 	}
 
-	static class SpringBootJdbcConfiguration
-			extends JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration {
-
-		@Override
-		protected RelationalMappingContext jdbcMappingContext(
-				Optional<NamingStrategy> namingStrategy) {
-			return super.jdbcMappingContext(namingStrategy);
-		}
-
-		@Override
-		protected RelationalConverter relationalConverter(
-				RelationalMappingContext mappingContext) {
-			return super.relationalConverter(mappingContext);
-		}
-
-		@Override
-		protected JdbcCustomConversions jdbcCustomConversions() {
-			return super.jdbcCustomConversions();
-		}
-
-	}
 }
