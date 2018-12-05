@@ -38,7 +38,45 @@ public class SampleConfigurationInitializer
 ```
 
 You then need a Spring application bootstrap utility that recognizes
-the `ApplicationContextInitializer` and treats it in a special way.
+the `ApplicationContextInitializer` and treats it in a special way. 
+This is provided in the modules of this project, so just
+add them as dependencies:
+
+```
+		<dependency>
+			<groupId>spring-init-experiment</groupId>
+			<artifactId>library</artifactId>
+			<version>${init.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>spring-init-experiment</groupId>
+			<artifactId>slim</artifactId>
+			<version>${init.version}</version>
+		</dependency>
+
+```
+
+and set the APT processor up as a compiler plugin:
+
+```
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>spring-init-experiment</groupId>
+							<artifactId>processor</artifactId>
+							<version>${init.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+
+```
+
+(Look at the samples for code to copy.) If you are using Eclipse you will need the
+M2E APT plugin.
 
 Build and run:
 
