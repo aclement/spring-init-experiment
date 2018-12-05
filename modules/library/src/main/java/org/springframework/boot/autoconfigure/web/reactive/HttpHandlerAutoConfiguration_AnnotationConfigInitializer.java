@@ -10,7 +10,7 @@ public class HttpHandlerAutoConfiguration_AnnotationConfigInitializer implements
   public void initialize(GenericApplicationContext context) {
     if (context.getBeanFactory().getBeanNamesForType(HttpHandlerAutoConfiguration.AnnotationConfig.class).length==0) {
       context.registerBean(HttpHandlerAutoConfiguration.AnnotationConfig.class, () -> new HttpHandlerAutoConfiguration.AnnotationConfig(context));
+      context.registerBean("httpHandler", HttpHandler.class, () -> context.getBean(HttpHandlerAutoConfiguration.AnnotationConfig.class).httpHandler());
     }
-    context.registerBean("httpHandler", HttpHandler.class, () -> context.getBean(HttpHandlerAutoConfiguration.AnnotationConfig.class).httpHandler());
   }
 }

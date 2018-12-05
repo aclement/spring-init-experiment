@@ -11,8 +11,8 @@ public class MongoRepositoriesAutoConfigurationInitializer implements Applicatio
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(MongoRepositoriesAutoConfiguration.class)) {
-      context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoRepositoriesAutoConfiguration.class, "org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfigureRegistrar");
       if (context.getBeanFactory().getBeanNamesForType(MongoRepositoriesAutoConfiguration.class).length==0) {
+        context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoRepositoriesAutoConfiguration.class, "org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfigureRegistrar");
         context.registerBean(MongoRepositoriesAutoConfiguration.class, () -> new MongoRepositoriesAutoConfiguration());
       }
     }

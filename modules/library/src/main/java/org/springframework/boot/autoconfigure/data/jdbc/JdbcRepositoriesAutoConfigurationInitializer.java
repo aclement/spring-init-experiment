@@ -10,9 +10,9 @@ public class JdbcRepositoriesAutoConfigurationInitializer implements Application
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(JdbcRepositoriesAutoConfiguration.class)) {
-      new JdbcRepositoriesAutoConfiguration_JdbcRepositoriesConfigurationInitializer().initialize(context);
-      new JdbcRepositoriesAutoConfiguration_SpringBootJdbcConfigurationInitializer().initialize(context);
       if (context.getBeanFactory().getBeanNamesForType(JdbcRepositoriesAutoConfiguration.class).length==0) {
+        new JdbcRepositoriesAutoConfiguration_JdbcRepositoriesConfigurationInitializer().initialize(context);
+        new JdbcRepositoriesAutoConfiguration_SpringBootJdbcConfigurationInitializer().initialize(context);
         context.registerBean(JdbcRepositoriesAutoConfiguration.class, () -> new JdbcRepositoriesAutoConfiguration());
       }
     }

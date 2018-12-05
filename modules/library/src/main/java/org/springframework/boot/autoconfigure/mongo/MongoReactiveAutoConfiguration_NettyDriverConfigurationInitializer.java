@@ -13,8 +13,8 @@ public class MongoReactiveAutoConfiguration_NettyDriverConfigurationInitializer 
     if (conditions.matches(MongoReactiveAutoConfiguration.NettyDriverConfiguration.class)) {
       if (context.getBeanFactory().getBeanNamesForType(MongoReactiveAutoConfiguration.NettyDriverConfiguration.class).length==0) {
         context.registerBean(MongoReactiveAutoConfiguration.NettyDriverConfiguration.class, () -> new MongoReactiveAutoConfiguration.NettyDriverConfiguration());
+        context.registerBean("nettyDriverCustomizer", MongoClientSettingsBuilderCustomizer.class, () -> context.getBean(MongoReactiveAutoConfiguration.NettyDriverConfiguration.class).nettyDriverCustomizer(context.getBeanProvider(MongoClientSettings.class)));
       }
-      context.registerBean("nettyDriverCustomizer", MongoClientSettingsBuilderCustomizer.class, () -> context.getBean(MongoReactiveAutoConfiguration.NettyDriverConfiguration.class).nettyDriverCustomizer(context.getBeanProvider(MongoClientSettings.class)));
     }
   }
 }

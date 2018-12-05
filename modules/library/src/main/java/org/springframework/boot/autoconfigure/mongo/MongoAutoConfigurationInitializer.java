@@ -14,12 +14,12 @@ public class MongoAutoConfigurationInitializer implements ApplicationContextInit
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(MongoAutoConfiguration.class)) {
-      context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
       if (context.getBeanFactory().getBeanNamesForType(MongoAutoConfiguration.class).length==0) {
+        context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
         context.registerBean(MongoAutoConfiguration.class, () -> new MongoAutoConfiguration(context.getBean(MongoProperties.class),context.getBeanProvider(MongoClientOptions.class),context.getBean(Environment.class)));
-      }
-      if (conditions.matches(MongoAutoConfiguration.class, MongoClient.class)) {
-        context.registerBean("mongo", MongoClient.class, () -> context.getBean(MongoAutoConfiguration.class).mongo());
+        if (conditions.matches(MongoAutoConfiguration.class, MongoClient.class)) {
+          context.registerBean("mongo", MongoClient.class, () -> context.getBean(MongoAutoConfiguration.class).mongo());
+        }
       }
     }
   }

@@ -1,11 +1,10 @@
 package org.springframework.boot.autoconfigure.jdbc;
 
+import java.lang.Override;
 import javax.sql.DataSource;
-
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.jmx.export.MBeanExporter;
-
 import slim.ConditionService;
 
 public class DataSourceJmxConfiguration_HikariInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
@@ -13,11 +12,9 @@ public class DataSourceJmxConfiguration_HikariInitializer implements Application
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(DataSourceJmxConfiguration.Hikari.class)) {
-      context.registerBean(DataSourceJmxConfiguration.Hikari.class, () -> new DataSourceJmxConfiguration.Hikari(context.getBean(DataSource.class),context.getBeanProvider(MBeanExporter.class)));
+      if (context.getBeanFactory().getBeanNamesForType(DataSourceJmxConfiguration.Hikari.class).length==0) {
+        context.registerBean(DataSourceJmxConfiguration.Hikari.class, () -> new DataSourceJmxConfiguration.Hikari(context.getBean(DataSource.class),context.getBeanProvider(MBeanExporter.class)));
+      }
     }
-  }
-
-  public static Class<?> configurations() {
-    return DataSourceJmxConfiguration.Hikari.class;
   }
 }

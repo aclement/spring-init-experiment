@@ -10,8 +10,8 @@ public class HttpHandlerAutoConfigurationInitializer implements ApplicationConte
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(HttpHandlerAutoConfiguration.class)) {
-      new HttpHandlerAutoConfiguration_AnnotationConfigInitializer().initialize(context);
       if (context.getBeanFactory().getBeanNamesForType(HttpHandlerAutoConfiguration.class).length==0) {
+        new HttpHandlerAutoConfiguration_AnnotationConfigInitializer().initialize(context);
         context.registerBean(HttpHandlerAutoConfiguration.class, () -> new HttpHandlerAutoConfiguration());
       }
     }

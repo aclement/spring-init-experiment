@@ -21,22 +21,22 @@ public class MongoDataAutoConfigurationInitializer implements ApplicationContext
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(MongoDataAutoConfiguration.class)) {
-      context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoDataAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
-      new MongoDataConfigurationInitializer().initialize(context);
       if (context.getBeanFactory().getBeanNamesForType(MongoDataAutoConfiguration.class).length==0) {
+        context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoDataAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
+        new MongoDataConfigurationInitializer().initialize(context);
         context.registerBean(MongoDataAutoConfiguration.class, () -> new MongoDataAutoConfiguration(context.getBean(MongoProperties.class)));
-      }
-      if (conditions.matches(MongoDataAutoConfiguration.class, MongoDbFactorySupport.class)) {
-        context.registerBean("mongoDbFactory", MongoDbFactorySupport.class, () -> context.getBean(MongoDataAutoConfiguration.class).mongoDbFactory(context.getBeanProvider(MongoClient.class),context.getBeanProvider(com.mongodb.client.MongoClient.class)));
-      }
-      if (conditions.matches(MongoDataAutoConfiguration.class, MongoTemplate.class)) {
-        context.registerBean("mongoTemplate", MongoTemplate.class, () -> context.getBean(MongoDataAutoConfiguration.class).mongoTemplate(context.getBean(MongoDbFactory.class),context.getBean(MongoConverter.class)));
-      }
-      if (conditions.matches(MongoDataAutoConfiguration.class, MappingMongoConverter.class)) {
-        context.registerBean("mappingMongoConverter", MappingMongoConverter.class, () -> context.getBean(MongoDataAutoConfiguration.class).mappingMongoConverter(context.getBean(MongoDbFactory.class),context.getBean(MongoMappingContext.class),context.getBean(MongoCustomConversions.class)));
-      }
-      if (conditions.matches(MongoDataAutoConfiguration.class, GridFsTemplate.class)) {
-        context.registerBean("gridFsTemplate", GridFsTemplate.class, () -> context.getBean(MongoDataAutoConfiguration.class).gridFsTemplate(context.getBean(MongoDbFactory.class),context.getBean(MongoTemplate.class)));
+        if (conditions.matches(MongoDataAutoConfiguration.class, MongoDbFactorySupport.class)) {
+          context.registerBean("mongoDbFactory", MongoDbFactorySupport.class, () -> context.getBean(MongoDataAutoConfiguration.class).mongoDbFactory(context.getBeanProvider(MongoClient.class),context.getBeanProvider(com.mongodb.client.MongoClient.class)));
+        }
+        if (conditions.matches(MongoDataAutoConfiguration.class, MongoTemplate.class)) {
+          context.registerBean("mongoTemplate", MongoTemplate.class, () -> context.getBean(MongoDataAutoConfiguration.class).mongoTemplate(context.getBean(MongoDbFactory.class),context.getBean(MongoConverter.class)));
+        }
+        if (conditions.matches(MongoDataAutoConfiguration.class, MappingMongoConverter.class)) {
+          context.registerBean("mappingMongoConverter", MappingMongoConverter.class, () -> context.getBean(MongoDataAutoConfiguration.class).mappingMongoConverter(context.getBean(MongoDbFactory.class),context.getBean(MongoMappingContext.class),context.getBean(MongoCustomConversions.class)));
+        }
+        if (conditions.matches(MongoDataAutoConfiguration.class, GridFsTemplate.class)) {
+          context.registerBean("gridFsTemplate", GridFsTemplate.class, () -> context.getBean(MongoDataAutoConfiguration.class).gridFsTemplate(context.getBean(MongoDbFactory.class),context.getBean(MongoTemplate.class)));
+        }
       }
     }
   }

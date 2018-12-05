@@ -11,8 +11,8 @@ public class MongoReactiveRepositoriesAutoConfigurationInitializer implements Ap
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(MongoReactiveRepositoriesAutoConfiguration.class)) {
-      context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoReactiveRepositoriesAutoConfiguration.class, "org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfigureRegistrar");
       if (context.getBeanFactory().getBeanNamesForType(MongoReactiveRepositoriesAutoConfiguration.class).length==0) {
+        context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoReactiveRepositoriesAutoConfiguration.class, "org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfigureRegistrar");
         context.registerBean(MongoReactiveRepositoriesAutoConfiguration.class, () -> new MongoReactiveRepositoriesAutoConfiguration());
       }
     }

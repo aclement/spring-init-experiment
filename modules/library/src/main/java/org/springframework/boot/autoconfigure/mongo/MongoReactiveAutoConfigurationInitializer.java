@@ -14,13 +14,13 @@ public class MongoReactiveAutoConfigurationInitializer implements ApplicationCon
   public void initialize(GenericApplicationContext context) {
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(MongoReactiveAutoConfiguration.class)) {
-      new MongoReactiveAutoConfiguration_NettyDriverConfigurationInitializer().initialize(context);
-      context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoReactiveAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
       if (context.getBeanFactory().getBeanNamesForType(MongoReactiveAutoConfiguration.class).length==0) {
+        new MongoReactiveAutoConfiguration_NettyDriverConfigurationInitializer().initialize(context);
+        context.getBeanFactory().getBean(ImportRegistrars.class).add(MongoReactiveAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
         context.registerBean(MongoReactiveAutoConfiguration.class, () -> new MongoReactiveAutoConfiguration(context.getBeanProvider(MongoClientSettings.class)));
-      }
-      if (conditions.matches(MongoReactiveAutoConfiguration.class, MongoClient.class)) {
-        context.registerBean("reactiveStreamsMongoClient", MongoClient.class, () -> context.getBean(MongoReactiveAutoConfiguration.class).reactiveStreamsMongoClient(context.getBean(MongoProperties.class),context.getBean(Environment.class),context.getBeanProvider(MongoClientSettingsBuilderCustomizer.class)));
+        if (conditions.matches(MongoReactiveAutoConfiguration.class, MongoClient.class)) {
+          context.registerBean("reactiveStreamsMongoClient", MongoClient.class, () -> context.getBean(MongoReactiveAutoConfiguration.class).reactiveStreamsMongoClient(context.getBean(MongoProperties.class),context.getBean(Environment.class),context.getBeanProvider(MongoClientSettingsBuilderCustomizer.class)));
+        }
       }
     }
   }

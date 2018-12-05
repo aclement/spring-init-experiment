@@ -9,27 +9,13 @@ import org.springframework.web.reactive.result.method.HandlerMethodArgumentResol
 import org.springframework.web.reactive.result.view.ViewResolver;
 import slim.ImportRegistrars;
 
-public class WebFluxAutoConfiguration_WebFluxConfigInitializer
-		implements ApplicationContextInitializer<GenericApplicationContext> {
-	@Override
-	public void initialize(GenericApplicationContext context) {
-		if (context.getBeanFactory().getBeanNamesForType(
-				WebFluxAutoConfiguration.WebFluxConfig.class).length == 0) {
-			context.getBeanFactory().getBean(ImportRegistrars.class).add(
-					WebFluxAutoConfiguration.WebFluxConfig.class,
-					"org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
-			new WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer()
-					.initialize(context);
-			context.registerBean(WebFluxAutoConfiguration.WebFluxConfig.class,
-					() -> new WebFluxAutoConfiguration.WebFluxConfig(
-							context.getBean(ResourceProperties.class),
-							context.getBean(WebFluxProperties.class),
-							context.getBeanFactory(),
-							context.getBeanProvider(HandlerMethodArgumentResolver.class),
-							context.getBeanProvider(CodecCustomizer.class),
-							context.getBeanProvider(
-									ResourceHandlerRegistrationCustomizer.class),
-							context.getBeanProvider(ViewResolver.class)));
-		}
-	}
+public class WebFluxAutoConfiguration_WebFluxConfigInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
+  @Override
+  public void initialize(GenericApplicationContext context) {
+    if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.WebFluxConfig.class).length==0) {
+      context.getBeanFactory().getBean(ImportRegistrars.class).add(WebFluxAutoConfiguration.WebFluxConfig.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
+      new WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer().initialize(context);
+      context.registerBean(WebFluxAutoConfiguration.WebFluxConfig.class, () -> new WebFluxAutoConfiguration.WebFluxConfig(context.getBean(ResourceProperties.class),context.getBean(WebFluxProperties.class),context.getBeanFactory(),context.getBeanProvider(HandlerMethodArgumentResolver.class),context.getBeanProvider(CodecCustomizer.class),context.getBeanProvider(ResourceHandlerRegistrationCustomizer.class),context.getBeanProvider(ViewResolver.class)));
+    }
+  }
 }
