@@ -18,7 +18,6 @@ package slim;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
@@ -41,7 +40,7 @@ import org.springframework.util.ClassUtils;
 public class ModuleInstallerImportRegistrars
 		implements BeanDefinitionRegistryPostProcessor, ImportRegistrars {
 
-	private Set<Imported> registrars = new TreeSet<>();
+	private Set<Imported> registrars = new LinkedHashSet<>();
 
 	private GenericApplicationContext context;
 
@@ -85,7 +84,7 @@ public class ModuleInstallerImportRegistrars
 
 	private Set<Imported> findAdded(Set<Imported> seen, BeanDefinitionRegistry registry) {
 		Set<Imported> added = new LinkedHashSet<>();
-		Set<Imported> start = new LinkedHashSet<>(registrars);
+		Set<Imported> start = ordered(registrars);
 		Set<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
 		for (Imported imported : registrars) {
 			if (seen.contains(imported)) {
@@ -162,6 +161,18 @@ public class ModuleInstallerImportRegistrars
 		return added;
 	}
 
+	private Set<Imported> ordered(Set<Imported> registrars) {
+		Set<Imported> result = new LinkedHashSet<>();
+		for (Imported imported : registrars) {
+			if (imported.getType().getName()
+					.startsWith(AutoConfigurationPackages.class.getName())) {
+				result.add(imported);
+			}
+		}
+		result.addAll(registrars);
+		return result;
+	}
+
 	public void importRegistrar(BeanDefinitionRegistry registry, Imported imported) {
 		Class<?> type = imported.getType();
 		Object bean = context.getAutowireCapableBeanFactory().createBean(type);
@@ -170,7 +181,7 @@ public class ModuleInstallerImportRegistrars
 				new StandardAnnotationMetadata(imported.getSource()), registry);
 	}
 
-	private static class Imported implements Comparable<Imported> {
+	private static class Imported {
 		private Class<?> source;
 		private String typeName;
 		private Class<?> type;
@@ -245,15 +256,5 @@ public class ModuleInstallerImportRegistrars
 					+ ", type=" + this.typeName + "]";
 		}
 
-		@Override
-		public int compareTo(Imported other) {
-			if (this.typeName.startsWith(AutoConfigurationPackages.class.getName())) {
-				if (!other.typeName
-						.startsWith(AutoConfigurationPackages.class.getName())) {
-					return -1;
-				}
-			}
-			return toString().compareTo(other.toString());
-		}
 	}
 }
