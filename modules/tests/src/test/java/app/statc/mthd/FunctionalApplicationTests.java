@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.statc;
+package app.statc.mthd;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +26,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import app.statc.mthd.Bar;
+import app.statc.mthd.Foo;
 
 /**
  * @author Dave Syer

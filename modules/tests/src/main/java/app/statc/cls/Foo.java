@@ -1,4 +1,4 @@
-package app.statc;
+package app.statc.cls;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

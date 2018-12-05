@@ -1,4 +1,4 @@
-package app.statc;
+package app.statc.mthd;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
