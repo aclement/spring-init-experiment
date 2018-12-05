@@ -13,8 +13,8 @@ public class ReactiveWebServerFactoryConfiguration_EmbeddedUndertowInitializer i
     if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class)) {
       if (context.getBeanFactory().getBeanNamesForType(ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class).length==0) {
         context.registerBean(ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class, () -> new ReactiveWebServerFactoryConfiguration.EmbeddedUndertow());
+        context.registerBean("undertowReactiveWebServerFactory", UndertowReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class).undertowReactiveWebServerFactory());
       }
-      context.registerBean("undertowReactiveWebServerFactory", UndertowReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedUndertow.class).undertowReactiveWebServerFactory());
     }
   }
 }

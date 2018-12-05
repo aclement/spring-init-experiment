@@ -15,16 +15,22 @@ public class ReactiveWebServerFactoryConfiguration_EmbeddedJettyInitializer impl
       if (context.getBeanFactory().getBeanNamesForType(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class).length==0) {
         context.registerBean(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class, () -> new ReactiveWebServerFactoryConfiguration.EmbeddedJetty());
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Update the library
         if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class, JettyResourceFactory.class)) {
           context.registerBean("jettyServerResourceFactory", JettyResourceFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class).jettyServerResourceFactory());
         }
         context.registerBean("jettyReactiveWebServerFactory", JettyReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class).jettyReactiveWebServerFactory(context.getBean(JettyResourceFactory.class)));
+<<<<<<< HEAD
 =======
       }
       context.registerBean("jettyReactiveWebServerFactory", JettyReactiveWebServerFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class).jettyReactiveWebServerFactory(context.getBean(JettyResourceFactory.class)));
       if (conditions.matches(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class, JettyResourceFactory.class)) {
         context.registerBean("jettyServerResourceFactory", JettyResourceFactory.class, () -> context.getBean(ReactiveWebServerFactoryConfiguration.EmbeddedJetty.class).jettyServerResourceFactory());
 >>>>>>> Add plain JDBC sample (db)
+=======
+>>>>>>> Update the library
       }
     }
   }

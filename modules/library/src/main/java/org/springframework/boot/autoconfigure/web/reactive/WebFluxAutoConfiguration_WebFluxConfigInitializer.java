@@ -13,6 +13,7 @@ public class WebFluxAutoConfiguration_WebFluxConfigInitializer implements Applic
   @Override
   public void initialize(GenericApplicationContext context) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.WebFluxConfig.class).length==0) {
       context.getBeanFactory().getBean(ImportRegistrars.class).add(WebFluxAutoConfiguration.WebFluxConfig.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
       new WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer().initialize(context);
@@ -21,6 +22,11 @@ public class WebFluxAutoConfiguration_WebFluxConfigInitializer implements Applic
     new WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer().initialize(context);
     if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.WebFluxConfig.class).length==0) {
 >>>>>>> Add plain JDBC sample (db)
+=======
+    if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.WebFluxConfig.class).length==0) {
+      context.getBeanFactory().getBean(ImportRegistrars.class).add(WebFluxAutoConfiguration.WebFluxConfig.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
+      new WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer().initialize(context);
+>>>>>>> Update the library
       context.registerBean(WebFluxAutoConfiguration.WebFluxConfig.class, () -> new WebFluxAutoConfiguration.WebFluxConfig(context.getBean(ResourceProperties.class),context.getBean(WebFluxProperties.class),context.getBeanFactory(),context.getBeanProvider(HandlerMethodArgumentResolver.class),context.getBeanProvider(CodecCustomizer.class),context.getBeanProvider(ResourceHandlerRegistrationCustomizer.class),context.getBeanProvider(ViewResolver.class)));
     }
   }

@@ -29,6 +29,9 @@ public class WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer impl
     if (context.getBeanFactory().getBeanNamesForType(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).length==0) {
       context.registerBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class, () -> new WebFluxAutoConfiguration.EnableWebFluxConfiguration(context.getBean(WebFluxProperties.class),context.getBeanProvider(WebFluxRegistrations.class)));
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Update the library
       context.registerBean("webFluxConversionService", FormattingConversionService.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxConversionService());
       context.registerBean("webFluxValidator", Validator.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxValidator());
       context.registerBean("handlerFunctionAdapter", HandlerFunctionAdapter.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).handlerFunctionAdapter());
@@ -48,6 +51,7 @@ public class WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer impl
       context.registerBean("webFluxAdapterRegistry", ReactiveAdapterRegistry.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxAdapterRegistry());
       context.registerBean("webFluxContentTypeResolver", RequestedContentTypeResolver.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxContentTypeResolver());
       context.registerBean("webHandler", DispatcherHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webHandler());
+<<<<<<< HEAD
     }
 =======
     }
@@ -71,5 +75,8 @@ public class WebFluxAutoConfiguration_EnableWebFluxConfigurationInitializer impl
     context.registerBean("webFluxContentTypeResolver", RequestedContentTypeResolver.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webFluxContentTypeResolver());
     context.registerBean("webHandler", DispatcherHandler.class, () -> context.getBean(WebFluxAutoConfiguration.EnableWebFluxConfiguration.class).webHandler());
 >>>>>>> Add plain JDBC sample (db)
+=======
+    }
+>>>>>>> Update the library
   }
 }

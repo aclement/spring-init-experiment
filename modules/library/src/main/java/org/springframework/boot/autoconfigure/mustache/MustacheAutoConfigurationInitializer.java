@@ -9,6 +9,9 @@ import slim.ConditionService;
 import slim.ImportRegistrars;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Update the library
 public class MustacheAutoConfigurationInitializer implements ApplicationContextInitializer<GenericApplicationContext> {
   @Override
   public void initialize(GenericApplicationContext context) {
@@ -28,6 +31,7 @@ public class MustacheAutoConfigurationInitializer implements ApplicationContextI
       }
     }
   }
+<<<<<<< HEAD
 =======
 /**
  * @author Dave Syer
@@ -58,4 +62,6 @@ public class MustacheAutoConfigurationInitializer
 	}
 
 >>>>>>> Add plain JDBC sample (db)
+=======
+>>>>>>> Update the library
 }

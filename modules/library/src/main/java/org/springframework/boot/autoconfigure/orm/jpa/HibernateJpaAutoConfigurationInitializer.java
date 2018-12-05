@@ -12,15 +12,21 @@ public class HibernateJpaAutoConfigurationInitializer implements ApplicationCont
     ConditionService conditions = context.getBeanFactory().getBean(ConditionService.class);
     if (conditions.matches(HibernateJpaAutoConfiguration.class)) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Update the library
       if (context.getBeanFactory().getBeanNamesForType(HibernateJpaAutoConfiguration.class).length==0) {
         new HibernateJpaConfigurationInitializer().initialize(context);
         context.getBeanFactory().getBean(ImportRegistrars.class).add(HibernateJpaAutoConfiguration.class, "org.springframework.boot.context.properties.EnableConfigurationPropertiesImportSelector");
         context.registerBean(HibernateJpaAutoConfiguration.class, () -> new HibernateJpaAutoConfiguration());
       }
+<<<<<<< HEAD
 =======
       new HibernateJpaConfigurationInitializer().initialize(context);
       context.registerBean(HibernateJpaAutoConfiguration.class, () -> new HibernateJpaAutoConfiguration());
 >>>>>>> Add plain JDBC sample (db)
+=======
+>>>>>>> Update the library
     }
   }
 }
