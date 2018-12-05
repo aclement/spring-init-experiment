@@ -17,6 +17,7 @@ package processor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -505,7 +506,7 @@ public class ElementUtils {
 
 	public List<TypeElement> getTypesFromAnnotation(TypeElement type, String annotation,
 			String attribute) {
-		Set<TypeElement> list = new HashSet<>();
+		Set<TypeElement> list = new LinkedHashSet<>();
 		for (AnnotationMirror mirror : type.getAnnotationMirrors()) {
 			if (((TypeElement) mirror.getAnnotationType().asElement()).getQualifiedName()
 					.toString().equals(annotation)) {
