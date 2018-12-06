@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package app.ecp;
+package app.ecp.cls;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import app.ecp.cls.Foo;
 
 /**
  * @author Andy Clement
@@ -39,7 +41,7 @@ public class FunctionalApplicationTests {
 	@Test
 	public void test() {
 		assertThat(foo).isNotNull();
-		assertThat(foo.getValue()).isEqualTo("default");
+		assertThat(foo.getValue()).isEqualTo("dave");
 	}
 
 }

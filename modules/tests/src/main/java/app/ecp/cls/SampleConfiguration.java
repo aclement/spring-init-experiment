@@ -1,4 +1,4 @@
-package app.ecp;
+package app.ecp.cls;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

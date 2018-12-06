@@ -1,4 +1,4 @@
-package app.ecp;
+package app.ecp.cls;
 
 public class Foo {
 

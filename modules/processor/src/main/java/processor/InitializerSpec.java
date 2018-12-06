@@ -286,8 +286,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 
 	private String customizer(ExecutableElement beanMethod) {
 		StringBuilder builder = new StringBuilder(", ");
+		boolean hasInit = false;
+		StringBuilder body = new StringBuilder();
 		if (utils.hasAnnotation(beanMethod, SpringClassNames.BEAN.toString())) {
-			StringBuilder body = new StringBuilder();
 			String methodName = utils.getStringFromAnnotation(beanMethod,
 					SpringClassNames.BEAN.toString(), "initMethod");
 			if (methodName != null && methodName.length() > 0) {
@@ -296,20 +297,27 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			methodName = utils.getStringFromAnnotation(beanMethod,
 					SpringClassNames.BEAN.toString(), "destroyMethod");
 			if (methodName != null && methodName.length() > 0) {
-				boolean hasInit = false;
-				if (body.length() > 0) {
+				hasInit = body.length() > 0;
+				if (hasInit && body.indexOf("{")!=0) {
 					body.insert(0, "{");
 					body.append("; ");
-					hasInit = true;
 				}
 				body.append("def.setDestroyMethodName(\"" + methodName + "\")");
-				if (hasInit) {
-					body.append(";}");
-				}
 			}
-			if (body.length() > 0) {
-				builder.append("def -> ").append(body.toString());
+		}
+		if (utils.hasAnnotation(beanMethod, SpringClassNames.CONFIGURATION_PROPERTIES.toString())) {
+			String methodName = beanMethod.getSimpleName().toString();
+			// The bean name for the @Configuration class is the class name
+			String factoryName = ((TypeElement)beanMethod.getEnclosingElement()).getQualifiedName().toString();
+			body.append("{ def.setFactoryMethodName(\"" + methodName + "\");");
+			body.append("def.setFactoryBeanName(\"" + factoryName + "\")"); 
+			hasInit = true;
+		}
+		if (body.length() > 0) {
+			if (hasInit) {
+				body.append(";}");
 			}
+			builder.append("def -> ").append(body.toString());
 		}
 		return builder.length() > 2 ? builder.toString() : "";
 	}

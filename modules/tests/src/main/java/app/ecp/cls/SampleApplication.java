@@ -1,4 +1,4 @@
-package app.ecp;
+package app.ecp.cls;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

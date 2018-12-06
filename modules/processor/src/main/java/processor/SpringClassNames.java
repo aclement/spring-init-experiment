@@ -101,6 +101,10 @@ public class SpringClassNames {
 			"org.springframework.boot.context.properties",
 			"EnableConfigurationProperties");
 
+	public static final ClassName CONFIGURATION_PROPERTIES = ClassName.get(
+			"org.springframework.boot.context.properties",
+			"ConfigurationProperties");
+
 	public static final ClassName RESOLVABLE_TYPE = ClassName
 			.get("org.springframework.core", "ResolvableType");
 
