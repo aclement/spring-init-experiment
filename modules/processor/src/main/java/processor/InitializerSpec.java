@@ -364,23 +364,26 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					TypeName value = TypeName.get(utils.erasure(type));
 					if (type instanceof DeclaredType
 							&& !((DeclaredType) type).getTypeArguments().isEmpty()) {
+						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
+						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
+						result.types.add(value);
+						type = ((DeclaredType) type).getTypeArguments().iterator().next();
+						value = TypeName.get(utils.erasure(type));
 						// The target type itself is generic. So far we only support one
 						// level of generic parameters. Further levels could be supported
 						// by adding calls to ResolvableType
-						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
-						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
 						if ("?".equals(value.toString())) {
 							result.types.add(TypeName.OBJECT);
 						}
 						else {
 							result.types.add(value);
 						}
-						type = ((DeclaredType) type).getTypeArguments().iterator().next();
 					}
 					else if (type instanceof ArrayType) {
 						// TODO: something special with an array of generic types?
+					} else {
+						result.types.add(value);
 					}
-					result.types.add(value);
 				}
 			}
 		}

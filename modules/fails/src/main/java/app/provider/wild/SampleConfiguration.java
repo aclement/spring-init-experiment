@@ -1,9 +1,9 @@
-package app.provider.list;
+package app.provider.wild;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -21,12 +21,14 @@ public class SampleConfiguration {
 	}
 
 	@Bean
-	public Bar bar(ObjectProvider<Foo> foo) {
-		return new Bar(foo.getIfUnique());
+	public Bar<?> bar(Map<String, Foo> foo) {
+		return new Bar<>(foo.values().iterator().next());
 	}
 
 	@Bean
-	public CommandLineRunner runner(Collection<Bar> bar) {
+	// This one generates an initializer that won't compile on command line (Eclipse is
+	// fine)
+	public CommandLineRunner runner(Collection<Bar<?>> bar) {
 		return args -> {
 			System.out.println("Message: " + message);
 			System.out.println("Bar: " + bar.stream().map(v -> v.toString())
