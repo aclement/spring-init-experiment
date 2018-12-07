@@ -22,6 +22,7 @@
                 <module>mongo</module>
                 <module>jdbc</module>
                 <module>db</module>
+                <module>actuator</module>
 	</modules>
 
 	<properties>
