@@ -97,6 +97,7 @@ public class ModuleInstallerImportRegistrars
 		Set<Imported> added = new LinkedHashSet<>();
 		Set<Imported> start = ordered(registrars);
 		Set<ApplicationContextInitializer<GenericApplicationContext>> initializers = new LinkedHashSet<>();
+		ConditionService conditions = context.getBean(ConditionService.class);
 		for (Imported imported : registrars) {
 			if (seen.contains(imported)) {
 				continue;
@@ -113,26 +114,29 @@ public class ModuleInstallerImportRegistrars
 						if (ClassUtils.isPresent(select, context.getClassLoader())) {
 							Class<?> clazz = ClassUtils.resolveClassName(select,
 									context.getClassLoader());
-							if (clazz.getAnnotation(Configuration.class) != null) {
-								// recurse?
-								if (ClassUtils.isPresent(select + "Initializer",
-										context.getClassLoader())) {
-									@SuppressWarnings("unchecked")
-									ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
-											.instantiateClass(
-													ClassUtils.resolveClassName(
-															select + "Initializer",
-															context.getClassLoader()),
-													ApplicationContextInitializer.class);
-									initializers.add(initializer);
+							if (conditions.matches(clazz)) {
+								if (AnnotatedElementUtils.hasMetaAnnotationTypes(clazz,
+										Configuration.class)) {
+									// recurse?
+									if (ClassUtils.isPresent(select + "Initializer",
+											context.getClassLoader())) {
+										@SuppressWarnings("unchecked")
+										ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
+												.instantiateClass(
+														ClassUtils.resolveClassName(
+																select + "Initializer",
+																context.getClassLoader()),
+														ApplicationContextInitializer.class);
+										initializers.add(initializer);
+									}
 								}
-							}
-							else if (ImportBeanDefinitionRegistrar.class
-									.isAssignableFrom(clazz)) {
-								added.add(new Imported(imported.getSource(), clazz));
-							}
-							else {
-								context.registerBean(clazz);
+								else if (ImportBeanDefinitionRegistrar.class
+										.isAssignableFrom(clazz)) {
+									added.add(new Imported(imported.getSource(), clazz));
+								}
+								else {
+									context.registerBean(clazz);
+								}
 							}
 						}
 					}
@@ -141,22 +145,27 @@ public class ModuleInstallerImportRegistrars
 					importRegistrar(registry, imported);
 				}
 				else {
-					if (type.getAnnotation(Configuration.class) != null) {
-						// recurse?
-						if (ClassUtils.isPresent(type.getName() + "Initializer",
-								context.getClassLoader())) {
-							@SuppressWarnings("unchecked")
-							ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
-									.instantiateClass(
-											ClassUtils.resolveClassName(
-													type.getName() + "Initializer",
-													context.getClassLoader()),
-											ApplicationContextInitializer.class);
-							initializers.add(initializer);
+					try {
+						if (type.getAnnotation(Configuration.class) != null) {
+							// recurse?
+							if (ClassUtils.isPresent(type.getName() + "Initializer",
+									context.getClassLoader())) {
+								@SuppressWarnings("unchecked")
+								ApplicationContextInitializer<GenericApplicationContext> initializer = BeanUtils
+										.instantiateClass(
+												ClassUtils.resolveClassName(
+														type.getName() + "Initializer",
+														context.getClassLoader()),
+												ApplicationContextInitializer.class);
+								initializers.add(initializer);
+							}
+						}
+						else {
+							context.registerBean(type);
 						}
 					}
-					else {
-						context.registerBean(type);
+					catch (ArrayStoreException e) {
+						// ignore
 					}
 				}
 			}
