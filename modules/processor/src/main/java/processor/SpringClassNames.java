@@ -63,6 +63,9 @@ public class SpringClassNames {
 	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
 			"Nullable");
 
+	public static final ClassName OBJECT_UTILS = ClassName.get("slim",
+			"ObjectUtils");
+
 	public static final ClassName CONDITION_SERVICE = ClassName.get("slim",
 			"ConditionService");
 
