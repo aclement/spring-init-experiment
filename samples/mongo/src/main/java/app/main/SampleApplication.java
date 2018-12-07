@@ -56,7 +56,7 @@ public class SampleApplication {
 	@Bean
 	public CommandLineRunner runner(ConfigurableListableBeanFactory beans) {
 		return args -> {
-			foos.findAll().switchIfEmpty(foos.save(new Foo("Hello"))).subscribe();
+			foos.findAll().switchIfEmpty(foos.save(new Foo("Hello"))).blockFirst();
 			System.err.println("Class count: " + ManagementFactory.getClassLoadingMXBean()
 					.getTotalLoadedClassCount());
 			System.err.println("Bean count: " + beans.getBeanDefinitionNames().length);
