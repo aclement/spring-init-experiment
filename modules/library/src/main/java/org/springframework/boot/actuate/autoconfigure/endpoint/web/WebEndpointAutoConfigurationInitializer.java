@@ -1,7 +1,6 @@
 package org.springframework.boot.actuate.autoconfigure.endpoint.web;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import slim.ConditionService;
@@ -23,7 +22,6 @@ import org.springframework.core.ResolvableType;
 
 public class WebEndpointAutoConfigurationInitializer
 		implements ApplicationContextInitializer<GenericApplicationContext> {
-	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(GenericApplicationContext context) {
 		ConditionService conditions = context.getBeanFactory()
@@ -79,15 +77,15 @@ public class WebEndpointAutoConfigurationInitializer
 				if (conditions.matches(WebEndpointAutoConfiguration.class,
 						PathMappedEndpoints.class)) {
 					context.registerBean("pathMappedEndpoints", PathMappedEndpoints.class,
-							() -> context.getBean(WebEndpointAutoConfiguration.class)
-									.pathMappedEndpoints(
-											collection(context
-													.getBeanProvider(
-															EndpointsSupplier.class)
-													.stream()
-													.collect(Collectors.toList())),
-											context.getBean(
-													WebEndpointProperties.class)));
+							() -> {
+								// Generics hack...
+								Collection<EndpointsSupplier<?>> generic = generic(
+										context.getBeanProvider(EndpointsSupplier.class)
+												.stream().collect(Collectors.toList()));
+								return context.getBean(WebEndpointAutoConfiguration.class)
+										.pathMappedEndpoints(generic, context
+												.getBean(WebEndpointProperties.class));
+							});
 				}
 				context.registerBean("webExposeExcludePropertyEndpointFilter",
 						ExposeExcludePropertyEndpointFilter.class,
@@ -101,10 +99,8 @@ public class WebEndpointAutoConfigurationInitializer
 		}
 	}
 
-	// Generics hack...
-	@SuppressWarnings("rawtypes")
-	private Collection collection(List<EndpointsSupplier> list) {
-		return list;
+	<T> T generic(Object thing) {
+		return (T) thing;
 	}
 
 }
