@@ -78,13 +78,15 @@ public class WebEndpointAutoConfigurationInitializer
 						PathMappedEndpoints.class)) {
 					context.registerBean("pathMappedEndpoints", PathMappedEndpoints.class,
 							() -> {
-								// Generics hack...
-								Collection<EndpointsSupplier<?>> generic = generic(
-										context.getBeanProvider(EndpointsSupplier.class)
-												.stream().collect(Collectors.toList()));
 								return context.getBean(WebEndpointAutoConfiguration.class)
-										.pathMappedEndpoints(generic, context
-												.getBean(WebEndpointProperties.class));
+										.pathMappedEndpoints(
+												generic(context
+														.getBeanProvider(
+																EndpointsSupplier.class)
+														.stream()
+														.collect(Collectors.toList())),
+												context.getBean(
+														WebEndpointProperties.class));
 							});
 				}
 				context.registerBean("webExposeExcludePropertyEndpointFilter",
@@ -99,6 +101,8 @@ public class WebEndpointAutoConfigurationInitializer
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	// Generics hack...
 	<T> T generic(Object thing) {
 		return (T) thing;
 	}
