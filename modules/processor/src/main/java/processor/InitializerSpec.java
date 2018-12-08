@@ -18,6 +18,7 @@ package processor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -298,19 +299,21 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					SpringClassNames.BEAN.toString(), "destroyMethod");
 			if (methodName != null && methodName.length() > 0) {
 				hasInit = body.length() > 0;
-				if (hasInit && body.indexOf("{")!=0) {
+				if (hasInit && body.indexOf("{") != 0) {
 					body.insert(0, "{");
 					body.append("; ");
 				}
 				body.append("def.setDestroyMethodName(\"" + methodName + "\")");
 			}
 		}
-		if (utils.hasAnnotation(beanMethod, SpringClassNames.CONFIGURATION_PROPERTIES.toString())) {
+		if (utils.hasAnnotation(beanMethod,
+				SpringClassNames.CONFIGURATION_PROPERTIES.toString())) {
 			String methodName = beanMethod.getSimpleName().toString();
 			// The bean name for the @Configuration class is the class name
-			String factoryName = ((TypeElement)beanMethod.getEnclosingElement()).getQualifiedName().toString();
+			String factoryName = ((TypeElement) beanMethod.getEnclosingElement())
+					.getQualifiedName().toString();
 			body.append("{ def.setFactoryMethodName(\"" + methodName + "\");");
-			body.append("def.setFactoryBeanName(\"" + factoryName + "\")"); 
+			body.append("def.setFactoryBeanName(\"" + factoryName + "\")");
 			hasInit = true;
 		}
 		if (body.length() > 0) {
@@ -362,7 +365,16 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				if (!args.isEmpty()) {
 					TypeMirror type = args.iterator().next();
 					TypeName value = TypeName.get(utils.erasure(type));
-					if (type instanceof DeclaredType
+					if (value.toString().equals(Map.class.getName())) {
+						result.format = "$T.map(context, $T.class)";
+						result.types.add(SpringClassNames.OBJECT_UTILS);
+						Iterator<? extends TypeMirror> iterator = ((DeclaredType) type).getTypeArguments().iterator();
+						iterator.next();
+						type = iterator.next();
+						value = TypeName.get(utils.erasure(type));
+						result.types.add(value);
+					}
+					else if (type instanceof DeclaredType
 							&& !((DeclaredType) type).getTypeArguments().isEmpty()) {
 						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
 						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
@@ -381,7 +393,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					}
 					else if (type instanceof ArrayType) {
 						// TODO: something special with an array of generic types?
-					} else {
+					}
+					else {
 						result.types.add(value);
 					}
 				}
@@ -437,8 +450,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			result.types.add(TypeName.get(utils.erasure(arrayType.getComponentType())));
 
 		}
-		else if (paramType instanceof DeclaredType && (utils.implementsInterface(typeElement, ClassName.get(List.class))
-				|| utils.implementsInterface(typeElement, ClassName.get(Collection.class)))) {
+		else if (paramType instanceof DeclaredType
+				&& (utils.implementsInterface(typeElement, ClassName.get(List.class))
+						|| utils.implementsInterface(typeElement,
+								ClassName.get(Collection.class)))) {
 			DeclaredType declaredType = (DeclaredType) paramType;
 			List<? extends TypeMirror> args = declaredType.getTypeArguments();
 			// TODO: make this work with more general collection elements types
@@ -463,8 +478,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					else {
 						result.types.add(value);
 					}
-					
-				} else {
+
+				}
+				else {
 					result.types.add(value);
 				}
 				result.types.add(TypeName.get(Collectors.class));

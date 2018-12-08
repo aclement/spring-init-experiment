@@ -16,6 +16,12 @@
 
 package slim;
 
+import java.util.Map;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
+
 /**
  * @author Dave Syer
  *
@@ -24,5 +30,29 @@ public class ObjectUtils {
 	@SuppressWarnings("unchecked")
 	public static <T> T generic(Object thing) {
 		return (T) thing;
+	}
+	public static <T> ObjectProvider<Map<String, T>> map(ListableBeanFactory beans, Class<T> type) {
+		return new ObjectProvider<Map<String,T>>() {
+
+			@Override
+			public Map<String, T> getObject() throws BeansException {
+				return beans.getBeansOfType(type);
+			}
+
+			@Override
+			public Map<String, T> getObject(Object... args) throws BeansException {
+				return getObject();
+			}
+
+			@Override
+			public Map<String, T> getIfAvailable() throws BeansException {
+				return getObject();
+			}
+
+			@Override
+			public Map<String, T> getIfUnique() throws BeansException {
+				return getObject();
+			}
+		};
 	}
 }

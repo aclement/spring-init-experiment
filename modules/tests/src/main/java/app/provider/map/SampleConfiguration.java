@@ -1,7 +1,6 @@
 package app.provider.map;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,8 +29,7 @@ public class SampleConfiguration {
 	public CommandLineRunner runner(ObjectProvider<Map<String, Bar>> bar) {
 		return args -> {
 			System.out.println("Message: " + message);
-			System.out.println("Bar: " + bar.stream().map(v -> v.toString())
-					.collect(Collectors.joining(",")));
+			bar.getIfAvailable().forEach((name, value) -> System.out.println("Bar: " + value));
 			bar.getIfAvailable().forEach((name, value) -> System.out
 					.println("Foo: " + name + "=" + value.getFoo()));
 		};
