@@ -16,6 +16,7 @@
 package processor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -375,7 +376,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		String paramTypename = utils.getParameterType(param);
 		TypeElement typeElement = (TypeElement) utils.asElement(paramType);
 		if (utils.implementsInterface(typeElement, SpringClassNames.OBJECT_PROVIDER)) {
-			result.format = "context.getBeanProvider($T.class)";
 			if (paramType instanceof DeclaredType) {
 				DeclaredType declaredType = (DeclaredType) paramType;
 				List<? extends TypeMirror> args = declaredType.getTypeArguments();
@@ -394,25 +394,36 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					}
 					else if (type instanceof DeclaredType
 							&& !((DeclaredType) type).getTypeArguments().isEmpty()) {
-						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, $T.class))";
+						result.format = "context.getBeanProvider($T.forClassWithGenerics($T.class, "
+								+ ((DeclaredType) type).getTypeArguments().stream()
+										.map(thing -> "$T.class")
+										.collect(Collectors.joining(", "))
+								+ "))";
 						result.types.add(SpringClassNames.RESOLVABLE_TYPE);
 						result.types.add(value);
-						type = ((DeclaredType) type).getTypeArguments().iterator().next();
-						value = TypeName.get(utils.erasure(type));
-						// The target type itself is generic. So far we only support one
-						// level of generic parameters. Further levels could be supported
-						// by adding calls to ResolvableType
-						if ("?".equals(value.toString())) {
-							result.types.add(TypeName.OBJECT);
-						}
-						else {
-							result.types.add(value);
-						}
+						((DeclaredType) type).getTypeArguments().forEach(t -> {
+							TypeName v = TypeName.get(utils.erasure(t));
+							// The target type itself is generic. So far we only support
+							// one
+							// level of generic parameters. Further levels could be
+							// supported
+							// by adding calls to ResolvableType
+							if ("?".equals(v.toString())) {
+								result.types.add(TypeName.OBJECT);
+							}
+							else {
+								result.types.add(v);
+							}
+						});
 					}
 					else if (type instanceof ArrayType) {
-						// TODO: something special with an array of generic types?
+						result.format = "$T.array(context, $T.class)";
+						result.types.add(SpringClassNames.OBJECT_UTILS);
+						value = TypeName.get(((ArrayType)type).getComponentType());
+						result.types.add(value);
 					}
 					else {
+						result.format = "context.getBeanProvider($T.class)";
 						result.types.add(value);
 					}
 				}
@@ -562,6 +573,9 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			}
 		}
 		// TODO: pick one that is explicitly autowired?
+		if (methods.isEmpty()) {
+			System.err.println("Wah: " + type);
+		}
 		return methods.get(0);
 	}
 

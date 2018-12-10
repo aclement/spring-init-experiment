@@ -17,6 +17,7 @@
 package slim;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -51,6 +52,31 @@ public class ObjectUtils {
 
 			@Override
 			public Map<String, T> getIfUnique() throws BeansException {
+				return getObject();
+			}
+		};
+	}
+	public static <T> ObjectProvider<T[]> array(ListableBeanFactory beans, Class<T> type) {
+		return new ObjectProvider<T[]>() {
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public T[] getObject() throws BeansException {
+				return (T[]) beans.getBeanProvider(type).orderedStream().collect(Collectors.toList()).toArray();
+			}
+
+			@Override
+			public T[] getObject(Object... args) throws BeansException {
+				return getObject();
+			}
+
+			@Override
+			public T[] getIfAvailable() throws BeansException {
+				return getObject();
+			}
+
+			@Override
+			public T[] getIfUnique() throws BeansException {
 				return getObject();
 			}
 		};

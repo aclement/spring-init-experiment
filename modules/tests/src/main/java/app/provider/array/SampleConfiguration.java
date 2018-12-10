@@ -21,7 +21,7 @@ public class SampleConfiguration {
 	}
 
 	@Bean
-	public Bar bar(ObjectProvider<Foo> foo) {
+	public Bar bar(ObjectProvider<Foo[]> foo) {
 		return new Bar(new Foo(Arrays.asList(foo.getIfUnique()).stream()
 				.map(v -> v.getValue()).collect(Collectors.joining())));
 	}
