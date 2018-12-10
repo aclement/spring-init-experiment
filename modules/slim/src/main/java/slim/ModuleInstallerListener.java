@@ -17,6 +17,7 @@ package slim;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,6 +126,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				return;
 			}
 			SpringApplication application = prepared.getSpringApplication();
+			findInitializers(application);
 			WebApplicationType type = application.getWebApplicationType();
 			Class<?> contextType = getApplicationContextType(application);
 			if (type == WebApplicationType.NONE) {
@@ -147,6 +149,37 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				}
 			}
 		}
+	}
+
+	private void findInitializers(SpringApplication application) {
+		for (Object source : application.getAllSources()) {
+			if (source instanceof Class<?>) {
+				Class<?> type = (Class<?>) source;
+				if (ClassUtils.isPresent(type.getName() + "Initializer",
+						application.getClassLoader())) {
+					@SuppressWarnings("unchecked")
+					Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
+							.resolveClassName(type.getName() + "Initializer",
+									application.getClassLoader());
+					addInitializer(initializer);
+					remove(application, source);
+				}
+			}
+		}
+		if (application.getAllSources().isEmpty()) {
+			// Spring Boot is fussy and doesn't like to run with no sources
+			application.addPrimarySources(Arrays.asList(Object.class));
+		}
+	}
+
+	private void remove(SpringApplication application, Object source) {
+		Field field = ReflectionUtils.findField(SpringApplication.class,
+				"primarySources");
+		ReflectionUtils.makeAccessible(field);
+		@SuppressWarnings("unchecked")
+		Set<Object> sources = (Set<Object>) ReflectionUtils.getField(field, application);
+		sources.remove(source);
+		application.getSources().remove(source);
 	}
 
 	private Class<?> getApplicationContextType(SpringApplication application) {
@@ -299,8 +332,9 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 							if (logger.isDebugEnabled()) {
 								logger.debug("Import: " + value);
 							}
-							//maybeAddInitializer(context, registrars, beanClass, value);
-							//processImports(context, conditions, registrars, value, seen);
+							// maybeAddInitializer(context, registrars, beanClass, value);
+							// processImports(context, conditions, registrars, value,
+							// seen);
 							seen.add(value);
 						}
 					}

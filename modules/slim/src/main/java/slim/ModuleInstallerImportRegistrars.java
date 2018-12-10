@@ -16,6 +16,7 @@
 
 package slim;
 
+import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -24,12 +25,16 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.ImportSelector;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.io.Resource;
 import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.util.ClassUtils;
 
@@ -60,7 +65,13 @@ public class ModuleInstallerImportRegistrars
 
 	@Override
 	public void add(Class<?> importer, String typeName) {
-		this.registrars.add(new Imported(importer, typeName, context.getClassLoader()));
+		if (typeName.endsWith(".xml")) {
+			this.registrars.add(new Imported(importer, typeName, context));
+		}
+		else {
+			this.registrars
+					.add(new Imported(importer, typeName, context.getClassLoader()));
+		}
 	}
 
 	@Override
@@ -149,6 +160,9 @@ public class ModuleInstallerImportRegistrars
 					}
 				}
 			}
+			else if (imported.getResources() != null) {
+				initializers.add(new XmlInitializer(imported.getResources()));
+			}
 		}
 		for (ApplicationContextInitializer<GenericApplicationContext> initializer : initializers) {
 			initializer.initialize(context);
@@ -164,7 +178,7 @@ public class ModuleInstallerImportRegistrars
 	private Set<Imported> ordered(Set<Imported> registrars) {
 		Set<Imported> result = new LinkedHashSet<>();
 		for (Imported imported : registrars) {
-			if (imported.getType().getName()
+			if (imported.getType() != null && imported.getType().getName()
 					.startsWith(AutoConfigurationPackages.class.getName())) {
 				result.add(imported);
 			}
@@ -185,6 +199,7 @@ public class ModuleInstallerImportRegistrars
 		private Class<?> source;
 		private String typeName;
 		private Class<?> type;
+		private Resource[] resources;
 
 		public Imported(Class<?> source, Class<?> type) {
 			this.source = source;
@@ -200,10 +215,23 @@ public class ModuleInstallerImportRegistrars
 			return null;
 		}
 
-		public Imported(Class<?> source, String typeName, ClassLoader classLoader) {
+		public Imported(Class<?> source, String location, ClassLoader classLoader) {
 			this.source = source;
-			this.type = resolve(classLoader, typeName);
-			this.typeName = type == null ? typeName : type.getName();
+			this.type = resolve(classLoader, location);
+			this.typeName = type == null ? location : type.getName();
+		}
+
+		public Imported(Class<?> importer, String location, ApplicationContext loader) {
+			this.source = importer;
+			try {
+				this.resources = loader.getResources(location);
+			}
+			catch (IOException e) {
+			}
+		}
+
+		public Resource[] getResources() {
+			return resources;
 		}
 
 		public Class<?> getSource() {
@@ -254,6 +282,25 @@ public class ModuleInstallerImportRegistrars
 			return "Imported [source=" + this.source.getName()
 
 					+ ", type=" + this.typeName + "]";
+		}
+
+	}
+
+	static class XmlInitializer
+			implements ApplicationContextInitializer<GenericApplicationContext> {
+
+		private final Resource[] resources;
+
+		public XmlInitializer(Resource[] resources) {
+			this.resources = resources;
+		}
+
+		@Override
+		public void initialize(GenericApplicationContext context) {
+			XmlBeanDefinitionReader xml = new XmlBeanDefinitionReader(context);
+			for (Resource resource : resources) {
+				xml.loadBeanDefinitions(resource);
+			}
 		}
 
 	}

@@ -59,6 +59,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private ElementUtils utils;
 	private ClassName className;
 	private Imports imports;
+	private Resources resources = new Resources();
 	private Components components;
 
 	public InitializerSpec(ElementUtils utils, TypeElement type, Imports imports,
@@ -76,6 +77,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		for (TypeElement imported : utils.getTypesFromAnnotation(type,
 				SpringClassNames.IMPORT.toString(), "value")) {
 			imports.addImport(type, imported);
+		}
+		for (String imported : utils.getStringsFromAnnotation(type,
+				SpringClassNames.IMPORT_RESOURCE.toString(), "value")) {
+			resources.addResource(type, imported);
 		}
 	}
 
@@ -149,7 +154,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	private void addImportInvokers(MethodSpec.Builder builder, TypeElement element) {
 		Set<TypeElement> registrarInitializers = imports.getImports().get(element);
 		if (registrarInitializers != null) {
-			for (TypeElement imported : imports.getImports().get(element)) {
+			for (TypeElement imported : registrarInitializers) {
 				if (utils.isImporter(imported)) {
 					builder.addStatement(
 							"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
@@ -184,6 +189,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		builder.beginControlFlow(
 				"if (context.getBeanFactory().getBeanNamesForType($T.class).length==0)",
 				type);
+		addResources(builder);
 		addRegistrarInvokers(builder);
 		addScannedComponents(builder);
 		addNewBeanForConfig(builder, type);
@@ -195,6 +201,17 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		builder.endControlFlow();
 		if (conditional) {
 			builder.endControlFlow();
+		}
+	}
+
+	private void addResources(MethodSpec.Builder builder) {
+		Set<String> locations = resources.getResources().get(configurationType);
+		if (locations != null) {
+			for (String location : locations) {
+				builder.addStatement(
+						"context.getBeanFactory().getBean($T.class).add($T.class, \"$L\")",
+						SpringClassNames.IMPORT_REGISTRARS, configurationType, location);
+			}
 		}
 	}
 
@@ -368,7 +385,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					if (value.toString().equals(Map.class.getName())) {
 						result.format = "$T.map(context, $T.class)";
 						result.types.add(SpringClassNames.OBJECT_UTILS);
-						Iterator<? extends TypeMirror> iterator = ((DeclaredType) type).getTypeArguments().iterator();
+						Iterator<? extends TypeMirror> iterator = ((DeclaredType) type)
+								.getTypeArguments().iterator();
 						iterator.next();
 						type = iterator.next();
 						value = TypeName.get(utils.erasure(type));

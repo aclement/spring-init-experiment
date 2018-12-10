@@ -60,11 +60,13 @@ public class SpringClassNames {
 	public static final ClassName IMPORT = ClassName
 			.get("org.springframework.context.annotation", "Import");
 
+	public static final ClassName IMPORT_RESOURCE = ClassName
+			.get("org.springframework.context.annotation", "ImportResource");
+
 	public static final ClassName NULLABLE = ClassName.get("org.springframework.lang",
 			"Nullable");
 
-	public static final ClassName OBJECT_UTILS = ClassName.get("slim",
-			"ObjectUtils");
+	public static final ClassName OBJECT_UTILS = ClassName.get("slim", "ObjectUtils");
 
 	public static final ClassName CONDITION_SERVICE = ClassName.get("slim",
 			"ConditionService");
@@ -105,8 +107,7 @@ public class SpringClassNames {
 			"EnableConfigurationProperties");
 
 	public static final ClassName CONFIGURATION_PROPERTIES = ClassName.get(
-			"org.springframework.boot.context.properties",
-			"ConfigurationProperties");
+			"org.springframework.boot.context.properties", "ConfigurationProperties");
 
 	public static final ClassName RESOLVABLE_TYPE = ClassName
 			.get("org.springframework.core", "ResolvableType");
