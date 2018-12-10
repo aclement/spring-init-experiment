@@ -35,14 +35,11 @@ import org.springframework.beans.factory.Aware;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
@@ -58,16 +55,11 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
-import org.springframework.context.annotation.ImportResource;
-import org.springframework.context.annotation.ImportSelector;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
@@ -203,7 +195,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 		context.registerBean(
 				AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME,
 				SlimConfigurationClassPostProcessor.class,
-				() -> new SlimConfigurationClassPostProcessor(autoTypes));
+				() -> new SlimConfigurationClassPostProcessor());
 		AnnotationConfigUtils.registerAnnotationConfigProcessors(context);
 	}
 
@@ -262,102 +254,7 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void apply(GenericApplicationContext context, SpringApplication application,
 			ConditionService conditions) {
-		ImportRegistrars registrars = context.getBeanFactory()
-				.getBean(ImportRegistrars.class);
-		Set<Class<?>> seen = new HashSet<>();
-		for (Object source : application.getAllSources()) {
-			Class<?> type = null;
-			if (source instanceof Class) {
-				type = (Class<?>) source;
-			}
-			else if (source instanceof String && ClassUtils.isPresent((String) source,
-					application.getClassLoader())) {
-				type = ClassUtils.resolveClassName((String) source,
-						application.getClassLoader());
-			}
-			if (type != null) {
-				extract(context, conditions, registrars, type, seen);
-			}
-		}
 		apply(context);
-	}
-
-	private void extract(GenericApplicationContext context, ConditionService conditions,
-			ImportRegistrars registrars, Class<?> beanClass, Set<Class<?>> seen) {
-		if (conditions.matches(beanClass)) {
-			// Causes inclusion of SampleApplicationModule if beanClass is
-			// SampleApplication (without this we'll only include SampleApplicationModule
-			// if it depends on other autoconfig that pulls in SampleApplicationModule!)
-			maybeAddInitializer(context, registrars, beanClass, beanClass);
-			processImports(context, conditions, registrars, beanClass, seen);
-		}
-	}
-
-	private void maybeAddInitializer(GenericApplicationContext context,
-			ImportRegistrars registrars, Class<?> source, Class<?> beanClass) {
-		if (autoTypes.containsKey(beanClass)) {
-			addInitializer(autoTypes.get(beanClass));
-		}
-		else if (ApplicationContextInitializer.class.isAssignableFrom(beanClass)) {
-			@SuppressWarnings("unchecked")
-			Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) beanClass;
-			addInitializer(initializer);
-		}
-		else if (ClassUtils.isPresent(beanClass.getName() + "Initializer",
-				context.getClassLoader())) {
-			@SuppressWarnings("unchecked")
-			Class<? extends ApplicationContextInitializer<?>> initializer = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
-					.resolveClassName(beanClass.getName() + "Initializer",
-							context.getClassLoader());
-			addInitializer(initializer);
-		}
-		else if (ImportBeanDefinitionRegistrar.class.isAssignableFrom(beanClass)
-				|| ImportSelector.class.isAssignableFrom(beanClass)) {
-			registrars.add(source, beanClass);
-		}
-	}
-
-	private void processImports(GenericApplicationContext context,
-			ConditionService conditions, ImportRegistrars registrars, Class<?> beanClass,
-			Set<Class<?>> seen) {
-		if (!seen.contains(beanClass)) {
-			XmlBeanDefinitionReader xml = null;
-			if (conditions.matches(beanClass)) {
-				// logger.info("processing beanclass: "+beanClass);
-				Set<Import> imports = AnnotatedElementUtils
-						.findAllMergedAnnotations(beanClass, Import.class);
-				if (imports != null) {
-					for (Import imported : imports) {
-						for (Class<?> value : imported.value()) {
-							if (logger.isDebugEnabled()) {
-								logger.debug("Import: " + value);
-							}
-							// maybeAddInitializer(context, registrars, beanClass, value);
-							// processImports(context, conditions, registrars, value,
-							// seen);
-							seen.add(value);
-						}
-					}
-				}
-				Set<ImportResource> resources = AnnotatedElementUtils
-						.findAllMergedAnnotations(beanClass, ImportResource.class);
-				if (resources != null) {
-					for (ImportResource resource : resources) {
-						for (String value : resource.value()) {
-							if (logger.isDebugEnabled()) {
-								logger.debug("ImportResource: " + value);
-							}
-							// Assume XML. No support for groovy as yet.
-							if (xml == null) {
-								xml = new XmlBeanDefinitionReader(context);
-							}
-							xml.loadBeanDefinitions(context.getResource(value));
-						}
-					}
-				}
-			}
-			seen.add(beanClass);
-		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -408,14 +305,6 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostProcessor,
 		BeanClassLoaderAware, PriorityOrdered {
 
-	private ClassLoader classLoader;
-	private Map<Class<?>, Class<? extends ApplicationContextInitializer<?>>> autoTypes;
-
-	public SlimConfigurationClassPostProcessor(
-			Map<Class<?>, Class<? extends ApplicationContextInitializer<?>>> autoTypes) {
-		this.autoTypes = autoTypes;
-	}
-
 	@Override
 	public int getOrder() {
 		return Ordered.LOWEST_PRECEDENCE - 1;
@@ -426,7 +315,6 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 
 	@Override
 	public void setBeanClassLoader(ClassLoader classLoader) {
-		this.classLoader = classLoader;
 	}
 
 	@Override
@@ -437,46 +325,6 @@ class SlimConfigurationClassPostProcessor implements BeanDefinitionRegistryPostP
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
 			throws BeansException {
-		String[] candidateNames = registry.getBeanDefinitionNames();
-		for (String beanName : candidateNames) {
-			BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
-			Class<?> beanClass = findBeanClass(beanDefinition);
-			if (beanClass != null) {
-				if (slimConfiguration(beanClass)) {
-					// In an app with mixed @Configuration and initializers we would have
-					// to do more than this...
-					if (registry instanceof ConfigurableListableBeanFactory) {
-						ConfigurableListableBeanFactory listable = (ConfigurableListableBeanFactory) registry;
-						if (listable.getBeanNamesForType(beanClass, false,
-								false).length > 1) {
-							// Some ApplicationContext classes register @Configuration
-							// classes as bean definitions so we need to remove that one
-							registry.removeBeanDefinition(beanName);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private Class<?> findBeanClass(BeanDefinition beanDefinition) {
-		String className = beanDefinition.getBeanClassName();
-		if (className == null || beanDefinition.getFactoryMethodName() != null) {
-			return null;
-		}
-		try {
-			return ClassUtils.resolveClassName(className, classLoader);
-		}
-		catch (Throwable e) {
-			return null;
-		}
-	}
-
-	private boolean slimConfiguration(Class<?> beanClass) {
-		if (autoTypes.containsKey(beanClass)) {
-			return true;
-		}
-		return beanClass.isAnnotationPresent(SpringBootConfiguration.class);
 	}
 
 }
