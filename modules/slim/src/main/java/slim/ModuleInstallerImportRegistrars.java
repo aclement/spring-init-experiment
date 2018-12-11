@@ -115,7 +115,7 @@ public class ModuleInstallerImportRegistrars
 							Class<?> clazz = ClassUtils.resolveClassName(select,
 									context.getClassLoader());
 							if (conditions.matches(clazz)) {
-								if (AnnotatedElementUtils.hasMetaAnnotationTypes(clazz,
+								if (AnnotatedElementUtils.isAnnotated(clazz,
 										Configuration.class)) {
 									// recurse?
 									if (ClassUtils.isPresent(select + "Initializer",

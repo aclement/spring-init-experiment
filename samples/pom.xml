@@ -23,6 +23,7 @@
                 <module>jdbc</module>
                 <module>db</module>
                 <module>actuator</module>
+                <module>cloud</module>
 	</modules>
 
 	<properties>
