@@ -16,7 +16,6 @@
 package processor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -325,12 +324,14 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			}
 		}
 		if (utils.hasAnnotation(beanMethod,
-				SpringClassNames.CONFIGURATION_PROPERTIES.toString())) {
+				SpringClassNames.CONFIGURATION_PROPERTIES.toString())
+				|| utils.implementsInterface((TypeElement) utils.asElement(beanMethod.getReturnType()),
+						SpringClassNames.FACTORY_BEAN)) {
 			String methodName = beanMethod.getSimpleName().toString();
 			// The bean name for the @Configuration class is the class name
 			String factoryName = ((TypeElement) beanMethod.getEnclosingElement())
 					.getQualifiedName().toString();
-			body.append("{ def.setFactoryMethodName(\"" + methodName + "\");");
+			body.append("{ def.setFactoryMethodName(\"" + methodName + "\"); ");
 			body.append("def.setFactoryBeanName(\"" + factoryName + "\")");
 			hasInit = true;
 		}
@@ -419,7 +420,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 					else if (type instanceof ArrayType) {
 						result.format = "$T.array(context, $T.class)";
 						result.types.add(SpringClassNames.OBJECT_UTILS);
-						value = TypeName.get(((ArrayType)type).getComponentType());
+						value = TypeName.get(((ArrayType) type).getComponentType());
 						result.types.add(value);
 					}
 					else {

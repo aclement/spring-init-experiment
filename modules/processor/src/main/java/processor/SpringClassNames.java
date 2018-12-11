@@ -115,4 +115,7 @@ public class SpringClassNames {
 	public static final ClassName CLASS_UTILS = ClassName.get("org.springframework.util",
 			"ClassUtils");
 
+	public static final ClassName FACTORY_BEAN = ClassName.get("org.springframework.beans.factory",
+			"FactoryBean");
+
 }
