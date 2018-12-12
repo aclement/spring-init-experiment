@@ -22,7 +22,7 @@ public class WebTestClientAutoConfigurationInitializer implements ApplicationCon
         if (conditions.matches(WebTestClientAutoConfiguration.class, WebTestClient.class)) {
           context.registerBean("webTestClient", WebTestClient.class, () -> context.getBean(WebTestClientAutoConfiguration.class).webTestClient(context,context.getBeanProvider(WebTestClientBuilderCustomizer.class).stream().collect(Collectors.toList()),context.getBeanProvider(MockServerConfigurer.class).stream().collect(Collectors.toList())));
         }
-        context.registerBean("springBootWebTestClientBuilderCustomizer", SpringBootWebTestClientBuilderCustomizer.class, () -> context.getBean(WebTestClientAutoConfiguration.class).springBootWebTestClientBuilderCustomizer(context.getBeanProvider(CodecCustomizer.class)), def -> { def.setFactoryMethodName("springBootWebTestClientBuilderCustomizer");def.setFactoryBeanName("org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration");});
+        context.registerBean("springBootWebTestClientBuilderCustomizer", SpringBootWebTestClientBuilderCustomizer.class, () -> context.getBean(WebTestClientAutoConfiguration.class).springBootWebTestClientBuilderCustomizer(context.getBeanProvider(CodecCustomizer.class)), def -> { def.setFactoryMethodName("springBootWebTestClientBuilderCustomizer"); def.setFactoryBeanName("org.springframework.boot.test.autoconfigure.web.reactive.WebTestClientAutoConfiguration");});
       }
     }
   }
