@@ -16,37 +16,30 @@
 
 package app.main;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.json.JsonTest;
+import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.server.WebHandler;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
  *
  */
-@SpringBootTest("spring.functional.enabled=false")
+@JsonTest
 @RunWith(SpringRunner.class)
-public class SampleApplicationTests {
+public class JacksonApplicationTests {
 
 	@Autowired
-	private WebHandler webHandler;
-
-	private WebTestClient client;
-
-	@Before
-	public void init() {
-		client = WebTestClient.bindToWebHandler(webHandler).build();
-	}
+	private JacksonTester<Foo> jackson;
 
 	@Test
-	public void test() {
-		client.get().uri("/").exchange().expectBody(String.class).isEqualTo("Hello");
+	public void test() throws Exception {
+		assertThat(jackson.write(new Foo("Hello")).getJson()).contains("Hello");
 	}
 
 }

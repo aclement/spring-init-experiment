@@ -201,9 +201,12 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 
 	private void initialize(GenericApplicationContext context,
 			ConditionService conditions) {
-		context.registerBean(ConditionService.class, () -> conditions);
-		context.registerBean(ImportRegistrars.class,
-				() -> new ModuleInstallerImportRegistrars(context));
+		if (!context.getBeanFactory()
+				.containsBeanDefinition(ConditionService.class.getName())) {
+			context.registerBean(ConditionService.class, () -> conditions);
+			context.registerBean(ImportRegistrars.class,
+					() -> new ModuleInstallerImportRegistrars(context));
+		}
 		this.autoTypeNames = new HashSet<>(SpringFactoriesLoader.loadFactoryNames(
 				EnableAutoConfiguration.class, context.getClassLoader()));
 		for (String autoName : autoTypeNames) {
