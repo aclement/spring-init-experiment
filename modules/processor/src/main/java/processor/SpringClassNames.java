@@ -80,6 +80,9 @@ public class SpringClassNames {
 	public static final ClassName APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context", "ApplicationContext");
 
+	public static final ClassName WEB_APPLICATION_CONTEXT = ClassName
+			.get("org.springframework.web.context", "WebApplicationContext");
+
 	public static final ClassName CONFIGURABLE_APPLICATION_CONTEXT = ClassName
 			.get("org.springframework.context", "ConfigurableApplicationContext");
 

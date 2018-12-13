@@ -325,7 +325,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		}
 		if (utils.hasAnnotation(beanMethod,
 				SpringClassNames.CONFIGURATION_PROPERTIES.toString())
-				|| utils.implementsInterface((TypeElement) utils.asElement(beanMethod.getReturnType()),
+				|| utils.implementsInterface(
+						(TypeElement) utils.asElement(beanMethod.getReturnType()),
 						SpringClassNames.FACTORY_BEAN)) {
 			String methodName = beanMethod.getSimpleName().toString();
 			// The bean name for the @Configuration class is the class name
@@ -434,7 +435,14 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 				SpringClassNames.APPLICATION_CONTEXT)
 				|| paramTypename.equals(
 						SpringClassNames.CONFIGURABLE_APPLICATION_CONTEXT.toString())) {
-			result.format = "context";
+			if (utils.implementsInterface(typeElement,
+					SpringClassNames.WEB_APPLICATION_CONTEXT)) {
+				result.format = "($T)context";
+				result.types.add(ClassName.get(typeElement));
+			}
+			else {
+				result.format = "context";
+			}
 		}
 		else if (utils.implementsInterface(typeElement, SpringClassNames.BEAN_FACTORY)) {
 			result.format = "context.getBeanFactory()";
