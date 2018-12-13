@@ -13,7 +13,7 @@ function init() {
     src=$1; shift
 
     if [ -e $module/src ]; then
-        rm -rf $module/src
+        rm -rf $module/src/main
     fi
 
     mkdir -p $module/src/main
@@ -46,24 +46,6 @@ function generate() {
 	</parent>
 
 	<dependencies>
-		<dependency>
-			<groupId>spring-init-experiment</groupId>
-			<artifactId>library</artifactId>
-			<version>\${slim.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>spring-init-experiment</groupId>
-			<artifactId>slim</artifactId>
-			<version>\${slim.version}</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>spring-init-experiment</groupId>
-			<artifactId>processor</artifactId>
-			<version>\${slim.version}</version>
-			<scope>provided</scope>
-		</dependency>
 	</dependencies>
 
 	<properties>
@@ -152,6 +134,11 @@ EOF
 			<artifactId>processor</artifactId>
 			<version>\${slim.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 EOF
