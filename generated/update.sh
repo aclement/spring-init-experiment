@@ -136,12 +136,12 @@ EOF
     fi
 
     # Delete the dependencies
-    sed -i '\!<dependencies!,\!</dependencies!{/dependencies>/!d}' $pom
+    sed -i.bak -e '\!<dependencies!,\!</dependencies!{/dependencies>/!d;}' $pom && rm $pom.bak
 
     # Build them back up
     tmpfile=.pom.xml
     sed '/<\/dependencies/,$ d' $pom > $tmpfile
-    sed '0,/<dependencies/ d;/<!-- Test/,$ d' $src >> $tmpfile
+    sed '1,/<dependencies/ d;/<!-- Test/,$ d' $src >> $tmpfile
     cat >> $tmpfile <<EOF
 		<dependency>
 			<groupId>com.google.code.findbugs</groupId>
@@ -174,7 +174,7 @@ EOF
 		</dependency>
 	</dependencies>
 EOF
-    sed '0,/<\/dependencies>/ d' $pom >> $tmpfile
+    sed '1,/<\/dependencies>/ d' $pom >> $tmpfile
     mv $tmpfile $pom
 
 }
