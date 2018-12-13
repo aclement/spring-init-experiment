@@ -38,7 +38,9 @@ public class TestModuleInitializer
 	public void initialize(GenericApplicationContext context) {
 		if (!ClassUtils.isPresent(
 				"org.springframework.boot.test.context.ImportsContextCustomizer",
-				context.getClassLoader())) {
+				context.getClassLoader())
+				|| !context.getEnvironment().getProperty("spring.functional.enabled",
+						Boolean.class, true)) {
 			// Only used in tests - could move to separate jar
 			return;
 		}

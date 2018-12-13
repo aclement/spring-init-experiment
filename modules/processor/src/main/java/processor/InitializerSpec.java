@@ -263,12 +263,6 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			TypeMirror returnType = utils.getReturnType(beanMethod);
 
 			Element returnTypeElement = utils.asElement(returnType);
-			if (returnTypeElement.getModifiers().contains(Modifier.PRIVATE)) {
-				utils.printMessage(Kind.WARNING,
-						"TODO: Unable to generate source for bean method, type involved is private: "
-								+ beanMethod.getEnclosingElement() + "." + beanMethod);
-				return false;
-			}
 			boolean conditional = utils.hasAnnotation(beanMethod,
 					SpringClassNames.CONDITIONAL.toString());
 			if (conditional) {
@@ -278,17 +272,41 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 							SpringClassNames.CONDITION_SERVICE,
 							SpringClassNames.CONDITION_SERVICE);
 				}
-				builder.beginControlFlow("if (conditions.matches($T.class, $T.class))",
-						type, utils.erasure(returnType));
 			}
 
-			Parameters params = autowireParamsForMethod(beanMethod);
+			if (returnTypeElement.getModifiers().contains(Modifier.PRIVATE)) {
 
-			builder.addStatement(
-					"context.registerBean(" + "\"" + beanMethod.getSimpleName()
-							+ "\", $T.class, " + supplier(type, beanMethod, params.format)
-							+ customizer(beanMethod, params) + ")",
-					ArrayUtils.merge(utils.erasure(returnType), type, params.args));
+				if (conditional) {
+					builder.beginControlFlow(
+							"if (conditions.matches($T.class, $T.resolveClassName(\"$L\", context.getClassLoader())))",
+							type, SpringClassNames.CLASS_UTILS,
+							utils.erasure(returnType));
+				}
+				utils.printMessage(Kind.WARNING,
+						"Generating source for bean method, type involved is private: "
+								+ beanMethod.getEnclosingElement() + "." + beanMethod);
+				builder.addStatement(
+						"context.registerBean($T.resolveClassName(\"$L\", context.getClassLoader()))",
+						SpringClassNames.CLASS_UTILS,
+						((TypeElement) returnTypeElement).getQualifiedName());
+
+			}
+			else {
+
+				if (conditional) {
+					builder.beginControlFlow(
+							"if (conditions.matches($T.class, $T.class))", type,
+							utils.erasure(returnType));
+				}
+				Parameters params = autowireParamsForMethod(beanMethod);
+
+				builder.addStatement(
+						"context.registerBean(" + "\"" + beanMethod.getSimpleName()
+								+ "\", $T.class, "
+								+ supplier(type, beanMethod, params.format)
+								+ customizer(beanMethod, params) + ")",
+						ArrayUtils.merge(utils.erasure(returnType), type, params.args));
+			}
 
 			if (conditional) {
 				builder.endControlFlow();
