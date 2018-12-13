@@ -1,8 +1,2 @@
-slim.Module=\
-boot.autoconfigure.context.ContextAutoConfigurationModule,\
-boot.autoconfigure.gson.GsonAutoConfigurationModule,\
-boot.autoconfigure.jackson.JacksonAutoConfigurationModule,\
-boot.autoconfigure.http.HttpMessageConvertersAutoConfigurationModule,\
-boot.autoconfigure.mustache.MustacheAutoConfigurationModule,\
-boot.autoconfigure.reactor.ReactorCoreAutoConfigurationModule,\
-boot.autoconfigure.web.reactive.ReactiveWebServerFactoryAutoConfigurationModule
+org.springframework.context.ApplicationContextInitializer=\
+org.springframework.cloud.function.context.config.ContextFunctionCatalogDisabler

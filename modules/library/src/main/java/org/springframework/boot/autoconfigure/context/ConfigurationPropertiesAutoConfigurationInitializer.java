@@ -38,8 +38,10 @@ public class ConfigurationPropertiesAutoConfigurationInitializer
 		// TODO: how to get from @EnableConfigurationProperties to this?
 		new ConfigurationPropertiesBindingPostProcessorRegistrar()
 				.registerBeanDefinitions(null, context);
-		context.registerBean(PropertySourcesPlaceholderConfigurer.class,
-				() -> new PropertySourcesPlaceholderConfigurer());
+		if (!context.containsBean(PropertySourcesPlaceholderConfigurer.class.getName())) {
+			context.registerBean(PropertySourcesPlaceholderConfigurer.class,
+					() -> new PropertySourcesPlaceholderConfigurer());
+		}
 	}
 
 }

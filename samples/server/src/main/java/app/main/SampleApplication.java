@@ -27,10 +27,8 @@ import reactor.core.publisher.Mono;
 @SpringBootConfiguration
 @Import({ PropertyPlaceholderAutoConfiguration.class,
 		ConfigurationPropertiesAutoConfiguration.class,
-		// TaskSchedulingAutoConfiguration.class, TaskExecutionAutoConfiguration.class,
 		ReactiveWebServerFactoryAutoConfiguration.class, WebFluxAutoConfiguration.class,
 		ErrorWebFluxAutoConfiguration.class, HttpHandlerAutoConfiguration.class })
-// @SpringBootApplication
 public class SampleApplication {
 
 	@Value("${app.value}")
