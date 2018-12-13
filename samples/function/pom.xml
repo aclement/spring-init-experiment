@@ -19,19 +19,20 @@
 		<java.version>1.8</java.version>
 		<spring-cloud.version>Greenwich.BUILD-SNAPSHOT</spring-cloud.version>
 		<slim.version>1.0-SNAPSHOT</slim.version>
+		<generated.version>2.1.1.BUILD-SNAPSHOT</generated.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>spring-init-experiment</groupId>
-			<artifactId>library</artifactId>
-			<version>${slim.version}</version>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<version>${generated.version}</version>
+			<classifier>func</classifier>
 		</dependency>
 		<dependency>
 			<groupId>spring-init-experiment</groupId>
-			<artifactId>library-test</artifactId>
+			<artifactId>library</artifactId>
 			<version>${slim.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>spring-init-experiment</groupId>

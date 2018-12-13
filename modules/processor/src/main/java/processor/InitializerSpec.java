@@ -287,7 +287,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			builder.addStatement(
 					"context.registerBean(" + "\"" + beanMethod.getSimpleName()
 							+ "\", $T.class, " + supplier(type, beanMethod, params.format)
-							+ customizer(beanMethod) + ")",
+							+ customizer(beanMethod, params) + ")",
 					ArrayUtils.merge(utils.erasure(returnType), type, params.args));
 
 			if (conditional) {
@@ -302,7 +302,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		}
 	}
 
-	private String customizer(ExecutableElement beanMethod) {
+	private String customizer(ExecutableElement beanMethod, Parameters params) {
 		StringBuilder builder = new StringBuilder(", ");
 		boolean hasInit = false;
 		StringBuilder body = new StringBuilder();
@@ -330,10 +330,10 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 						SpringClassNames.FACTORY_BEAN)) {
 			String methodName = beanMethod.getSimpleName().toString();
 			// The bean name for the @Configuration class is the class name
-			String factoryName = ((TypeElement) beanMethod.getEnclosingElement())
-					.getQualifiedName().toString();
+			String factoryName = "$T.class.getName()";
+			params.addArg(beanMethod.getEnclosingElement());
 			body.append("{ def.setFactoryMethodName(\"" + methodName + "\"); ");
-			body.append("def.setFactoryBeanName(\"" + factoryName + "\")");
+			body.append("def.setFactoryBeanName(" + factoryName + ")");
 			hasInit = true;
 		}
 		if (body.length() > 0) {
@@ -616,6 +616,13 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 	static class Parameters {
 		private String format;
 		private Object[] args;
+
+		public void addArg(Object arg) {
+			Object[] args = new Object[this.args.length + 1];
+			System.arraycopy(this.args, 0, args, 0, this.args.length);
+			args[args.length - 1] = arg;
+			this.args = args;
+		}
 	}
 
 	@Override

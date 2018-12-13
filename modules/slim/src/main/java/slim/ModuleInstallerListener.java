@@ -211,7 +211,8 @@ public class ModuleInstallerListener implements SmartApplicationListener {
 				EnableAutoConfiguration.class, context.getClassLoader()));
 		for (String autoName : autoTypeNames) {
 			String typeName = autoName + "Initializer";
-			if (ClassUtils.isPresent(typeName, context.getClassLoader())) {
+			if (ClassUtils.isPresent(autoName, context.getClassLoader())
+					&& ClassUtils.isPresent(typeName, context.getClassLoader())) {
 				@SuppressWarnings("unchecked")
 				Class<? extends ApplicationContextInitializer<?>> module = (Class<? extends ApplicationContextInitializer<?>>) ClassUtils
 						.resolveClassName(typeName, context.getClassLoader());

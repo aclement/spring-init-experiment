@@ -17,11 +17,8 @@
 	<modules>
 		<module>slim</module>
 		<module>library</module>
-		<module>library-test</module>
 		<module>processor</module>
 		<module>aspects</module>
-		<module>tests-lib</module>
-		<module>tests</module>
 	</modules>
 
 	<properties>
