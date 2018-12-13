@@ -304,7 +304,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 						"context.registerBean(" + "\"" + beanMethod.getSimpleName()
 								+ "\", $T.class, "
 								+ supplier(type, beanMethod, params.format)
-								+ customizer(beanMethod, params) + ")",
+								+ customizer(type, beanMethod, params) + ")",
 						ArrayUtils.merge(utils.erasure(returnType), type, params.args));
 			}
 
@@ -320,7 +320,8 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 		}
 	}
 
-	private String customizer(ExecutableElement beanMethod, Parameters params) {
+	private String customizer(TypeElement type, ExecutableElement beanMethod,
+			Parameters params) {
 		StringBuilder builder = new StringBuilder(", ");
 		boolean hasInit = false;
 		StringBuilder body = new StringBuilder();
@@ -349,7 +350,7 @@ public class InitializerSpec implements Comparable<InitializerSpec> {
 			String methodName = beanMethod.getSimpleName().toString();
 			// The bean name for the @Configuration class is the class name
 			String factoryName = "$T.class.getName()";
-			params.addArg(beanMethod.getEnclosingElement());
+			params.addArg(type);
 			body.append("{ def.setFactoryMethodName(\"" + methodName + "\"); ");
 			body.append("def.setFactoryBeanName(" + factoryName + ")");
 			hasInit = true;
